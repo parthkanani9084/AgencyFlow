@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Users, CheckCircle2, Timer, Circle, Calendar, ChevronRight, Camera, Film, Megaphone, AlertCircle } from 'lucide-react';
+import { useRoleGuard } from '@/hooks/useRoleGuard';
 
 type TaskStatus = 'pending' | 'in_progress' | 'completed';
 type TaskPriority = 'low' | 'medium' | 'high';
@@ -71,6 +72,7 @@ const roleFilters: { label: string; value: TaskRole | 'all' }[] = [
 ];
 
 export default function ManagerDashboardPage() {
+  useRoleGuard(['Owner', 'Manager']);
   const [roleFilter, setRoleFilter] = useState<TaskRole | 'all'>('all');
 
   const filtered = allTasks.filter((t) => roleFilter === 'all' || t.role === roleFilter);

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Film, CheckCircle2, Timer, Circle, Calendar, ChevronRight, ArrowRight } from 'lucide-react';
+import { useRoleGuard } from '@/hooks/useRoleGuard';
 
 type TaskStatus = 'pending' | 'in_progress' | 'completed';
 type TaskPriority = 'low' | 'medium' | 'high';
@@ -93,6 +94,7 @@ function getDaysLeft(deadline: string) {
 }
 
 export default function EditorDashboardPage() {
+  useRoleGuard(['Owner', 'Editor']);
   const [tasks, setTasks] = useState<EditorTask[]>(editorTasks);
 
   const stats = {

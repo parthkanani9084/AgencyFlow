@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Camera, CheckCircle2, Timer, Circle, Calendar, ChevronRight, ArrowRight } from 'lucide-react';
+import { useRoleGuard } from '@/hooks/useRoleGuard';
 
 type TaskStatus = 'pending' | 'in_progress' | 'completed';
 type TaskPriority = 'low' | 'medium' | 'high';
@@ -94,6 +95,7 @@ function getDaysLeft(deadline: string) {
 }
 
 export default function ShooterDashboardPage() {
+  useRoleGuard(['Owner', 'Shooter']);
   const [tasks, setTasks] = useState<ShooterTask[]>(shooterTasks);
 
   const stats = {

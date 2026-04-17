@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import Modal from '@/components/ui/Modal';
 import { Plus, Pencil, Trash2, Search, Briefcase, AlertTriangle, X } from 'lucide-react';
+import { useRoleGuard } from '@/hooks/useRoleGuard';
 
 interface Client {
   id: string;
@@ -24,6 +25,7 @@ const initialClients: Client[] = [
 const emptyForm = { name: '', brand: '', budget: '', planType: 'monthly\' as \'monthly\' | \'weekly' };
 
 export default function ClientManagementPage() {
+  useRoleGuard(['Owner', 'Manager']);
   const [clients, setClients] = useState<Client[]>(initialClients);
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);

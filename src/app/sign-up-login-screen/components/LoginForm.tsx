@@ -7,6 +7,7 @@ import { Eye, EyeOff, ArrowRight, Zap, BarChart3, Users, Shield } from 'lucide-r
 import AppLogo from '@/components/ui/AppLogo';
 import { toast } from 'sonner';
 import Icon from '@/components/ui/AppIcon';
+import { useAuth, ROLE_HOME } from '@/context/AuthContext';
 
 
 // BACKEND INTEGRATION: Replace with real auth API call
@@ -44,6 +45,7 @@ const features = [
 
 export default function LoginForm() {
   const router = useRouter();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -72,21 +74,22 @@ export default function LoginForm() {
   const onSubmit = async (data: FormValues) => {
     setIsLoading(true);
     // BACKEND INTEGRATION: POST /api/auth/login with data.email + data.password
-    await new Promise((r) => setTimeout(r, 1200));
+    await new Promise((r) => setTimeout(r, 1000));
 
-    const matched = demoCredentials.find(
-      (c) => c.email === data.email && c.password === data.password
-    );
+    const result = await login(data.email, data.password);
 
-    if (!matched) {
+    if (!result.success) {
       setIsLoading(false);
-      toast.error('Invalid credentials — use the demo accounts below to sign in');
+      toast.error(result.error ?? 'Invalid credentials');
       return;
     }
 
-    toast.success(`Welcome back! Signing in as ${matched.role}…`);
-    await new Promise((r) => setTimeout(r, 600));
-    router.push('/dashboard');
+    // Determine role-based redirect
+    const matched = demoCredentials.find((c) => c.email === data.email);
+    const home = matched ? ROLE_HOME[matched.role] : '/dashboard';
+    toast.success(`Welcome back! Signing in as ${matched?.role ?? 'user'}…`);
+    await new Promise((r) => setTimeout(r, 500));
+    router.push(home);
   };
 
   return (

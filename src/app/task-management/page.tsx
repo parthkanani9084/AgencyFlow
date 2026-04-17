@@ -5,6 +5,7 @@ import AppLayout from '@/components/AppLayout';
 import Modal from '@/components/ui/Modal';
 import { Plus, Search, X, CheckSquare, AlertCircle, ChevronDown, Calendar, User, Filter, Pencil, Trash2, CheckCircle2, Circle, Timer, Camera, Film, Megaphone } from 'lucide-react';
 import Icon from '@/components/ui/AppIcon';
+import { useRoleGuard } from '@/hooks/useRoleGuard';
 
 
 type TaskStatus = 'pending' | 'in_progress' | 'completed';
@@ -119,6 +120,7 @@ function isOverdue(deadline: string, status: TaskStatus) {
 }
 
 export default function TaskManagementPage() {
+  useRoleGuard(['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager']);
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<TaskRole | 'all'>('all');

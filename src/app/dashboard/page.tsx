@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import AppLayout from '@/components/AppLayout';
 import MetricsBentoGrid from './components/MetricsBentoGrid';
@@ -6,8 +8,11 @@ import ActivityFeed from './components/ActivityFeed';
 import TopCampaignsTable from './components/TopCampaignsTable';
 import DashboardHeader from './components/DashboardHeader';
 import { Toaster } from 'sonner';
+import { useRoleGuard } from '@/hooks/useRoleGuard';
 
 export default function DashboardPage() {
+  useRoleGuard(['Owner']);
+
   return (
     <AppLayout>
       <Toaster position="bottom-right" richColors />
