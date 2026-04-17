@@ -23,7 +23,9 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import type { UserRole } from '@/lib/types';
 import Icon from '@/components/ui/AppIcon';
+
 
 
 interface NavItem {
@@ -33,23 +35,31 @@ interface NavItem {
   href: string;
   badge?: number;
   group: string;
+  allowedRoles: UserRole[];
 }
 
 const navItems: NavItem[] = [
-  { id: 'nav-dashboard',    label: 'Dashboard',    icon: LayoutDashboard, href: '/dashboard',             group: 'main' },
-  { id: 'nav-campaigns',    label: 'Campaigns',    icon: Megaphone,       href: '/campaign-management',   badge: 3, group: 'main' },
-  { id: 'nav-clients',      label: 'Clients',      icon: Briefcase,       href: '/client-management',     group: 'main' },
-  { id: 'nav-tasks',        label: 'Tasks',        icon: CheckSquare,     href: '/task-management',       badge: 7, group: 'main' },
-  { id: 'nav-shooter',      label: 'Shooter',      icon: Camera,          href: '/shooter-dashboard',     group: 'roles' },
-  { id: 'nav-editor',       label: 'Editor',       icon: Film,            href: '/editor-dashboard',      group: 'roles' },
-  { id: 'nav-ads-mgr',      label: 'Ads Manager',  icon: Megaphone,       href: '/ads-manager-dashboard', group: 'roles' },
-  { id: 'nav-manager',      label: 'Manager',      icon: UserCheck,       href: '/manager-dashboard',     group: 'roles' },
-  { id: 'nav-ads',          label: 'Ads Tracking', icon: TrendingUp,      href: '/ads-manager-dashboard', group: 'analytics' },
-  { id: 'nav-files',        label: 'File Manager', icon: FileUp,          href: '/file-manager',          group: 'analytics' },
-  { id: 'nav-reports',      label: 'Reports',      icon: BarChart3,       href: '/reports',               group: 'analytics' },
-  { id: 'nav-team',         label: 'Team',         icon: Users,           href: '/manager-dashboard',     group: 'settings' },
-  { id: 'nav-notifications',label: 'Notifications',icon: Bell,            href: '/notifications',         badge: 4, group: 'settings' },
-  { id: 'nav-settings',     label: 'Settings',     icon: Settings,        href: '/dashboard',             group: 'settings' },
+  // Workspace
+  { id: 'nav-dashboard',     label: 'Dashboard',     icon: LayoutDashboard, href: '/dashboard',             group: 'main',      allowedRoles: ['Owner'] },
+  { id: 'nav-campaigns',     label: 'Campaigns',     icon: Megaphone,       href: '/campaign-management',   badge: 3, group: 'main', allowedRoles: ['Owner', 'Manager'] },
+  { id: 'nav-clients',       label: 'Clients',       icon: Briefcase,       href: '/client-management',     group: 'main',      allowedRoles: ['Owner', 'Manager'] },
+  { id: 'nav-tasks',         label: 'Tasks',         icon: CheckSquare,     href: '/task-management',       badge: 7, group: 'main', allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager'] },
+
+  // Role Dashboards
+  { id: 'nav-manager',       label: 'Manager',       icon: UserCheck,       href: '/manager-dashboard',     group: 'roles',     allowedRoles: ['Owner', 'Manager'] },
+  { id: 'nav-shooter',       label: 'Shooter',       icon: Camera,          href: '/shooter-dashboard',     group: 'roles',     allowedRoles: ['Owner', 'Shooter'] },
+  { id: 'nav-editor',        label: 'Editor',        icon: Film,            href: '/editor-dashboard',      group: 'roles',     allowedRoles: ['Owner', 'Editor'] },
+  { id: 'nav-ads-mgr',       label: 'Ads Manager',   icon: Megaphone,       href: '/ads-manager-dashboard', group: 'roles',     allowedRoles: ['Owner', 'Ads Manager'] },
+
+  // Analytics
+  { id: 'nav-ads',           label: 'Ads Tracking',  icon: TrendingUp,      href: '/ads-manager-dashboard', group: 'analytics', allowedRoles: ['Owner', 'Ads Manager'] },
+  { id: 'nav-files',         label: 'File Manager',  icon: FileUp,          href: '/file-manager',          group: 'analytics', allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager'] },
+  { id: 'nav-reports',       label: 'Reports',       icon: BarChart3,       href: '/reports',               group: 'analytics', allowedRoles: ['Owner', 'Manager'] },
+
+  // Account
+  { id: 'nav-team',          label: 'Team',          icon: Users,           href: '/manager-dashboard',     group: 'settings',  allowedRoles: ['Owner', 'Manager'] },
+  { id: 'nav-notifications', label: 'Notifications', icon: Bell,            href: '/notifications',         badge: 4, group: 'settings', allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager'] },
+  { id: 'nav-settings',      label: 'Settings',      icon: Settings,        href: '/dashboard',             group: 'settings',  allowedRoles: ['Owner'] },
 ];
 
 const groups = [
@@ -63,6 +73,11 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   const { user, logout } = useAuth();
+
+  // Filter nav items to only those the current user's role can access
+  const visibleItems = user
+    ? navItems.filter((item) => item.allowedRoles.includes(user.role))
+    : [];
 
   return (
     <aside
@@ -84,7 +99,8 @@ export default function Sidebar() {
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-3 scrollbar-thin">
         {groups.map((group) => {
-          const items = navItems.filter((i) => i.group === group.id);
+          const items = visibleItems.filter((i) => i.group === group.id);
+          if (items.length === 0) return null;
           return (
             <div key={`group-${group.id}`} className="mb-4">
               {!collapsed && (

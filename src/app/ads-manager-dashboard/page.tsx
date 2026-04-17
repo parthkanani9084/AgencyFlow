@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Megaphone, CheckCircle2, Timer, Circle, Calendar, ChevronRight, TrendingUp, DollarSign } from 'lucide-react';
+import { useRoleGuard } from '@/hooks/useRoleGuard';
 
 type TaskStatus = 'pending' | 'in_progress' | 'completed';
 type TaskPriority = 'low' | 'medium' | 'high';
@@ -114,6 +115,7 @@ function getDaysLeft(deadline: string) {
 }
 
 export default function AdsManagerDashboardPage() {
+  useRoleGuard(['Owner', 'Ads Manager']);
   const [tasks, setTasks] = useState<AdsTask[]>(adsTasks);
 
   const stats = {

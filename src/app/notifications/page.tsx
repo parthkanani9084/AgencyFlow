@@ -6,6 +6,7 @@ import { Bell, CheckCheck, Trash2, CheckCircle2, AlertCircle, Megaphone, ArrowRi
 import { Toaster, toast } from 'sonner';
 import type { Notification, NotificationType } from '@/lib/types';
 import Icon from '@/components/ui/AppIcon';
+import { useRoleGuard } from '@/hooks/useRoleGuard';
 
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
@@ -42,6 +43,7 @@ function timeAgo(ts: string): string {
 type FilterTab = 'all' | 'unread';
 
 export default function NotificationsPage() {
+  useRoleGuard(['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager']);
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
   const [tab, setTab] = useState<FilterTab>('all');
 

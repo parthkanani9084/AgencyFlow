@@ -7,6 +7,7 @@ import { Toaster, toast } from 'sonner';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell,  } from 'recharts';
 import type { CampaignReport } from '@/lib/types';
 import Icon from '@/components/ui/AppIcon';
+import { useRoleGuard } from '@/hooks/useRoleGuard';
 
 
 // ─── Mock report data ─────────────────────────────────────────────────────────
@@ -49,6 +50,7 @@ const stageBadge: Record<string, string> = {
 };
 
 export default function ReportsPage() {
+  useRoleGuard(['Owner', 'Manager']);
   const [dateRange, setDateRange] = useState('last_30');
 
   function handleExport() {

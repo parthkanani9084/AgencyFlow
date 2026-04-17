@@ -6,6 +6,7 @@ import { FileUp, Search, Image, Film, FileText, Archive, Download, Trash2, Uploa
 import { Toaster, toast } from 'sonner';
 import type { ManagedFile, FileType, FileStage } from '@/lib/types';
 import Icon from '@/components/ui/AppIcon';
+import { useRoleGuard } from '@/hooks/useRoleGuard';
 
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
@@ -47,6 +48,7 @@ const ALL_TYPES: FileType[] = ['image', 'video', 'document', 'archive'];
 const ALL_STAGES: FileStage[] = ['raw', 'edited', 'final', 'asset'];
 
 export default function FileManagerPage() {
+  useRoleGuard(['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager']);
   const [files, setFiles]       = useState<ManagedFile[]>(initialFiles);
   const [search, setSearch]     = useState('');
   const [typeFilter, setTypeFilter]   = useState<FileType | 'all'>('all');
