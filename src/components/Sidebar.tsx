@@ -52,14 +52,14 @@ const navItems: NavItem[] = [
   { id: 'nav-ads-mgr',       label: 'Ads Manager',   icon: Megaphone,       href: '/ads-manager-dashboard', group: 'roles',     allowedRoles: ['Owner', 'Ads Manager'] },
 
   // Analytics
-  { id: 'nav-ads',           label: 'Ads Tracking',  icon: TrendingUp,      href: '/ads-manager-dashboard', group: 'analytics', allowedRoles: ['Owner', 'Ads Manager'] },
+  { id: 'nav-ads',           label: 'Ads Tracking',  icon: TrendingUp,      href: '/ads-tracking',          group: 'analytics', allowedRoles: ['Owner', 'Ads Manager'] },
   { id: 'nav-files',         label: 'File Manager',  icon: FileUp,          href: '/file-manager',          group: 'analytics', allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager'] },
   { id: 'nav-reports',       label: 'Reports',       icon: BarChart3,       href: '/reports',               group: 'analytics', allowedRoles: ['Owner', 'Manager'] },
 
   // Account
-  { id: 'nav-team',          label: 'Team',          icon: Users,           href: '/manager-dashboard',     group: 'settings',  allowedRoles: ['Owner', 'Manager'] },
+  { id: 'nav-team',          label: 'Team',          icon: Users,           href: '/team',                  group: 'settings',  allowedRoles: ['Owner', 'Manager'] },
   { id: 'nav-notifications', label: 'Notifications', icon: Bell,            href: '/notifications',         badge: 4, group: 'settings', allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager'] },
-  { id: 'nav-settings',      label: 'Settings',      icon: Settings,        href: '/dashboard',             group: 'settings',  allowedRoles: ['Owner'] },
+  { id: 'nav-settings',      label: 'Settings',      icon: Settings,        href: '/settings',              group: 'settings',  allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager'] },
 ];
 
 const groups = [
