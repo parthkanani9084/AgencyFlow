@@ -22,6 +22,7 @@ import {
   Film,
   UserCheck,
 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 import Icon from '@/components/ui/AppIcon';
 
 
@@ -35,32 +36,33 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { id: 'nav-dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', group: 'main' },
-  { id: 'nav-campaigns', label: 'Campaigns', icon: Megaphone, href: '/campaign-management', badge: 3, group: 'main' },
-  { id: 'nav-clients', label: 'Clients', icon: Briefcase, href: '/client-management', group: 'main' },
-  { id: 'nav-tasks', label: 'Tasks', icon: CheckSquare, href: '/task-management', badge: 7, group: 'main' },
-  { id: 'nav-shooter', label: 'Shooter', icon: Camera, href: '/shooter-dashboard', group: 'roles' },
-  { id: 'nav-editor', label: 'Editor', icon: Film, href: '/editor-dashboard', group: 'roles' },
-  { id: 'nav-ads-mgr', label: 'Ads Manager', icon: Megaphone, href: '/ads-manager-dashboard', group: 'roles' },
-  { id: 'nav-manager', label: 'Manager', icon: UserCheck, href: '/manager-dashboard', group: 'roles' },
-  { id: 'nav-ads', label: 'Ads Tracking', icon: TrendingUp, href: '/dashboard', group: 'analytics' },
-  { id: 'nav-files', label: 'File Manager', icon: FileUp, href: '/dashboard', group: 'analytics' },
-  { id: 'nav-reports', label: 'Reports', icon: BarChart3, href: '/dashboard', group: 'analytics' },
-  { id: 'nav-team', label: 'Team', icon: Users, href: '/dashboard', group: 'settings' },
-  { id: 'nav-notifications', label: 'Notifications', icon: Bell, href: '/dashboard', badge: 4, group: 'settings' },
-  { id: 'nav-settings', label: 'Settings', icon: Settings, href: '/dashboard', group: 'settings' },
+  { id: 'nav-dashboard',    label: 'Dashboard',    icon: LayoutDashboard, href: '/dashboard',             group: 'main' },
+  { id: 'nav-campaigns',    label: 'Campaigns',    icon: Megaphone,       href: '/campaign-management',   badge: 3, group: 'main' },
+  { id: 'nav-clients',      label: 'Clients',      icon: Briefcase,       href: '/client-management',     group: 'main' },
+  { id: 'nav-tasks',        label: 'Tasks',        icon: CheckSquare,     href: '/task-management',       badge: 7, group: 'main' },
+  { id: 'nav-shooter',      label: 'Shooter',      icon: Camera,          href: '/shooter-dashboard',     group: 'roles' },
+  { id: 'nav-editor',       label: 'Editor',       icon: Film,            href: '/editor-dashboard',      group: 'roles' },
+  { id: 'nav-ads-mgr',      label: 'Ads Manager',  icon: Megaphone,       href: '/ads-manager-dashboard', group: 'roles' },
+  { id: 'nav-manager',      label: 'Manager',      icon: UserCheck,       href: '/manager-dashboard',     group: 'roles' },
+  { id: 'nav-ads',          label: 'Ads Tracking', icon: TrendingUp,      href: '/ads-manager-dashboard', group: 'analytics' },
+  { id: 'nav-files',        label: 'File Manager', icon: FileUp,          href: '/file-manager',          group: 'analytics' },
+  { id: 'nav-reports',      label: 'Reports',      icon: BarChart3,       href: '/reports',               group: 'analytics' },
+  { id: 'nav-team',         label: 'Team',         icon: Users,           href: '/manager-dashboard',     group: 'settings' },
+  { id: 'nav-notifications',label: 'Notifications',icon: Bell,            href: '/notifications',         badge: 4, group: 'settings' },
+  { id: 'nav-settings',     label: 'Settings',     icon: Settings,        href: '/dashboard',             group: 'settings' },
 ];
 
 const groups = [
-  { id: 'main', label: 'Workspace' },
-  { id: 'roles', label: 'Role Dashboards' },
+  { id: 'main',      label: 'Workspace' },
+  { id: 'roles',     label: 'Role Dashboards' },
   { id: 'analytics', label: 'Analytics' },
-  { id: 'settings', label: 'Account' },
+  { id: 'settings',  label: 'Account' },
 ];
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+  const { user, logout } = useAuth();
 
   return (
     <aside
@@ -92,12 +94,10 @@ export default function Sidebar() {
               )}
               {items.map((item) => {
                 const Icon = item.icon;
-                const isActive = pathname === item.href && item.href !== '/dashboard' 
-                  ? true 
-                  : pathname === item.href && item.id === 'nav-dashboard';
-                const active = pathname.startsWith(item.href) && item.href !== '/dashboard'
-                  ? true
-                  : item.id === 'nav-dashboard' && pathname === '/dashboard';
+                const active =
+                  item.id === 'nav-dashboard'
+                    ? pathname === '/dashboard'
+                    : pathname.startsWith(item.href);
 
                 return (
                   <Link
@@ -142,17 +142,30 @@ export default function Sidebar() {
 
       {/* User + collapse */}
       <div className="border-t border-slate-200 p-2">
-        {!collapsed && (
-          <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-50 cursor-pointer mb-1 transition-colors">
+        {!collapsed && user && (
+          <div
+            className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-50 cursor-pointer mb-1 transition-colors"
+            onClick={logout}
+            title="Sign out"
+          >
             <div className="w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0">
-              <span className="text-[11px] font-semibold text-white">AO</span>
+              <span className="text-[11px] font-semibold text-white">{user.avatarInitials}</span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[12.5px] font-semibold text-slate-800 truncate">Alex Owens</p>
-              <p className="text-[11px] text-slate-400 truncate">Owner</p>
+              <p className="text-[12.5px] font-semibold text-slate-800 truncate">{user.name}</p>
+              <p className="text-[11px] text-slate-400 truncate">{user.role}</p>
             </div>
             <LogOut size={14} className="text-slate-400 flex-shrink-0" />
           </div>
+        )}
+        {collapsed && user && (
+          <button
+            onClick={logout}
+            title="Sign out"
+            className="w-full flex items-center justify-center p-2 rounded-lg hover:bg-red-50 transition-colors text-slate-400 hover:text-red-500 mb-1"
+          >
+            <LogOut size={15} />
+          </button>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
