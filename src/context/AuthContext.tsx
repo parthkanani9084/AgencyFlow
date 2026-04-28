@@ -11,6 +11,7 @@ const DEMO_USERS: (AuthUser & { password: string })[] = [
   { id: 'u3', name: 'Marco Reyes',   email: 'marco.reyes@agencyflow.io',   password: 'Shooter@2026',    role: 'Shooter',     avatarInitials: 'MR' },
   { id: 'u4', name: 'Jin Park',      email: 'jin.park@agencyflow.io',      password: 'Editor@2026',     role: 'Editor',      avatarInitials: 'JP' },
   { id: 'u5', name: 'Sofia Nguyen',  email: 'sofia.nguyen@agencyflow.io',  password: 'AdsManager@2026', role: 'Ads Manager', avatarInitials: 'SN' },
+  { id: 'u6', name: 'Jordan Lee',    email: 'jordan.lee@novabrew.com',     password: 'Client@2026',     role: 'Client',      avatarInitials: 'JL' },
 ];
 
 // Role → default landing page
@@ -20,6 +21,7 @@ export const ROLE_HOME: Record<UserRole, string> = {
   Shooter:     '/shooter-dashboard',
   Editor:      '/editor-dashboard',
   'Ads Manager': '/ads-manager-dashboard',
+  Client:      '/client/campaigns',
 };
 
 // Pages accessible without login

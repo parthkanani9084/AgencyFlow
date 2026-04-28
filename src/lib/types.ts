@@ -1,5 +1,5 @@
 // ─── Roles ────────────────────────────────────────────────────────────────────
-export type UserRole = 'Owner' | 'Manager' | 'Shooter' | 'Editor' | 'Ads Manager';
+export type UserRole = 'Owner' | 'Manager' | 'Shooter' | 'Editor' | 'Ads Manager' | 'Client';
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 export interface AuthUser {

@@ -41,8 +41,8 @@ interface NavItem {
 const navItems: NavItem[] = [
   // Workspace
   { id: 'nav-dashboard',     label: 'Dashboard',     icon: LayoutDashboard, href: '/dashboard',             group: 'main',      allowedRoles: ['Owner'] },
-  { id: 'nav-campaigns',     label: 'Campaigns',     icon: Megaphone,       href: '/campaign-management',   badge: 3, group: 'main', allowedRoles: ['Owner', 'Manager'] },
-  { id: 'nav-clients',       label: 'Clients',       icon: Briefcase,       href: '/client-management',     group: 'main',      allowedRoles: ['Owner', 'Manager'] },
+  { id: 'nav-campaigns',     label: 'Campaigns',     icon: Megaphone,       href: '/campaign-management',   badge: 3, group: 'main', allowedRoles: ['Owner', 'Manager','Ads Manager'] },
+  { id: 'nav-clients',       label: 'Clients',       icon: Briefcase,       href: '/client-management',     group: 'main',      allowedRoles: ['Owner', 'Manager','Ads Manager'] },
   { id: 'nav-tasks',         label: 'Tasks',         icon: CheckSquare,     href: '/task-management',       badge: 7, group: 'main', allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager'] },
 
   // Role Dashboards
@@ -52,14 +52,19 @@ const navItems: NavItem[] = [
   { id: 'nav-ads-mgr',       label: 'Ads Manager',   icon: Megaphone,       href: '/ads-manager-dashboard', group: 'roles',     allowedRoles: ['Owner', 'Ads Manager'] },
 
   // Analytics
-  { id: 'nav-ads',           label: 'Ads Tracking',  icon: TrendingUp,      href: '/ads-manager-dashboard', group: 'analytics', allowedRoles: ['Owner', 'Ads Manager'] },
-  { id: 'nav-files',         label: 'File Manager',  icon: FileUp,          href: '/file-manager',          group: 'analytics', allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager'] },
+  { id: 'nav-ads',           label: 'Ads Tracking',  icon: TrendingUp,      href: '/ads-tracking',          group: 'analytics', allowedRoles: ['Owner', 'Ads Manager'] },
+
   { id: 'nav-reports',       label: 'Reports',       icon: BarChart3,       href: '/reports',               group: 'analytics', allowedRoles: ['Owner', 'Manager'] },
 
   // Account
-  { id: 'nav-team',          label: 'Team',          icon: Users,           href: '/manager-dashboard',     group: 'settings',  allowedRoles: ['Owner', 'Manager'] },
+  // Client Navigation
+  { id: 'nav-client-profile', label: 'Profile', icon: UserCheck, href: '/client/profile', group: 'main', allowedRoles: ['Client'] },
+  { id: 'nav-client-campaigns', label: 'Campaigns', icon: Megaphone,       href: '/client/campaigns', group: 'main', allowedRoles: ['Client'] },
+
+
+  { id: 'nav-team',          label: 'Team',          icon: Users,           href: '/team',                  group: 'settings',  allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager'] },
   { id: 'nav-notifications', label: 'Notifications', icon: Bell,            href: '/notifications',         badge: 4, group: 'settings', allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager'] },
-  { id: 'nav-settings',      label: 'Settings',      icon: Settings,        href: '/dashboard',             group: 'settings',  allowedRoles: ['Owner'] },
+  { id: 'nav-settings',      label: 'Settings',      icon: Settings,        href: '/settings',              group: 'settings',  allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager'] },
 ];
 
 const groups = [
@@ -81,10 +86,9 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`relative flex flex-col bg-white border-r border-slate-200 transition-all duration-300 ease-in-out flex-shrink-0 ${
+      className={`relative flex flex-col h-full bg-white border-r border-slate-200 transition-all duration-300 ease-in-out flex-shrink-0 ${
         collapsed ? 'w-16' : 'w-60'
       }`}
-      style={{ minHeight: '100vh' }}
     >
       {/* Logo */}
       <div className={`flex items-center gap-2.5 px-3 py-4 border-b border-slate-200 ${collapsed ? 'justify-center px-0' : ''}`}>
@@ -109,7 +113,7 @@ export default function Sidebar() {
                 </p>
               )}
               {items.map((item) => {
-                const Icon = item.icon;
+                const NavIcon = item.icon;
                 const active =
                   item.id === 'nav-dashboard'
                     ? pathname === '/dashboard'
@@ -126,14 +130,14 @@ export default function Sidebar() {
                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                     } ${collapsed ? 'justify-center px-0 mx-1' : ''}`}
                   >
-                    <Icon
+                    <NavIcon
                       size={17}
                       className={`flex-shrink-0 transition-colors ${
                         active ? 'text-violet-600' : 'text-slate-400 group-hover:text-slate-600'
                       }`}
                     />
                     {!collapsed && (
-                      <span className="flex-1 truncate">{item.label}</span>
+                      <span key={`label-${item.id}`} className="flex-1 truncate">{item.label}</span>
                     )}
                     {!collapsed && item.badge && (
                       <span className="ml-auto text-[10px] font-600 bg-violet-100 text-violet-700 rounded-full px-1.5 py-0.5 leading-none tabular-nums">

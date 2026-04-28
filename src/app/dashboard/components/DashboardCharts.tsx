@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Legend, defs, linearGradient, stop,
+  Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 
 // BACKEND INTEGRATION: GET /api/dashboard/charts?range=12w → { leadsData, taskCompletionData }

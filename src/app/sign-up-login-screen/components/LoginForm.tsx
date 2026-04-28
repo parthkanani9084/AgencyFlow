@@ -19,7 +19,7 @@ interface FormValues {
   remember: boolean;
 }
 
-type Role = 'Owner' | 'Shooter' | 'Editor' | 'Ads Manager' | 'Manager';
+type Role = 'Owner' | 'Shooter' | 'Editor' | 'Ads Manager' | 'Manager' | 'Client';
 
 interface DemoCredential {
   role: Role;
@@ -34,6 +34,7 @@ const demoCredentials: DemoCredential[] = [
   { role: 'Shooter', email: 'marco.reyes@agencyflow.io', password: 'Shooter@2026', color: 'bg-emerald-100 text-emerald-700' },
   { role: 'Editor', email: 'jin.park@agencyflow.io', password: 'Editor@2026', color: 'bg-amber-100 text-amber-700' },
   { role: 'Ads Manager', email: 'sofia.nguyen@agencyflow.io', password: 'AdsManager@2026', color: 'bg-rose-100 text-rose-700' },
+  { role: 'Client', email: 'jordan.lee@novabrew.com', password: 'Client@2026', color: 'bg-indigo-100 text-indigo-700' },
 ];
 
 const features = [

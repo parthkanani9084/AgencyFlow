@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { Camera, CheckCircle2, Timer, Circle, Calendar, ChevronRight, ArrowRight } from 'lucide-react';
+import Modal from '@/components/ui/Modal';
+import { Camera, CheckCircle2, Timer, Circle, Calendar, ChevronRight, ArrowRight, UserPlus, Info } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 
 type TaskStatus = 'pending' | 'in_progress' | 'completed';
@@ -18,7 +19,18 @@ interface ShooterTask {
   priority: TaskPriority;
   description: string;
   workflowStage: number;
+  notes?: string;
+  assignedTo?: string;
+  nextRole?: string;
 }
+
+const teamMembers = [
+  { id: 'tm1', name: 'John Doe', role: 'Editor' },
+  { id: 'tm2', name: 'Jane Smith', role: 'Ads Manager' },
+  { id: 'tm3', name: 'Amara Diallo', role: 'Editor' },
+  { id: 'tm4', name: 'Jin Park', role: 'Editor' },
+  { id: 'tm5', name: 'Sofia Nguyen', role: 'Ads Manager' },
+];
 
 const shooterTasks: ShooterTask[] = [
   {
@@ -49,7 +61,7 @@ const shooterTasks: ShooterTask[] = [
     client: 'Ethan Patel',
     campaign: 'GreenRoot Awareness',
     deadline: '2026-04-12',
-    status: 'completed',
+    status: 'pending',
     priority: 'medium',
     description: 'Cover the GreenRoot pop-up event. Capture crowd, products, and key moments.',
     workflowStage: 2,
@@ -97,22 +109,64 @@ function getDaysLeft(deadline: string) {
 export default function ShooterDashboardPage() {
   useRoleGuard(['Owner', 'Shooter']);
   const [tasks, setTasks] = useState<ShooterTask[]>(shooterTasks);
+  const [activeTab, setActiveTab] = useState<TaskStatus>('pending');
+
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<ShooterTask | null>(null);
+  const [step, setStep] = useState(1);
+  const [notes, setNotes] = useState('');
+  const [sendTo, setSendTo] = useState('');
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const stats = {
-    total: tasks.length,
+    pending: tasks.filter((t) => t.status === 'pending').length,
     inProgress: tasks.filter((t) => t.status === 'in_progress').length,
     completed: tasks.filter((t) => t.status === 'completed').length,
-    overdue: tasks.filter((t) => isOverdue(t.deadline, t.status)).length,
   };
 
-  function cycleStatus(id: string) {
-    const order: TaskStatus[] = ['pending', 'in_progress', 'completed'];
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === id ? { ...t, status: order[(order.indexOf(t.status) + 1) % order.length] } : t
-      )
-    );
-  }
+  const handleStatusChange = (task: ShooterTask, newStatus: TaskStatus) => {
+    if (newStatus === 'completed') {
+      if (task.status === 'completed') return;
+      setSelectedTask(task);
+      setStep(1);
+      setNotes('');
+      setSendTo('');
+      setFormErrors({});
+      setIsModalOpen(true);
+    } else {
+      setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
+    }
+  };
+
+  const handleFinalSubmit = () => {
+    const errors: Record<string, string> = {};
+    if (!notes.trim()) errors.notes = 'Notes are required';
+    if (!sendTo) errors.sendTo = 'Please select a team member';
+    
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    if (selectedTask) {
+      const selectedMember = teamMembers.find(m => m.id === sendTo);
+      
+      setTasks(prev => prev.map(t => 
+        t.id === selectedTask.id 
+          ? { 
+              ...t, 
+              status: 'completed',
+              notes: notes,
+              assignedTo: selectedMember?.name,
+              nextRole: selectedMember?.role
+            } 
+          : t
+      ));
+      setIsModalOpen(false);
+      setSelectedTask(null);
+    }
+  };
 
   return (
     <AppLayout>
@@ -131,12 +185,11 @@ export default function ShooterDashboardPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[
-            { label: 'Assigned', value: stats.total, color: 'text-blue-600', bg: 'bg-blue-50' },
+            { label: 'Pending', value: stats.pending, color: 'text-slate-600', bg: 'bg-slate-50' },
             { label: 'In Progress', value: stats.inProgress, color: 'text-amber-600', bg: 'bg-amber-50' },
             { label: 'Completed', value: stats.completed, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-            { label: 'Overdue', value: stats.overdue, color: 'text-red-600', bg: 'bg-red-50' },
           ].map((s) => (
-            <div key={s.label} className="bg-white rounded-xl border border-slate-200 px-4 py-3.5 shadow-sm">
+            <div key={s.label} className="bg-white rounded-xl border border-slate-200 px-4 py-3.5 shadow-sm col-span-1">
               <p className={`text-[24px] font-bold ${s.color}`}>{s.value}</p>
               <p className="text-[12px] text-slate-500 mt-0.5">{s.label}</p>
             </div>
@@ -167,55 +220,172 @@ export default function ShooterDashboardPage() {
         </div>
 
         {/* Task List */}
-        <div className="space-y-3">
-          <h2 className="text-[14px] font-semibold text-slate-800">Assigned Tasks</h2>
-          {tasks.map((task) => {
-            const StatusIcon = statusConfig[task.status].icon;
-            const overdue = isOverdue(task.deadline, task.status);
-            const daysLeft = getDaysLeft(task.deadline);
-            return (
-              <div
-                key={task.id}
-                className={`bg-white rounded-xl border shadow-sm p-4 ${overdue ? 'border-red-200' : 'border-slate-200'}`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
-                    <span className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${priorityDot[task.priority]}`} style={{ marginTop: 6 }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[14px] font-semibold text-slate-900 truncate">{task.title}</p>
-                      <p className="text-[12px] text-slate-500 mt-0.5">{task.client} · {task.campaign}</p>
-                      <p className="text-[12px] text-slate-400 mt-1 line-clamp-1">{task.description}</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => cycleStatus(task.id)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium whitespace-nowrap ${statusConfig[task.status].bg} ${statusConfig[task.status].color} transition-all hover:opacity-80`}
-                  >
-                    <StatusIcon size={13} />
-                    {statusConfig[task.status].label}
-                  </button>
-                </div>
-                <div className="flex items-center gap-4 mt-3 pt-3 border-t border-slate-100">
-                  <div className={`flex items-center gap-1.5 text-[12px] ${overdue ? 'text-red-600 font-semibold' : 'text-slate-500'}`}>
-                    <Calendar size={12} />
-                    {overdue ? 'Overdue · ' : ''}{formatDeadline(task.deadline)}
-                    {!overdue && task.status !== 'completed' && (
-                      <span className={`ml-1 ${daysLeft <= 3 ? 'text-red-500 font-semibold' : 'text-slate-400'}`}>
-                        ({daysLeft > 0 ? `${daysLeft}d left` : 'Today'})
-                      </span>
-                    )}
-                  </div>
-                  {task.status === 'completed' && (
-                    <div className="flex items-center gap-1 text-[12px] text-emerald-600 font-medium">
-                      <ArrowRight size={12} />
-                      Passed to Editor
-                    </div>
-                  )}
-                </div>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-[14px] font-semibold text-slate-800">Assigned Tasks</h2>
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+              {(['in_progress', 'pending', 'completed'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-all ${
+                    activeTab === tab
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  {tab === 'in_progress' ? 'In Progress' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {tasks.filter(t => t.status === activeTab).length === 0 ? (
+              <div className="bg-white rounded-xl border border-dashed border-slate-200 py-12 text-center">
+                <p className="text-[13px] text-slate-400 font-medium font-inter">No tasks found in {activeTab.replace('_', ' ')}</p>
               </div>
-            );
-          })}
+            ) : (
+              tasks.filter(t => t.status === activeTab).map((task) => {
+                const overdue = isOverdue(task.deadline, task.status);
+                const daysLeft = getDaysLeft(task.deadline);
+                const isCompleted = task.status === 'completed';
+
+                return (
+                  <div
+                    key={task.id}
+                    className={`bg-white rounded-xl border shadow-sm p-4 ${overdue ? 'border-red-200' : 'border-slate-200'}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <span className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${priorityDot[task.priority]}`} style={{ marginTop: 6 }} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[14px] font-semibold text-slate-900 truncate">{task.title}</p>
+                          <p className="text-[12px] text-slate-500 mt-0.5">{task.client} · {task.campaign}</p>
+                          <p className="text-[12px] text-slate-400 mt-1 line-clamp-1">{task.description}</p>
+                        </div>
+                      </div>
+                      <div className="relative">
+                        <select
+                          value={task.status}
+                          onChange={(e) => handleStatusChange(task, e.target.value as TaskStatus)}
+                          className={`appearance-none pl-2.5 pr-8 py-1 rounded-lg text-[12px] font-medium transition-all cursor-pointer outline-none border-none ${statusConfig[task.status].bg} ${statusConfig[task.status].color} hover:opacity-80`}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="in_progress">In Progress</option>
+                          <option value="completed">Completed</option>
+                        </select>
+                        <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none" size={12} />
+                      </div>
+                    </div>
+                    
+                    {isCompleted && task.notes && (
+                      <div className="mt-3 pt-3 border-t border-slate-100">
+                        <p className="text-[12px] text-slate-500 font-semibold">Notes:</p>
+                        <p className="text-[12px] text-slate-500 mt-0.5 leading-relaxed">{task.notes}</p>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-4 mt-3 pt-3 border-t border-slate-100">
+                      <div className={`flex items-center gap-1.5 text-[12px] ${overdue ? 'text-red-600 font-semibold' : 'text-slate-500'}`}>
+                        <Calendar size={12} />
+                        {overdue ? 'Overdue · ' : ''}{formatDeadline(task.deadline)}
+                        {!overdue && !isCompleted && (
+                          <span className={`ml-1 ${daysLeft <= 3 ? 'text-red-500 font-semibold' : 'text-slate-400'}`}>
+                            ({daysLeft > 0 ? `${daysLeft}d left` : 'Today'})
+                          </span>
+                        )}
+                      </div>
+                      {isCompleted && (
+                        <div className="flex items-center gap-1 text-[12px] text-emerald-600 font-medium">
+                          <CheckCircle2 size={12} />
+                          {task.assignedTo ? `Passed to ${task.assignedTo} (${task.nextRole})` : 'Passed to Editor'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
+
+        {/* Completion Flow Modal */}
+        <Modal
+          open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          title="Complete Task"
+          subtitle={selectedTask?.title}
+          size="md"
+        >
+          <div className="p-6 pt-2">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">
+                  Submission Notes <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  rows={4}
+                  placeholder="Provide details like file locations, Drive links, or specific instructions for the next person."
+                  className={`w-full px-4 py-3 rounded-xl border text-[13.5px] outline-none transition-all resize-none ${
+                    formErrors.notes ? 'border-red-300 bg-red-50 focus:ring-red-100' : 'border-slate-200 focus:ring-4 focus:ring-violet-50 focus:border-violet-300'
+                  }`}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                />
+                {formErrors.notes && (
+                  <p className="mt-1.5 text-[11.5px] text-red-600 flex items-center gap-1">
+                    <Info size={12} /> {formErrors.notes}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">
+                  Send Forward To <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <UserPlus size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <select
+                    className={`w-full pl-10 pr-4 py-3 rounded-xl border text-[13.5px] outline-none transition-all appearance-none bg-white ${
+                      formErrors.sendTo ? 'border-red-300 bg-red-50 focus:ring-red-100' : 'border-slate-200 focus:ring-4 focus:ring-violet-50 focus:border-violet-300'
+                    }`}
+                    value={sendTo}
+                    onChange={(e) => setSendTo(e.target.value)}
+                  >
+                    <option value="">Select team member…</option>
+                    {teamMembers.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name} ({m.role})
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronRight className="absolute right-3.5 top-1/2 -translate-y-1/2 rotate-90 text-slate-400 pointer-events-none" size={14} />
+                </div>
+                {formErrors.sendTo && (
+                  <p className="mt-1.5 text-[11.5px] text-red-600 flex items-center gap-1">
+                    <Info size={12} /> {formErrors.sendTo}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleFinalSubmit}
+                  className="flex items-center gap-2 px-6 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[13px] font-semibold shadow-md shadow-violet-100 transition-all active:scale-[0.98]"
+                >
+                  Complete Task <CheckCircle2 size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </Modal>
       </div>
     </AppLayout>
   );

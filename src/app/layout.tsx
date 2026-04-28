@@ -2,6 +2,7 @@ import React from 'react';
 import type { Metadata, Viewport } from 'next';
 import '../styles/tailwind.css';
 import { AuthProvider } from '@/context/AuthContext';
+import { AdsDataProvider } from '@/context/AdsDataContext';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -23,7 +24,9 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <AuthProvider>
-          {children}
+          <AdsDataProvider>
+            {children}
+          </AdsDataProvider>
         </AuthProvider>
 
         <script type="module" async src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Fagencyflow7064back.builtwithrocket.new&_be=https%3A%2F%2Fappanalytics.rocket.new&_v=0.1.18" />

@@ -8,6 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import type { CampaignReport } from '@/lib/types';
 import Icon from '@/components/ui/AppIcon';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
+import { useAdsData } from '@/context/AdsDataContext';
 
 
 // ─── Mock report data ─────────────────────────────────────────────────────────
@@ -34,13 +35,6 @@ const stageDistribution = [
 
 const ROAS_COLORS = ['#6366f1', '#8b5cf6', '#f59e0b', '#10b981'];
 
-const summaryStats = [
-  { label: 'Total Budget',   value: '$45,500',  icon: DollarSign, color: 'text-violet-600 bg-violet-50' },
-  { label: 'Total Spent',    value: '$31,300',  icon: TrendingUp, color: 'text-blue-600 bg-blue-50' },
-  { label: 'Total Leads',    value: '1,144',    icon: Users,      color: 'text-emerald-600 bg-emerald-50' },
-  { label: 'Avg ROAS',       value: '4.0×',     icon: Target,     color: 'text-amber-600 bg-amber-50' },
-];
-
 const stageBadge: Record<string, string> = {
   Shooting: 'bg-blue-100 text-blue-700',
   'Raw Upload': 'bg-slate-100 text-slate-600',
@@ -52,6 +46,19 @@ const stageBadge: Record<string, string> = {
 export default function ReportsPage() {
   useRoleGuard(['Owner', 'Manager']);
   const [dateRange, setDateRange] = useState('last_30');
+  const { adsMetrics } = useAdsData();
+
+  const totalSpend = adsMetrics.totalSpend;
+  const totalLeads = adsMetrics.totalLeads;
+  const avgRoas = adsMetrics.avgRoas.toFixed(1);
+  const totalBudget = campaignReports.reduce((s, c) => s + c.budget, 0);
+
+  const summaryStats = [
+    { label: 'Total Budget',   value: `$${totalBudget.toLocaleString()}`,  icon: DollarSign, color: 'text-violet-600 bg-violet-50' },
+    { label: 'Total Spent',    value: `$${totalSpend.toLocaleString()}`,  icon: TrendingUp, color: 'text-blue-600 bg-blue-50' },
+    { label: 'Total Leads',    value: totalLeads.toLocaleString(),    icon: Users,      color: 'text-emerald-600 bg-emerald-50' },
+    { label: 'Avg ROAS',       value: `${avgRoas}×`,     icon: Target,     color: 'text-amber-600 bg-amber-50' },
+  ];
 
   function handleExport() {
     // BACKEND INTEGRATION: GET /api/reports/export?format=csv

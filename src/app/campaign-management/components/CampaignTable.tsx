@@ -1,16 +1,17 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Search, Plus, ChevronUp, ChevronDown, ChevronsUpDown, Edit2, Trash2, Eye, X, CheckSquare, Download, Megaphone,  } from 'lucide-react';
+import { Search, Plus, ChevronUp, ChevronDown, ChevronsUpDown, Edit2, Trash2, Eye, X, CheckSquare, Download, Megaphone, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 import CreateCampaignModal from './CreateCampaignModal';
 import DeleteConfirmModal from './DeleteConfirmModal';
+import EditCampaignModal from './EditCampaignModal';
+import LogPerformanceModal from './LogPerformanceModal';
 
-// BACKEND INTEGRATION: GET /api/campaigns?status=&client=&stage=&platform=&search= → paginated campaign list
 
 type CampaignStatus = 'active' | 'draft' | 'paused' | 'completed' | 'archived';
 type WorkflowStage = 'Briefing' | 'Shooting' | 'Editing' | 'Ads Setup' | 'Ads Live' | 'Review' | 'Completed';
-type Platform = 'Meta' | 'Google' | 'TikTok' | 'LinkedIn' | 'Multi';
+type Platform = 'Meta' | 'Facebook' | 'Instagram' | 'Google' | 'TikTok' | 'LinkedIn' | 'Multi';
 
 interface Campaign {
   id: string;
@@ -28,6 +29,13 @@ interface Campaign {
   platform: Platform;
   progress: number;
   createdAt: string;
+  performanceHistory?: {
+    id: string;
+    date: string;
+    addedSpend: number;
+    addedLeads: number;
+    newRoas: number;
+  }[];
 }
 
 const allCampaigns: Campaign[] = [
@@ -47,7 +55,7 @@ const allCampaigns: Campaign[] = [
 
 const statusOptions: CampaignStatus[] = ['active', 'draft', 'paused', 'completed', 'archived'];
 const stageOptions: WorkflowStage[] = ['Briefing', 'Shooting', 'Editing', 'Ads Setup', 'Ads Live', 'Review', 'Completed'];
-const platformOptions: Platform[] = ['Meta', 'Google', 'TikTok', 'LinkedIn', 'Multi'];
+const platformOptions: Platform[] = ['Meta', 'Facebook', 'Instagram', 'Google', 'TikTok', 'LinkedIn', 'Multi'];
 const clientOptions = [...new Set(allCampaigns.map((c) => c.client))].sort();
 
 const statusBadge: Record<CampaignStatus, string> = {
@@ -70,6 +78,8 @@ const stageBadge: Record<WorkflowStage, string> = {
 
 const platformBadge: Record<Platform, string> = {
   Meta: 'bg-blue-50 text-blue-700',
+  Facebook: 'bg-blue-50 text-blue-700',
+  Instagram: 'bg-pink-50 text-pink-700 px-2.5',
   Google: 'bg-red-50 text-red-600',
   TikTok: 'bg-slate-800 text-white',
   LinkedIn: 'bg-sky-50 text-sky-700',
@@ -91,8 +101,22 @@ export default function CampaignTable() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(8);
   const [createOpen, setCreateOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<Campaign | null>(null);
+  const [logTarget, setLogTarget] = useState<Campaign | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Campaign | null>(null);
-  const [campaigns, setCampaigns] = useState<Campaign[]>(allCampaigns);
+  const [campaigns, setCampaigns] = useState<Campaign[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('agencyflow_campaigns');
+      return saved ? JSON.parse(saved) : allCampaigns;
+    }
+    return allCampaigns;
+  });
+
+  // Persist to localStorage
+  React.useEffect(() => {
+    localStorage.setItem('agencyflow_campaigns', JSON.stringify(campaigns));
+  }, [campaigns]);
+
   const [statusDropdownId, setStatusDropdownId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
@@ -168,6 +192,18 @@ export default function CampaignTable() {
     setCampaigns((prev) => [newCampaign, ...prev]);
     setCreateOpen(false);
     toast.success(`Campaign "${newCampaign.name}" created and workflow initiated`);
+  };
+
+  const handleEditSuccess = (updated: Campaign) => {
+    setCampaigns((prev) => prev.map(c => c.id === updated.id ? updated : c));
+    setEditTarget(null);
+    toast.success(`Campaign "${updated.name}" updated successfully`);
+  };
+
+  const handleLogSuccess = (updated: Campaign) => {
+    setCampaigns((prev) => prev.map(c => c.id === updated.id ? updated : c));
+    setLogTarget(null);
+    toast.success(`Performance logged for "${updated.name}"`);
   };
 
   const clearFilters = () => {
@@ -469,18 +505,18 @@ export default function CampaignTable() {
                           <span className="text-[11px] text-slate-500 tabular-nums w-8 text-right">{campaign.progress}%</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {/* Show actions always for usability */}
-                          <div className="flex items-center gap-0.5">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-0.5">
                             <button
-                              title="View campaign details"
-                              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                              title="Log performance metrics"
+                              onClick={() => setLogTarget(campaign)}
+                              className="p-1.5 rounded-lg hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 transition-colors"
                             >
-                              <Eye size={13} />
+                              <TrendingUp size={13} />
                             </button>
                             <button
                               title="Edit campaign"
+                              onClick={() => setEditTarget(campaign)}
                               className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-violet-600 transition-colors"
                             >
                               <Edit2 size={13} />
@@ -493,8 +529,7 @@ export default function CampaignTable() {
                               <Trash2 size={13} />
                             </button>
                           </div>
-                        </div>
-                      </td>
+                        </td>
                     </tr>
                   );
                 })
@@ -599,6 +634,20 @@ export default function CampaignTable() {
         open={createOpen}
         onClose={() => setCreateOpen(false)}
         onSuccess={handleCreateSuccess}
+      />
+
+      <EditCampaignModal
+        open={!!editTarget}
+        campaign={editTarget}
+        onClose={() => setEditTarget(null)}
+        onSuccess={handleEditSuccess}
+      />
+
+      <LogPerformanceModal
+        open={!!logTarget}
+        campaign={logTarget}
+        onClose={() => setLogTarget(null)}
+        onSuccess={handleLogSuccess}
       />
 
       <DeleteConfirmModal
