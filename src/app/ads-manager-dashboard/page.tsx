@@ -5,91 +5,9 @@ import AppLayout from '@/components/AppLayout';
 import Modal from '@/components/ui/Modal';
 import { Megaphone, CheckCircle2, Timer, Circle, Calendar, ChevronRight, TrendingUp, DollarSign, Upload, Info, ExternalLink } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
+import { useTasks } from '@/context/TaskContext';
+import { Task, TaskStatus, TaskPriority } from '@/lib/types';
 
-type TaskStatus = 'pending' | 'in_progress' | 'completed';
-type TaskPriority = 'low' | 'medium' | 'high';
-
-interface AdsTask {
-  id: string;
-  title: string;
-  client: string;
-  campaign: string;
-  deadline: string;
-  status: TaskStatus;
-  priority: TaskPriority;
-  description: string;
-  platform: string;
-  budget: number;
-  spent: number;
-  leads: number;
-  screenshot?: string;
-  notes?: string;
-  previousNotes?: string;
-}
-
-const adsTasks: AdsTask[] = [
-  {
-    id: 'at1',
-    title: 'Run Meta ads for GreenRoot campaign',
-    client: 'Ethan Patel',
-    campaign: 'GreenRoot Awareness',
-    deadline: '2026-04-20',
-    status: 'in_progress',
-    priority: 'medium',
-    description: 'Set up and launch Meta ad sets. Budget: $2,000. Target: eco-conscious 25-40 demographic.',
-    platform: 'Meta',
-    budget: 2000,
-    spent: 840,
-    leads: 62,
-    previousNotes: 'Videos are edited with high contrast as requested. Please use the V2 version for the main feed ads.',
-  },
-  {
-    id: 'at2',
-    title: 'Launch Google Ads for PulseWear',
-    client: 'Samantha Cruz',
-    campaign: 'PulseWear Q2 Reel',
-    deadline: '2026-04-28',
-    status: 'completed',
-    priority: 'low',
-    description: 'Set up search and display campaigns. Track conversions via GA4.',
-    platform: 'Google',
-    budget: 1500,
-    spent: 1500,
-    leads: 118,
-    screenshot: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2426&auto=format&fit=crop',
-    notes: 'Campaign performing well. CPC is lower than expected.',
-    previousNotes: 'Make sure to target the specific keywords listed in the strategy doc. All assets are in the Google Ads folder.',
-  },
-  {
-    id: 'at3',
-    title: 'Launch NovaBrew Instagram campaign',
-    client: 'Jordan Lee',
-    campaign: 'NovaBrew Spring Launch',
-    deadline: '2026-04-30',
-    status: 'pending',
-    priority: 'high',
-    description: 'Run Instagram story and feed ads targeting coffee enthusiasts aged 22-35.',
-    platform: 'Meta',
-    budget: 3000,
-    spent: 0,
-    leads: 0,
-    previousNotes: 'The client wants a very "vibey" feel. Color grading is optimized for mobile screens.',
-  },
-  {
-    id: 'at4',
-    title: 'Set up LuxeHome Pinterest ads',
-    client: 'Mia Tanaka',
-    campaign: 'LuxeHome Interior Series',
-    deadline: '2026-05-05',
-    status: 'pending',
-    priority: 'medium',
-    description: 'Create Pinterest promoted pins targeting home decor enthusiasts.',
-    platform: 'Pinterest',
-    budget: 1200,
-    spent: 0,
-    leads: 0,
-  },
-];
 
 const workflowStages = ['Shooting', 'Raw Upload', 'Editing', 'Ads', 'Complete'];
 
@@ -125,12 +43,13 @@ function getDaysLeft(deadline: string) {
 
 export default function AdsManagerDashboardPage() {
   useRoleGuard(['Owner', 'Ads Manager']);
-  const [tasks, setTasks] = useState<AdsTask[]>(adsTasks);
+  const { tasks: allTasks, updateTask } = useTasks();
+  const tasks = allTasks.filter(t => t.role === 'Ads Manager');
   const [activeTab, setActiveTab] = useState<TaskStatus>('in_progress');
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<AdsTask | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [screenshot, setScreenshot] = useState('');
   const [notes, setNotes] = useState('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -144,7 +63,7 @@ export default function AdsManagerDashboardPage() {
   const totalSpent = tasks.reduce((sum, t) => sum + t.spent, 0);
   const totalLeads = tasks.reduce((sum, t) => sum + t.leads, 0);
 
-  const handleStatusChange = (task: AdsTask, newStatus: TaskStatus) => {
+  const handleStatusChange = (task: Task, newStatus: TaskStatus) => {
     if (newStatus === 'completed') {
       if (task.status === 'completed') return;
       setSelectedTask(task);
@@ -153,7 +72,7 @@ export default function AdsManagerDashboardPage() {
       setFormErrors({});
       setIsModalOpen(true);
     } else {
-      setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
+      updateTask(task.id, { status: newStatus });
     }
   };
 
@@ -168,16 +87,11 @@ export default function AdsManagerDashboardPage() {
 
   const handleFinalSubmit = () => {
     if (validate() && selectedTask) {
-      setTasks(prev => prev.map(t => 
-        t.id === selectedTask.id 
-          ? { 
-              ...t, 
-              status: 'completed',
-              screenshot: screenshot,
-              notes: notes || undefined
-            } 
-          : t
-      ));
+      updateTask(selectedTask.id, {
+        status: 'completed',
+        screenshot: screenshot,
+        notes: notes || undefined
+      });
       setIsModalOpen(false);
       setSelectedTask(null);
     }

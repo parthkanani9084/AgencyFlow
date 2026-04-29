@@ -5,84 +5,9 @@ import AppLayout from '@/components/AppLayout';
 import Modal from '@/components/ui/Modal';
 import { Film, CheckCircle2, Timer, Circle, Calendar, ChevronRight, ArrowRight, UserPlus, Info } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
+import { useTasks } from '@/context/TaskContext';
+import { Task, TaskStatus, TaskPriority } from '@/lib/types';
 
-type TaskStatus = 'pending' | 'in_progress' | 'completed';
-type TaskPriority = 'low' | 'medium' | 'high';
-
-interface EditorTask {
-  id: string;
-  title: string;
-  client: string;
-  campaign: string;
-  deadline: string;
-  status: TaskStatus;
-  priority: TaskPriority;
-  description: string;
-  fromShooter: string;
-  notes?: string;
-  previousNotes?: string;
-  assignedTo?: string;
-  nextRole?: string;
-}
-
-const teamMembers = [
-  { id: 'tm1', name: 'John Doe', role: 'Editor' },
-  { id: 'tm2', name: 'Jane Smith', role: 'Ads Manager' },
-  { id: 'tm3', name: 'Amara Diallo', role: 'Editor' },
-  { id: 'tm4', name: 'Jin Park', role: 'Editor' },
-  { id: 'tm5', name: 'Sofia Nguyen', role: 'Ads Manager' },
-  { id: 'tm6', name: 'Alex', role: 'Client' },
-];
-
-const editorTasks: EditorTask[] = [
-  {
-    id: 'et1',
-    title: 'Edit raw footage for PulseWear reel',
-    client: 'Samantha Cruz',
-    campaign: 'PulseWear Q2 Reel',
-    deadline: '2026-04-18',
-    status: 'pending',
-    priority: 'high',
-    description: 'Cut 60-second reel from raw footage. Add transitions, color grade, and music sync.',
-    fromShooter: 'Marco Reyes',
-    previousNotes: 'Raw files uploaded to Drive link /pulsewear-raw. Direct sunlight shots preferred.',
-  },
-  {
-    id: 'et2',
-    title: 'Edit NovaBrew promo video',
-    client: 'Jordan Lee',
-    campaign: 'NovaBrew Spring Launch',
-    deadline: '2026-04-25',
-    status: 'pending',
-    priority: 'high',
-    description: 'Produce 30-second promo from shooter footage. Brand colors: dark brown and cream.',
-    fromShooter: 'Marco Reyes',
-    previousNotes: 'Check studio shots folder. 20+ product shots available.',
-  },
-  {
-    id: 'et3',
-    title: 'Edit LuxeHome showcase reel',
-    client: 'Mia Tanaka',
-    campaign: 'LuxeHome Interior Series',
-    deadline: '2026-04-30',
-    status: 'pending',
-    priority: 'low',
-    description: 'Compile interior shots into a 45-second showcase. Soft ambient music.',
-    fromShooter: 'Marco Reyes',
-  },
-  {
-    id: 'et4',
-    title: 'Edit GreenRoot event highlight',
-    client: 'Ethan Patel',
-    campaign: 'GreenRoot Awareness',
-    deadline: '2026-04-14',
-    status: 'in_progress',
-    priority: 'medium',
-    description: 'Create 90-second event highlight reel. Include key speakers and crowd moments.',
-    fromShooter: 'Marco Reyes',
-    previousNotes: 'Crowd reactions are at the end of the second raw file.',
-  },
-];
 
 const workflowStages = ['Shooting', 'Raw Upload', 'Editing', 'Ads', 'Complete'];
 
@@ -110,14 +35,24 @@ function getDaysLeft(deadline: string) {
   return Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000);
 }
 
+const teamMembers = [
+  { id: 'tm1', name: 'John Doe', role: 'Editor' },
+  { id: 'tm2', name: 'Jane Smith', role: 'Ads Manager' },
+  { id: 'tm3', name: 'Amara Diallo', role: 'Editor' },
+  { id: 'tm4', name: 'Jin Park', role: 'Editor' },
+  { id: 'tm5', name: 'Sofia Nguyen', role: 'Ads Manager' },
+  { id: 'tm6', name: 'Alex', role: 'Client' },
+];
+
 export default function EditorDashboardPage() {
   useRoleGuard(['Owner', 'Editor']);
-  const [tasks, setTasks] = useState<EditorTask[]>(editorTasks);
+  const { tasks: allTasks, updateTask } = useTasks();
+  const tasks = allTasks.filter(t => t.role === 'Editor');
   const [activeTab, setActiveTab] = useState<TaskStatus>('in_progress');
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<EditorTask | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [step, setStep] = useState(1);
   const [notes, setNotes] = useState('');
   const [sendTo, setSendTo] = useState('');
@@ -129,7 +64,7 @@ export default function EditorDashboardPage() {
     completed: tasks.filter((t) => t.status === 'completed').length,
   };
 
-  const handleStatusChange = (task: EditorTask, newStatus: TaskStatus) => {
+  const handleStatusChange = (task: Task, newStatus: TaskStatus) => {
     if (newStatus === 'completed') {
       if (task.status === 'completed') return;
       setSelectedTask(task);
@@ -139,7 +74,7 @@ export default function EditorDashboardPage() {
       setFormErrors({});
       setIsModalOpen(true);
     } else {
-      setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
+      updateTask(task.id, { status: newStatus });
     }
   };
 
@@ -156,17 +91,12 @@ export default function EditorDashboardPage() {
     if (selectedTask) {
       const selectedMember = teamMembers.find(m => m.id === sendTo);
       
-      setTasks(prev => prev.map(t => 
-        t.id === selectedTask.id 
-          ? { 
-              ...t, 
-              status: 'completed',
-              notes: notes,
-              assignedTo: selectedMember?.name,
-              nextRole: selectedMember?.role
-            } 
-          : t
-      ));
+      updateTask(selectedTask.id, {
+        status: 'completed',
+        notes: notes,
+        assignedTo: selectedMember?.name,
+        nextRole: selectedMember?.role as any
+      });
       setIsModalOpen(false);
       setSelectedTask(null);
     }

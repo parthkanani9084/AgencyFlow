@@ -55,6 +55,17 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   description?: string;
+  // Workflow fields
+  notes?: string;
+  previousNotes?: string;
+  fromShooter?: string;
+  nextRole?: string;
+  // Ads fields
+  platform?: string;
+  budget?: number;
+  spent?: number;
+  leads?: number;
+  screenshot?: string;
 }
 
 // ─── Files ────────────────────────────────────────────────────────────────────

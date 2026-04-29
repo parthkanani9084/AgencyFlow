@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next';
 import '../styles/tailwind.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { AdsDataProvider } from '@/context/AdsDataContext';
+import { TaskProvider } from '@/context/TaskContext';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -25,7 +26,9 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           <AdsDataProvider>
-            {children}
+            <TaskProvider>
+              {children}
+            </TaskProvider>
           </AdsDataProvider>
         </AuthProvider>
 

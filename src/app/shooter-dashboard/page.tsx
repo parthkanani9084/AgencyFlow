@@ -5,79 +5,9 @@ import AppLayout from '@/components/AppLayout';
 import Modal from '@/components/ui/Modal';
 import { Camera, CheckCircle2, Timer, Circle, Calendar, ChevronRight, ArrowRight, UserPlus, Info } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
+import { useTasks } from '@/context/TaskContext';
+import { Task, TaskStatus, TaskPriority } from '@/lib/types';
 
-type TaskStatus = 'pending' | 'in_progress' | 'completed';
-type TaskPriority = 'low' | 'medium' | 'high';
-
-interface ShooterTask {
-  id: string;
-  title: string;
-  client: string;
-  campaign: string;
-  deadline: string;
-  status: TaskStatus;
-  priority: TaskPriority;
-  description: string;
-  workflowStage: number;
-  notes?: string;
-  assignedTo?: string;
-  nextRole?: string;
-}
-
-const teamMembers = [
-  { id: 'tm1', name: 'John Doe', role: 'Editor' },
-  { id: 'tm2', name: 'Jane Smith', role: 'Ads Manager' },
-  { id: 'tm3', name: 'Amara Diallo', role: 'Editor' },
-  { id: 'tm4', name: 'Jin Park', role: 'Editor' },
-  { id: 'tm5', name: 'Sofia Nguyen', role: 'Ads Manager' },
-];
-
-const shooterTasks: ShooterTask[] = [
-  {
-    id: 'st1',
-    title: 'Shoot product photos for NovaBrew launch',
-    client: 'Jordan Lee',
-    campaign: 'NovaBrew Spring Launch',
-    deadline: '2026-04-15',
-    status: 'in_progress',
-    priority: 'high',
-    description: 'Capture 20+ product shots in studio setup. Include lifestyle and flat-lay compositions.',
-    workflowStage: 1,
-  },
-  {
-    id: 'st2',
-    title: 'Shoot behind-the-scenes for LuxeHome',
-    client: 'Mia Tanaka',
-    campaign: 'LuxeHome Interior Series',
-    deadline: '2026-04-22',
-    status: 'pending',
-    priority: 'medium',
-    description: 'Document the interior styling process. Capture 3-4 rooms with natural lighting.',
-    workflowStage: 1,
-  },
-  {
-    id: 'st3',
-    title: 'Shoot event coverage for GreenRoot',
-    client: 'Ethan Patel',
-    campaign: 'GreenRoot Awareness',
-    deadline: '2026-04-12',
-    status: 'pending',
-    priority: 'medium',
-    description: 'Cover the GreenRoot pop-up event. Capture crowd, products, and key moments.',
-    workflowStage: 2,
-  },
-  {
-    id: 'st4',
-    title: 'Shoot PulseWear lifestyle content',
-    client: 'Samantha Cruz',
-    campaign: 'PulseWear Q2 Reel',
-    deadline: '2026-04-28',
-    status: 'pending',
-    priority: 'low',
-    description: 'Capture athletes wearing PulseWear gear in outdoor settings.',
-    workflowStage: 1,
-  },
-];
 
 const workflowStages = ['Shooting', 'Raw Upload', 'Editing', 'Ads', 'Complete'];
 
@@ -106,14 +36,23 @@ function getDaysLeft(deadline: string) {
   return diff;
 }
 
+const teamMembers = [
+  { id: 'tm1', name: 'John Doe', role: 'Editor' },
+  { id: 'tm2', name: 'Jane Smith', role: 'Ads Manager' },
+  { id: 'tm3', name: 'Amara Diallo', role: 'Editor' },
+  { id: 'tm4', name: 'Jin Park', role: 'Editor' },
+  { id: 'tm5', name: 'Sofia Nguyen', role: 'Ads Manager' },
+];
+
 export default function ShooterDashboardPage() {
   useRoleGuard(['Owner', 'Shooter']);
-  const [tasks, setTasks] = useState<ShooterTask[]>(shooterTasks);
+  const { tasks: allTasks, updateTask } = useTasks();
+  const tasks = allTasks.filter(t => t.role === 'Shooter');
   const [activeTab, setActiveTab] = useState<TaskStatus>('pending');
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<ShooterTask | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [step, setStep] = useState(1);
   const [notes, setNotes] = useState('');
   const [sendTo, setSendTo] = useState('');
@@ -125,7 +64,7 @@ export default function ShooterDashboardPage() {
     completed: tasks.filter((t) => t.status === 'completed').length,
   };
 
-  const handleStatusChange = (task: ShooterTask, newStatus: TaskStatus) => {
+  const handleStatusChange = (task: Task, newStatus: TaskStatus) => {
     if (newStatus === 'completed') {
       if (task.status === 'completed') return;
       setSelectedTask(task);
@@ -135,7 +74,7 @@ export default function ShooterDashboardPage() {
       setFormErrors({});
       setIsModalOpen(true);
     } else {
-      setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
+      updateTask(task.id, { status: newStatus });
     }
   };
 
@@ -152,17 +91,12 @@ export default function ShooterDashboardPage() {
     if (selectedTask) {
       const selectedMember = teamMembers.find(m => m.id === sendTo);
       
-      setTasks(prev => prev.map(t => 
-        t.id === selectedTask.id 
-          ? { 
-              ...t, 
-              status: 'completed',
-              notes: notes,
-              assignedTo: selectedMember?.name,
-              nextRole: selectedMember?.role
-            } 
-          : t
-      ));
+      updateTask(selectedTask.id, {
+        status: 'completed',
+        notes: notes,
+        assignedTo: selectedMember?.name,
+        nextRole: selectedMember?.role as any
+      });
       setIsModalOpen(false);
       setSelectedTask(null);
     }

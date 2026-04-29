@@ -6,75 +6,10 @@ import Modal from '@/components/ui/Modal';
 import { Plus, Search, X, CheckSquare, AlertCircle, ChevronDown, Calendar, User, Filter, Pencil, Trash2, CheckCircle2, Circle, Timer, Camera, Film, Megaphone } from 'lucide-react';
 import Icon from '@/components/ui/AppIcon';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
+import { useTasks } from '@/context/TaskContext';
+import { Task, TaskStatus, TaskPriority, TaskRole } from '@/lib/types';
 
 
-type TaskStatus = 'pending' | 'in_progress' | 'completed';
-type TaskPriority = 'low' | 'medium' | 'high';
-type TaskRole = 'Shooter' | 'Editor' | 'Ads Manager' | 'Owner' | 'Manager';
-
-interface Task {
-  id: string;
-  title: string;
-  assignedTo: string;
-  role: TaskRole;
-  client: string;
-  campaign: string;
-  deadline: string;
-  status: TaskStatus;
-  priority: TaskPriority;
-  description?: string;
-}
-
-const initialTasks: Task[] = [
-  {
-    id: 't1', title: 'Shoot product photos for NovaBrew launch', assignedTo: 'Marco Reyes',
-    role: 'Shooter', client: 'Jordan Lee', campaign: 'NovaBrew Spring Launch',
-    deadline: '2026-04-15', status: 'in_progress', priority: 'high',
-    description: 'Capture 20+ product shots in studio setup. Include lifestyle and flat-lay compositions.'
-  },
-  {
-    id: 't2', title: 'Edit raw footage for PulseWear reel', assignedTo: 'Jin Park',
-    role: 'Editor', client: 'Samantha Cruz', campaign: 'PulseWear Q2 Reel',
-    deadline: '2026-04-18', status: 'pending', priority: 'high',
-    description: 'Cut 60-second reel from raw footage. Add transitions, color grade, and music sync.'
-  },
-  {
-    id: 't3', title: 'Run Meta ads for GreenRoot campaign', assignedTo: 'Sofia Nguyen',
-    role: 'Ads Manager', client: 'Ethan Patel', campaign: 'GreenRoot Awareness',
-    deadline: '2026-04-20', status: 'in_progress', priority: 'medium',
-    description: 'Set up and launch Meta ad sets. Budget: $2,000. Target: eco-conscious 25-40 demographic.'
-  },
-  {
-    id: 't4', title: 'Shoot behind-the-scenes for LuxeHome', assignedTo: 'Marco Reyes',
-    role: 'Shooter', client: 'Mia Tanaka', campaign: 'LuxeHome Interior Series',
-    deadline: '2026-04-22', status: 'pending', priority: 'medium',
-    description: 'Document the interior styling process. Capture 3-4 rooms with natural lighting.'
-  },
-  {
-    id: 't5', title: 'Edit NovaBrew promo video', assignedTo: 'Jin Park',
-    role: 'Editor', client: 'Jordan Lee', campaign: 'NovaBrew Spring Launch',
-    deadline: '2026-04-25', status: 'pending', priority: 'high',
-    description: 'Produce 30-second promo from shooter footage. Brand colors: dark brown and cream.'
-  },
-  {
-    id: 't6', title: 'Launch Google Ads for PulseWear', assignedTo: 'Sofia Nguyen',
-    role: 'Ads Manager', client: 'Samantha Cruz', campaign: 'PulseWear Q2 Reel',
-    deadline: '2026-04-28', status: 'completed', priority: 'low',
-    description: 'Set up search and display campaigns. Track conversions via GA4.'
-  },
-  {
-    id: 't7', title: 'Shoot event coverage for GreenRoot', assignedTo: 'Marco Reyes',
-    role: 'Shooter', client: 'Ethan Patel', campaign: 'GreenRoot Awareness',
-    deadline: '2026-04-12', status: 'completed', priority: 'medium',
-    description: 'Cover the GreenRoot pop-up event. Capture crowd, products, and key moments.'
-  },
-  {
-    id: 't8', title: 'Edit LuxeHome showcase reel', assignedTo: 'Jin Park',
-    role: 'Editor', client: 'Mia Tanaka', campaign: 'LuxeHome Interior Series',
-    deadline: '2026-04-30', status: 'pending', priority: 'low',
-    description: 'Compile interior shots into a 45-second showcase. Soft ambient music.'
-  },
-];
 
 const roleConfig: Record<TaskRole, { color: string; bg: string; icon: React.ElementType }> = {
   Shooter: { color: 'text-blue-700', bg: 'bg-blue-100', icon: Camera },
@@ -121,7 +56,7 @@ function isOverdue(deadline: string, status: TaskStatus) {
 
 export default function TaskManagementPage() {
   useRoleGuard(['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager']);
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const { tasks, addTask, updateTask, deleteTask } = useTasks();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<TaskRole | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
@@ -188,24 +123,16 @@ export default function TaskManagementPage() {
     if (Object.keys(e).length > 0) { setErrors(e); return; }
 
     if (editingTask) {
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.id === editingTask.id ? { ...t, ...form } : t
-        )
-      );
+      updateTask(editingTask.id, form);
     } else {
-      const newTask: Task = {
-        id: `t${Date.now()}`,
-        ...form,
-      };
-      setTasks((prev) => [newTask, ...prev]);
+      addTask(form);
     }
     setModalOpen(false);
   }
 
   function handleDelete() {
     if (deleteModal.task) {
-      setTasks((prev) => prev.filter((t) => t.id !== deleteModal.task!.id));
+      deleteTask(deleteModal.task.id);
     }
     setDeleteModal({ open: false, task: null });
   }
@@ -213,7 +140,7 @@ export default function TaskManagementPage() {
   function cycleStatus(task: Task) {
     const order: TaskStatus[] = ['pending', 'in_progress', 'completed'];
     const next = order[(order.indexOf(task.status) + 1) % order.length];
-    setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, status: next } : t));
+    updateTask(task.id, { status: next });
   }
 
   return (
