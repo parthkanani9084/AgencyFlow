@@ -40,9 +40,16 @@ export interface Campaign {
 export type WorkflowStage = 'Shooting' | 'Raw Upload' | 'Editing' | 'Ads' | 'Complete';
 
 // ─── Tasks ────────────────────────────────────────────────────────────────────
-export type TaskStatus = 'pending' | 'in_progress' | 'completed';
+export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'ASSIGNED' | 'SHOOTER_DONE' | 'EDITOR_DONE';
 export type TaskPriority = 'low' | 'medium' | 'high';
 export type TaskRole = 'Shooter' | 'Editor' | 'Ads Manager' | 'Owner' | 'Manager';
+
+export interface TaskNote {
+  role: TaskRole;
+  message: string;
+  timestamp: string;
+  author?: string; // Who wrote the note
+}
 
 export interface Task {
   id: string;
@@ -51,15 +58,20 @@ export interface Task {
   role: TaskRole;
   client: string;
   campaign: string;
+  campaignId?: string; // Scoped campaign ID
   deadline: string;
   status: TaskStatus;
   priority: TaskPriority;
   description?: string;
   // Workflow fields
-  notes?: string;
+  notes?: string; // Legacy field for existing UI
+  roleNotes?: TaskNote[]; // Scalable role-based notes
+  shooterNotes?: string; // Specific field for easy access
+  editorNotes?: string;  // Specific field for easy access
   previousNotes?: string;
   fromShooter?: string;
   nextRole?: string;
+  forwardedBy?: string;
   // Ads fields
   platform?: string;
   budget?: number;

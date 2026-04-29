@@ -5,6 +5,7 @@ import AppLayout from '@/components/AppLayout';
 import Modal from '@/components/ui/Modal';
 import { Camera, CheckCircle2, Timer, Circle, Calendar, ChevronRight, ArrowRight, UserPlus, Info } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
+import { useAuth } from '@/context/AuthContext';
 import { useTasks } from '@/context/TaskContext';
 import { Task, TaskStatus, TaskPriority } from '@/lib/types';
 
@@ -13,8 +14,10 @@ const workflowStages = ['Shooting', 'Raw Upload', 'Editing', 'Ads', 'Complete'];
 
 const statusConfig: Record<TaskStatus, { label: string; color: string; bg: string; icon: React.ElementType }> = {
   pending: { label: 'Pending', color: 'text-slate-600', bg: 'bg-slate-100', icon: Circle },
+  ASSIGNED: { label: 'Assigned', color: 'text-blue-600', bg: 'bg-blue-50', icon: Circle },
   in_progress: { label: 'In Progress', color: 'text-amber-700', bg: 'bg-amber-100', icon: Timer },
   completed: { label: 'Completed', color: 'text-emerald-700', bg: 'bg-emerald-100', icon: CheckCircle2 },
+  SHOOTER_DONE: { label: 'Shooter Done', color: 'text-emerald-700', bg: 'bg-emerald-100', icon: CheckCircle2 },
 };
 
 const priorityDot: Record<TaskPriority, string> = {
@@ -46,6 +49,7 @@ const teamMembers = [
 
 export default function ShooterDashboardPage() {
   useRoleGuard(['Owner', 'Shooter']);
+  const { user } = useAuth();
   const { tasks: allTasks, updateTask } = useTasks();
   const tasks = allTasks.filter(t => t.role === 'Shooter');
   const [activeTab, setActiveTab] = useState<TaskStatus>('pending');
@@ -90,17 +94,32 @@ export default function ShooterDashboardPage() {
 
     if (selectedTask) {
       const selectedMember = teamMembers.find(m => m.id === sendTo);
+      const newNote = {
+        role: 'Shooter' as const,
+        message: notes,
+        timestamp: new Date().toISOString()
+      };
       
       updateTask(selectedTask.id, {
-        status: 'completed',
-        notes: notes,
+        status: 'SHOOTER_DONE', // Use new workflow status
+        shooterNotes: notes,
+        roleNotes: [...(selectedTask.roleNotes || []), newNote],
+        previousNotes: `SHOOTER: ${notes}`, // For legacy UI support
         assignedTo: selectedMember?.name,
-        nextRole: selectedMember?.role as any
+        nextRole: selectedMember?.role as any,
+        forwardedBy: user?.name // Track who forwarded it
       });
       setIsModalOpen(false);
       setSelectedTask(null);
     }
   };
+
+  const filteredTasks = tasks.filter(t => {
+    // Show in completed tab if either fully completed or shooter has finished their part
+    if (activeTab === 'completed') return t.status === 'completed' || t.status === 'SHOOTER_DONE';
+    // Only show tasks assigned specifically to Shooter role for other tabs
+    return t.role === 'Shooter' && t.status === activeTab;
+  });
 
   return (
     <AppLayout>
@@ -175,12 +194,12 @@ export default function ShooterDashboardPage() {
           </div>
 
           <div className="space-y-3">
-            {tasks.filter(t => t.status === activeTab).length === 0 ? (
+            {filteredTasks.length === 0 ? (
               <div className="bg-white rounded-xl border border-dashed border-slate-200 py-12 text-center">
                 <p className="text-[13px] text-slate-400 font-medium font-inter">No tasks found in {activeTab.replace('_', ' ')}</p>
               </div>
             ) : (
-              tasks.filter(t => t.status === activeTab).map((task) => {
+              filteredTasks.map((task) => {
                 const overdue = isOverdue(task.deadline, task.status);
                 const daysLeft = getDaysLeft(task.deadline);
                 const isCompleted = task.status === 'completed';
@@ -201,9 +220,9 @@ export default function ShooterDashboardPage() {
                       </div>
                       <div className="relative">
                         <select
-                          value={task.status}
+                          value={task.status === 'SHOOTER_DONE' ? 'completed' : task.status}
                           onChange={(e) => handleStatusChange(task, e.target.value as TaskStatus)}
-                          className={`appearance-none pl-2.5 pr-8 py-1 rounded-lg text-[12px] font-medium transition-all cursor-pointer outline-none border-none ${statusConfig[task.status].bg} ${statusConfig[task.status].color} hover:opacity-80`}
+                          className={`appearance-none pl-2.5 pr-8 py-1 rounded-lg text-[12px] font-medium transition-all cursor-pointer outline-none border-none ${statusConfig[task.status === 'SHOOTER_DONE' ? 'completed' : task.status].bg} ${statusConfig[task.status === 'SHOOTER_DONE' ? 'completed' : task.status].color} hover:opacity-80`}
                         >
                           <option value="pending">Pending</option>
                           <option value="in_progress">In Progress</option>
@@ -213,10 +232,24 @@ export default function ShooterDashboardPage() {
                       </div>
                     </div>
                     
-                    {isCompleted && task.notes && (
-                      <div className="mt-3 pt-3 border-t border-slate-100">
-                        <p className="text-[12px] text-slate-500 font-semibold">Notes:</p>
-                        <p className="text-[12px] text-slate-500 mt-0.5 leading-relaxed">{task.notes}</p>
+                    {/* Enhanced Notes History Display */}
+                    {(task.roleNotes && task.roleNotes.length > 0) && (
+                      <div className="mt-3 pt-3 border-t border-slate-100 space-y-2.5">
+                        <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Notes:</p>
+                        {task.roleNotes.map((note, idx) => (
+                          <div key={idx} className="bg-slate-50 rounded-lg p-2.5 border border-slate-100 flex gap-2.5">
+                            <div className="w-6 h-6 rounded bg-blue-100 text-blue-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <span className="text-[10px] font-bold">S</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2 mb-0.5">
+                                <p className="text-[12px] font-semibold text-slate-800">{note.role} Notes: {note.author || 'Shooter'}</p>
+                                <p className="text-[10px] text-slate-400">{new Date(note.timestamp).toLocaleDateString()}</p>
+                              </div>
+                              <p className="text-[12.5px] text-slate-600 leading-relaxed font-inter italic">"{note.message}"</p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     )}
 

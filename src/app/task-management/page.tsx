@@ -21,7 +21,10 @@ const roleConfig: Record<TaskRole, { color: string; bg: string; icon: React.Elem
 
 const statusConfig: Record<TaskStatus, { label: string; color: string; bg: string; icon: React.ElementType }> = {
   pending: { label: 'Pending', color: 'text-slate-600', bg: 'bg-slate-100', icon: Circle },
+  ASSIGNED: { label: 'Assigned', color: 'text-blue-600', bg: 'bg-blue-100', icon: User },
   in_progress: { label: 'In Progress', color: 'text-amber-700', bg: 'bg-amber-100', icon: Timer },
+  SHOOTER_DONE: { label: 'Shooter Done', color: 'text-purple-700', bg: 'bg-purple-100', icon: Camera },
+  EDITOR_DONE: { label: 'Editor Done', color: 'text-indigo-700', bg: 'bg-indigo-100', icon: Film },
   completed: { label: 'Completed', color: 'text-emerald-700', bg: 'bg-emerald-100', icon: CheckCircle2 },
 };
 
@@ -73,15 +76,17 @@ export default function TaskManagementPage() {
       t.client.toLowerCase().includes(search.toLowerCase()) ||
       t.campaign.toLowerCase().includes(search.toLowerCase());
     const matchRole = roleFilter === 'all' || t.role === roleFilter;
-    const matchStatus = statusFilter === 'all' || t.status === statusFilter;
+    const matchStatus = statusFilter === 'all' || 
+      t.status === statusFilter || 
+      (statusFilter === 'completed' && (t.status === 'SHOOTER_DONE' || t.status === 'EDITOR_DONE'));
     return matchSearch && matchRole && matchStatus;
   });
 
   const stats = {
     total: tasks.length,
-    pending: tasks.filter((t) => t.status === 'pending').length,
+    pending: tasks.filter((t) => t.status === 'pending' || t.status === 'ASSIGNED').length,
     inProgress: tasks.filter((t) => t.status === 'in_progress').length,
-    completed: tasks.filter((t) => t.status === 'completed').length,
+    completed: tasks.filter((t) => t.status === 'completed' || t.status === 'SHOOTER_DONE' || t.status === 'EDITOR_DONE').length,
     overdue: tasks.filter((t) => isOverdue(t.deadline, t.status)).length,
   };
 
@@ -138,8 +143,8 @@ export default function TaskManagementPage() {
   }
 
   function cycleStatus(task: Task) {
-    const order: TaskStatus[] = ['pending', 'in_progress', 'completed'];
-    const next = order[(order.indexOf(task.status) + 1) % order.length];
+    const order: TaskStatus[] = ['pending', 'ASSIGNED', 'in_progress', 'SHOOTER_DONE', 'EDITOR_DONE', 'completed'];
+    const next = order[(order.indexOf(task.status) === -1 ? 0 : (order.indexOf(task.status) + 1) % order.length)];
     updateTask(task.id, { status: next });
   }
 
@@ -273,11 +278,11 @@ export default function TaskManagementPage() {
                 </tr>
               ) : (
                 filtered.map((task, idx) => {
-                  const statusCfg = statusConfig[task.status];
+                  const statusCfg = statusConfig[task.status] || statusConfig.pending;
                   const StatusIcon = statusCfg.icon;
-                  const roleCfg = roleConfig[task.role];
+                  const roleCfg = roleConfig[task.role] || roleConfig.Shooter;
                   const RoleIcon = roleCfg.icon;
-                  const priCfg = priorityConfig[task.priority];
+                  const priCfg = priorityConfig[task.priority] || priorityConfig.medium;
                   const overdue = isOverdue(task.deadline, task.status);
 
                   return (
@@ -300,10 +305,10 @@ export default function TaskManagementPage() {
                         <div className="flex items-center gap-2">
                           <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
                             <span className="text-[9px] font-bold text-violet-700">
-                              {task.assignedTo.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
+                              {(task.assignedTo || 'Unassigned').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
                             </span>
                           </div>
-                          <span className="text-[12.5px] text-slate-700 whitespace-nowrap">{task.assignedTo}</span>
+                          <span className="text-[12.5px] text-slate-700 whitespace-nowrap">{task.assignedTo || 'Unassigned'}</span>
                         </div>
                       </td>
 

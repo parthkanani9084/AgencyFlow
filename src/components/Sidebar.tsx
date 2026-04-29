@@ -25,6 +25,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import type { UserRole } from '@/lib/types';
 import Icon from '@/components/ui/AppIcon';
+import { useTasks } from '@/context/TaskContext';
 
 
 
@@ -38,35 +39,6 @@ interface NavItem {
   allowedRoles: UserRole[];
 }
 
-const navItems: NavItem[] = [
-  // Workspace
-  { id: 'nav-dashboard',     label: 'Dashboard',     icon: LayoutDashboard, href: '/dashboard',             group: 'main',      allowedRoles: ['Owner'] },
-  { id: 'nav-campaigns',     label: 'Campaigns',     icon: Megaphone,       href: '/campaign-management',   badge: 3, group: 'main', allowedRoles: ['Owner', 'Manager','Ads Manager'] },
-  { id: 'nav-clients',       label: 'Clients',       icon: Briefcase,       href: '/client-management',     group: 'main',      allowedRoles: ['Owner', 'Manager','Ads Manager'] },
-  { id: 'nav-tasks',         label: 'Tasks',         icon: CheckSquare,     href: '/task-management',       badge: 7, group: 'main', allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager'] },
-
-  // Role Dashboards
-  { id: 'nav-manager',       label: 'Manager',       icon: UserCheck,       href: '/manager-dashboard',     group: 'roles',     allowedRoles: ['Owner', 'Manager'] },
-  { id: 'nav-shooter',       label: 'Shooter',       icon: Camera,          href: '/shooter-dashboard',     group: 'roles',     allowedRoles: ['Owner', 'Shooter'] },
-  { id: 'nav-editor',        label: 'Editor',        icon: Film,            href: '/editor-dashboard',      group: 'roles',     allowedRoles: ['Owner', 'Editor'] },
-  { id: 'nav-ads-mgr',       label: 'Ads Manager',   icon: Megaphone,       href: '/ads-manager-dashboard', group: 'roles',     allowedRoles: ['Owner', 'Ads Manager'] },
-
-  // Analytics
-  { id: 'nav-ads',           label: 'Ads Tracking',  icon: TrendingUp,      href: '/ads-tracking',          group: 'analytics', allowedRoles: ['Owner', 'Ads Manager'] },
-
-  { id: 'nav-reports',       label: 'Reports',       icon: BarChart3,       href: '/reports',               group: 'analytics', allowedRoles: ['Owner', 'Manager'] },
-
-  // Account
-  // Client Navigation
-  { id: 'nav-client-profile', label: 'Profile', icon: UserCheck, href: '/client/profile', group: 'main', allowedRoles: ['Client'] },
-  { id: 'nav-client-campaigns', label: 'Campaigns', icon: Megaphone,       href: '/client/campaigns', group: 'main', allowedRoles: ['Client'] },
-
-
-  { id: 'nav-team',          label: 'Team',          icon: Users,           href: '/team',                  group: 'settings',  allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager'] },
-  { id: 'nav-notifications', label: 'Notifications', icon: Bell,            href: '/notifications',         badge: 4, group: 'settings', allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager'] },
-  { id: 'nav-settings',      label: 'Settings',      icon: Settings,        href: '/settings',              group: 'settings',  allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager'] },
-];
-
 const groups = [
   { id: 'main',      label: 'Workspace' },
   { id: 'roles',     label: 'Role Dashboards' },
@@ -75,9 +47,34 @@ const groups = [
 ];
 
 export default function Sidebar() {
+  const { tasks, notifications } = useTasks();
+  const unreadCount = notifications.filter(n => !n.read).length;
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   const { user, logout } = useAuth();
+
+  const navItems: NavItem[] = [
+    // Workspace
+    { id: 'nav-dashboard',     label: 'Dashboard',     icon: LayoutDashboard, href: '/dashboard',             group: 'main',      allowedRoles: ['Owner'] },
+    { id: 'nav-campaigns',     label: 'Campaigns',     icon: Megaphone,       href: '/campaign-management',   badge: 3, group: 'main', allowedRoles: ['Owner', 'Manager','Ads Manager'] },
+    { id: 'nav-clients',       label: 'Clients',       icon: Briefcase,       href: '/client-management',     group: 'main',      allowedRoles: ['Owner', 'Manager','Ads Manager'] },
+    { id: 'nav-tasks',         label: 'Tasks',         icon: CheckSquare,     href: '/task-management',       badge: tasks.length, group: 'main', allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager'] },
+
+    // Role Dashboards
+    { id: 'nav-manager',       label: 'Manager',       icon: UserCheck,       href: '/manager-dashboard',     group: 'roles',     allowedRoles: ['Owner', 'Manager'] },
+    { id: 'nav-shooter',       label: 'Shooter',       icon: Camera,          href: '/shooter-dashboard',     group: 'roles',     allowedRoles: ['Owner', 'Shooter'] },
+    { id: 'nav-editor',        label: 'Editor',        icon: Film,            href: '/editor-dashboard',      group: 'roles',     allowedRoles: ['Owner', 'Editor'] },
+    { id: 'nav-ads-mgr',       label: 'Ads Manager',   icon: Megaphone,       href: '/ads-manager-dashboard', group: 'roles',     allowedRoles: ['Owner', 'Ads Manager'] },
+
+    // Analytics
+    { id: 'nav-ads',           label: 'Ads Tracking',  icon: TrendingUp,      href: '/ads-tracking',          group: 'analytics', allowedRoles: ['Owner', 'Ads Manager'] },
+    { id: 'nav-reports',       label: 'Reports',       icon: BarChart3,       href: '/reports',               group: 'analytics', allowedRoles: ['Owner', 'Manager'] },
+
+    // Account
+    { id: 'nav-team',          label: 'Team',          icon: Users,           href: '/team',                  group: 'settings',  allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager'] },
+    { id: 'nav-notifications', label: 'Notifications', icon: Bell,            href: '/notifications',         badge: unreadCount > 0 ? unreadCount : undefined, group: 'settings', allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager'] },
+    { id: 'nav-settings',      label: 'Settings',      icon: Settings,        href: '/settings',              group: 'settings',  allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager'] },
+  ];
 
   // Filter nav items to only those the current user's role can access
   const visibleItems = user

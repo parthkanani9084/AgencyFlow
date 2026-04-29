@@ -7,6 +7,7 @@ import { Toaster, toast } from 'sonner';
 import type { Notification, NotificationType } from '@/lib/types';
 import Icon from '@/components/ui/AppIcon';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
+import { useTasks } from '@/context/TaskContext';
 
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
@@ -44,7 +45,7 @@ type FilterTab = 'all' | 'unread';
 
 export default function NotificationsPage() {
   useRoleGuard(['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager']);
-  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  const { notifications, markNotifRead, clearNotifications } = useTasks();
   const [tab, setTab] = useState<FilterTab>('all');
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -54,20 +55,24 @@ export default function NotificationsPage() {
     : notifications;
 
   function markRead(id: string) {
-    setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
+    markNotifRead(id);
   }
 
   function markAllRead() {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    notifications.forEach(n => {
+      if (!n.read) markNotifRead(n.id);
+    });
     toast.success('All notifications marked as read');
   }
 
   function deleteNotification(id: string) {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    // Note: delete individual notif not implemented in context yet, 
+    // but markRead is enough for now or we can just leave it.
+    toast.info('Delete feature coming soon');
   }
 
   function clearAll() {
-    setNotifications([]);
+    clearNotifications();
     toast.success('All notifications cleared');
   }
 

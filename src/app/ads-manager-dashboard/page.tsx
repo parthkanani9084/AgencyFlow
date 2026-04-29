@@ -3,16 +3,15 @@
 import React, { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import Modal from '@/components/ui/Modal';
-import { Megaphone, CheckCircle2, Timer, Circle, Calendar, ChevronRight, TrendingUp, DollarSign, Upload, Info, ExternalLink } from 'lucide-react';
+import { Megaphone, Film, CheckCircle2, Timer, Circle, Calendar, ChevronRight, TrendingUp, DollarSign, Upload, Info, ExternalLink } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
+import { useAuth } from '@/context/AuthContext';
 import { useTasks } from '@/context/TaskContext';
 import { Task, TaskStatus, TaskPriority } from '@/lib/types';
 
-
-const workflowStages = ['Shooting', 'Raw Upload', 'Editing', 'Ads', 'Complete'];
-
 const statusConfig: Record<TaskStatus, { label: string; color: string; bg: string; icon: React.ElementType }> = {
   pending: { label: 'Pending', color: 'text-slate-600', bg: 'bg-slate-100', icon: Circle },
+  EDITOR_DONE: { label: 'Ready for Ads', color: 'text-blue-600', bg: 'bg-blue-50', icon: Film },
   in_progress: { label: 'In Progress', color: 'text-amber-700', bg: 'bg-amber-100', icon: Timer },
   completed: { label: 'Completed', color: 'text-emerald-700', bg: 'bg-emerald-100', icon: CheckCircle2 },
 };
@@ -37,17 +36,13 @@ function formatDeadline(deadline: string) {
   return new Date(deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function getDaysLeft(deadline: string) {
-  return Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000);
-}
-
 export default function AdsManagerDashboardPage() {
   useRoleGuard(['Owner', 'Ads Manager']);
+  const { user } = useAuth();
   const { tasks: allTasks, updateTask } = useTasks();
   const tasks = allTasks.filter(t => t.role === 'Ads Manager');
-  const [activeTab, setActiveTab] = useState<TaskStatus>('in_progress');
+  const [activeTab, setActiveTab] = useState<TaskStatus>('pending');
 
-  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [screenshot, setScreenshot] = useState('');
@@ -55,13 +50,10 @@ export default function AdsManagerDashboardPage() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const stats = {
-    pending: tasks.filter((t) => t.status === 'pending').length,
+    pending: tasks.filter((t) => t.status === 'pending' || t.status === 'EDITOR_DONE').length,
     inProgress: tasks.filter((t) => t.status === 'in_progress').length,
     completed: tasks.filter((t) => t.status === 'completed').length,
   };
-
-  const totalSpent = tasks.reduce((sum, t) => sum + t.spent, 0);
-  const totalLeads = tasks.reduce((sum, t) => sum + t.leads, 0);
 
   const handleStatusChange = (task: Task, newStatus: TaskStatus) => {
     if (newStatus === 'completed') {
@@ -76,333 +68,215 @@ export default function AdsManagerDashboardPage() {
     }
   };
 
-  const validate = () => {
-    const errors: Record<string, string> = {};
-    if (!screenshot.trim()) {
-      errors.screenshot = 'Screenshot link is required';
-    }
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
   const handleFinalSubmit = () => {
-    if (validate() && selectedTask) {
+    if (!screenshot.trim()) {
+      setFormErrors({ screenshot: 'Screenshot link is required' });
+      return;
+    }
+    
+    if (selectedTask) {
+      const newNote = {
+        role: 'Ads Manager' as const,
+        message: notes,
+        timestamp: new Date().toISOString(),
+        author: user?.name || 'Ads Manager'
+      };
+
       updateTask(selectedTask.id, {
         status: 'completed',
         screenshot: screenshot,
-        notes: notes || undefined
+        notes: notes || undefined,
+        roleNotes: [...(selectedTask.roleNotes || []), newNote],
+        forwardedBy: user?.name
       });
       setIsModalOpen(false);
       setSelectedTask(null);
     }
   };
 
+  const filteredTasks = tasks.filter(t => {
+    if (activeTab === 'completed') return t.status === 'completed';
+    return (t.role === 'Ads Manager' && t.status === activeTab) || (activeTab === 'pending' && t.status === 'EDITOR_DONE');
+  });
+
   return (
     <AppLayout>
       <div className="p-6 max-w-5xl mx-auto">
-        {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
             <Megaphone size={20} className="text-orange-700" />
           </div>
           <div>
             <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">Ads Manager Dashboard</h1>
-            <p className="text-[13px] text-slate-500">Sofia Nguyen · Ads Team</p>
+            <p className="text-[13px] text-slate-500">{user?.name || 'Sofia Nguyen'} · Ads Team</p>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {[
-            { label: 'Pending', value: stats.pending, color: 'text-orange-600', bg: 'bg-orange-50' },
-            { label: 'In Progress', value: stats.inProgress, color: 'text-amber-600', bg: 'bg-amber-50' },
-            { label: 'Completed', value: stats.completed, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-          ].map((s) => (
-            <div key={s.label} className="bg-white rounded-xl border border-slate-200 px-4 py-3.5 shadow-sm col-span-1">
-              <p className={`text-[24px] font-bold ${s.color}`}>{s.value}</p>
-              <p className="text-[12px] text-slate-500 mt-0.5">{s.label}</p>
+            { label: 'Pending Handoff', value: stats.pending, color: 'text-blue-600', icon: Film },
+            { label: 'Active Campaigns', value: stats.inProgress, color: 'text-amber-600', icon: Timer },
+            { label: 'Completed Ads', value: stats.completed, color: 'text-emerald-600', icon: CheckCircle2 },
+          ].map((s, i) => (
+            <div key={i} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`p-2 rounded-lg bg-slate-50 ${s.color}`}>
+                  <s.icon size={18} />
+                </div>
+                <p className="text-[13px] font-medium text-slate-500">{s.label}</p>
+              </div>
+              <p className="text-2xl font-bold text-slate-900">{s.value}</p>
             </div>
           ))}
         </div>
 
-        {/* Ad Performance Summary */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center">
-              <DollarSign size={17} className="text-green-600" />
-            </div>
-            <div>
-              <p className="text-[20px] font-bold text-slate-900">${totalSpent.toLocaleString()}</p>
-              <p className="text-[12px] text-slate-500">Total Ad Spend</p>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center">
-              <TrendingUp size={17} className="text-violet-600" />
-            </div>
-            <div>
-              <p className="text-[20px] font-bold text-slate-900">{totalLeads}</p>
-              <p className="text-[12px] text-slate-500">Total Leads Generated</p>
-            </div>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-[14px] font-semibold text-slate-800">Assigned Tasks</h2>
+          <div className="bg-slate-100 p-1 rounded-lg flex items-center gap-1">
+            {[
+              { id: 'in_progress', label: 'In Progress' },
+              { id: 'pending', label: 'Pending' },
+              { id: 'completed', label: 'Completed' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as TaskStatus)}
+                className={`px-4 py-1.5 rounded-md text-[12px] font-medium transition-all ${
+                  activeTab === tab.id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Workflow Stage Progress */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5 mb-6 shadow-sm">
-          <h2 className="text-[14px] font-semibold text-slate-800 mb-4">Workflow Stage Overview</h2>
-          <div className="flex items-center gap-1">
-            {workflowStages.map((stage, idx) => {
-              const isActive = idx === 3;
-              const isDone = idx < 3;
+        <div className="space-y-3">
+          {filteredTasks.length === 0 ? (
+            <div className="bg-white rounded-xl border border-dashed border-slate-200 py-12 text-center">
+              <p className="text-[13px] text-slate-400 font-medium">No campaigns found</p>
+            </div>
+          ) : (
+            filteredTasks.map((task) => {
+              const overdue = isOverdue(task.deadline, task.status);
+              const spendPct = task.budget > 0 ? Math.min(100, Math.round((task.spent / task.budget) * 100)) : 0;
+              const isCompleted = task.status === 'completed';
+
               return (
-                <React.Fragment key={stage}>
-                  <div className="flex-1 text-center">
-                    <div className={`h-2 rounded-full mb-2 ${isActive ? 'bg-orange-500' : isDone ? 'bg-emerald-500' : 'bg-slate-200'}`} />
-                    <span className={`text-[11px] font-medium ${isActive ? 'text-orange-700' : isDone ? 'text-emerald-600' : 'text-slate-400'}`}>{stage}</span>
-                  </div>
-                  {idx < workflowStages.length - 1 && (
-                    <ChevronRight size={14} className="text-slate-300 flex-shrink-0 mb-4" />
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </div>
-          <p className="text-[12px] text-slate-500 mt-3">Your role: <span className="font-semibold text-orange-700">Ads</span> — run campaigns and input performance data to complete the workflow.</p>
-        </div>
-
-        {/* Task List */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-[14px] font-semibold text-slate-800">Assigned Campaigns</h2>
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
-              {(['in_progress', 'pending', 'completed'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-all ${
-                    activeTab === tab
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  {tab === 'in_progress' ? 'In Progress' : tab.charAt(0).toUpperCase() + tab.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {tasks.filter(t => t.status === activeTab).length === 0 ? (
-              <div className="bg-white rounded-xl border border-dashed border-slate-200 py-12 text-center">
-                <p className="text-[13px] text-slate-400 font-medium font-inter">No campaigns found in {activeTab.replace('_', ' ')}</p>
-              </div>
-            ) : (
-              tasks.filter(t => t.status === activeTab).map((task) => {
-                const overdue = isOverdue(task.deadline, task.status);
-                const daysLeft = getDaysLeft(task.deadline);
-                const platform = platformColors[task.platform] ?? { color: 'text-slate-700', bg: 'bg-slate-100' };
-                const spendPct = task.budget > 0 ? Math.min(100, Math.round((task.spent / task.budget) * 100)) : 0;
-                const isCompleted = task.status === 'completed';
-
-                return (
-                  <div
-                    key={task.id}
-                    className={`bg-white rounded-xl border shadow-sm p-4 ${overdue ? 'border-red-200' : 'border-slate-200'}`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <span className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${priorityDot[task.priority]}`} style={{ marginTop: 6 }} />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="text-[14px] font-semibold text-slate-900">{task.title}</p>
-                            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${platform.bg} ${platform.color}`}>{task.platform}</span>
-                          </div>
-                          <p className="text-[12px] text-slate-500 mt-0.5">{task.client} · {task.campaign}</p>
-                          <p className="text-[12px] text-slate-400 mt-1 line-clamp-1">{task.description}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="relative">
-                        <select
-                          value={task.status}
-                          onChange={(e) => handleStatusChange(task, e.target.value as TaskStatus)}
-                          className={`appearance-none pl-2.5 pr-8 py-1 rounded-lg text-[12px] font-medium transition-all cursor-pointer outline-none border-none ${statusConfig[task.status].bg} ${statusConfig[task.status].color} hover:opacity-80`}
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="in_progress">In Progress</option>
-                          <option value="completed">Completed</option>
-                        </select>
-                        <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none" size={12} />
+                <div key={task.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <div className="flex items-start gap-3">
+                      <span className={`mt-1.5 w-2 h-2 rounded-full ${priorityDot[task.priority]}`} />
+                      <div>
+                        <p className="text-[14px] font-bold text-slate-900">{task.title}</p>
+                        <p className="text-[12px] text-slate-500">{task.client} · {task.campaign}</p>
                       </div>
                     </div>
+                    <select
+                      value={task.status === 'EDITOR_DONE' ? 'pending' : task.status}
+                      onChange={(e) => handleStatusChange(task, e.target.value as TaskStatus)}
+                      className={`appearance-none px-3 py-1 rounded-lg text-[12px] font-bold border-none ${statusConfig[task.status === 'EDITOR_DONE' ? 'pending' : task.status].bg} ${statusConfig[task.status === 'EDITOR_DONE' ? 'pending' : task.status].color}`}
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                  </div>
 
-                    {/* Previous Notes (from Editor) */}
-                    {task.previousNotes && (
-                      <div className="mt-3 p-2.5 bg-violet-50/50 rounded-lg border border-violet-100 flex gap-2">
-                        <div className="w-5 h-5 rounded bg-violet-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <span className="text-[10px] font-bold text-violet-700">ED</span>
+                  {task.roleNotes && task.roleNotes.length > 0 && (
+                    <div className="mb-4 space-y-2">
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Notes:</p>
+                      {task.roleNotes.map((note, idx) => (
+                        <div key={idx} className="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[11px] font-bold text-slate-700">{note.role} Notes: {note.author}</span>
+                            <span className="text-[10px] text-slate-400">{new Date(note.timestamp).toLocaleDateString()}</span>
+                          </div>
+                          <p className="text-[12px] text-slate-600 italic">"{note.message}"</p>
                         </div>
-                        <div>
-                          <p className="text-[11px] font-semibold text-violet-800">Notes from Editor</p>
-                          <p className="text-[11px] text-violet-600/90 leading-relaxed mt-0.5">{task.previousNotes}</p>
-                        </div>
-                      </div>
-                    )}
+                      ))}
+                    </div>
+                  )}
 
-                    {/* Budget Progress */}
-                    {task.budget > 0 && (
-                      <div className="mt-3">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-[11px] text-slate-500">Budget: ${task.budget.toLocaleString()}</span>
-                          <span className="text-[11px] font-medium text-slate-700">${task.spent.toLocaleString()} spent · {task.leads} leads</span>
-                        </div>
-                        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${spendPct >= 90 ? 'bg-red-500' : spendPct >= 60 ? 'bg-amber-400' : 'bg-orange-400'}`}
-                            style={{ width: `${spendPct}%` }}
+                  {task.screenshot && (
+                    <div className="mb-4">
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Campaign Delivery:</p>
+                      <div className="relative group rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-slate-100 max-w-[240px]">
+                        <div className="aspect-[4/3] w-full">
+                          <img 
+                            src={task.screenshot} 
+                            alt="Campaign Screenshot" 
+                            className="w-full h-full object-cover transition-transform group-hover:scale-105"
                           />
                         </div>
-                      </div>
-                    )}
-
-                    {/* Completion Data Display */}
-                    {(task.screenshot || task.notes) && isCompleted && (
-                      <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-2.5">
-                        {task.screenshot && (
-                          <>
-                            <p className="text-[12px] text-slate-500 font-semibold tracking-tight">Screenshot:</p>
-                            <div className="relative group w-full max-w-[160px]">
-                              <div className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 shadow-sm transition-all hover:border-orange-300">
-                                <img 
-                                  src={task.screenshot} 
-                                  alt="Campaign Screenshot" 
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).style.display = 'none';
-                                    (e.target as HTMLImageElement).parentElement?.classList.add('bg-slate-100');
-                                  }}
-                                />
-                                <a 
-                                  href={task.screenshot} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer" 
-                                  className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-200 flex flex-col items-center justify-center text-white gap-1.5"
-                                >
-                                  <ExternalLink size={16} />
-                                </a>
-                              </div>
-                            </div>
-                          </>
-                        )}
-                        
-                        {task.notes && (
-                          <div className={task.screenshot ? 'mt-1' : ''}>
-                            <p className="text-[12px] text-slate-500 font-semibold tracking-tight">Notes:</p>
-                            <p className="text-[12px] text-slate-500 mt-1 leading-relaxed">{task.notes}</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-4 mt-3 pt-3 border-t border-slate-100">
-                      <div className={`flex items-center gap-1.5 text-[12px] ${overdue ? 'text-red-600 font-semibold' : 'text-slate-500'}`}>
-                        <Calendar size={12} />
-                        {overdue ? 'Overdue · ' : ''}{formatDeadline(task.deadline)}
-                        {!overdue && !isCompleted && (
-                          <span className={`ml-1 ${daysLeft <= 3 ? 'text-red-500 font-semibold' : 'text-slate-400'}`}>
-                            ({daysLeft > 0 ? `${daysLeft}d left` : 'Today'})
-                          </span>
-                        )}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <a 
+                            href={task.screenshot} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="p-2 bg-white rounded-full text-slate-900 shadow-lg hover:scale-110 transition-transform"
+                          >
+                            <ExternalLink size={16} />
+                          </a>
+                        </div>
                       </div>
                     </div>
+                  )}
+
+                  {task.budget > 0 && (
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                      <div className="flex justify-between text-[11px] font-bold text-slate-400 uppercase mb-2">
+                        <span>Budget Progress</span>
+                        <span>{spendPct}% Spent</span>
+                      </div>
+                      <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden mb-2">
+                        <div className="h-full bg-orange-500 transition-all" style={{ width: `${spendPct}%` }} />
+                      </div>
+                      <div className="flex justify-between text-[12px]">
+                        <span className="text-slate-600">${task.spent.toLocaleString()} / ${task.budget.toLocaleString()}</span>
+                        <span className="text-slate-900 font-bold">{task.leads} Leads</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-[12px] text-slate-500">
+                      <Calendar size={14} /> {formatDeadline(task.deadline)}
+                    </div>
+                    {task.assignedTo && (
+                      <div className="text-[11px] text-slate-400 italic">Assigned to: {task.assignedTo}</div>
+                    )}
                   </div>
-                );
-              })
-            )}
-          </div>
+                </div>
+              );
+            })
+          )}
         </div>
 
-        {/* Completion Modal */}
-        <Modal
-          open={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          title="Complete Campaign"
-          subtitle={selectedTask?.title}
-          size="md"
-        >
-          <div className="p-6 space-y-5">
+        <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title="Complete Campaign">
+          <div className="p-6 space-y-4">
             <div>
-              <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">
-                Upload Screenshot <span className="text-red-500">*</span>
-              </label>
-              <div className="relative group">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        setScreenshot(reader.result as string);
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                  }}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                />
-                <div className={`w-full py-8 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all ${
-                  screenshot ? 'border-orange-400 bg-orange-50/30' : 'border-slate-200 hover:border-orange-300 hover:bg-slate-50'
-                }`}>
-                  {screenshot ? (
-                    <div className="flex flex-col items-center">
-                      <img src={screenshot} alt="Selected" className="w-32 h-20 object-cover rounded-lg border border-orange-200 mb-2 shadow-sm" />
-                      <p className="text-[12px] text-orange-600 font-medium">Image Selected — Click to change</p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center mb-2">
-                        <Upload size={18} className="text-orange-600" />
-                      </div>
-                      <p className="text-[13px] text-slate-600 font-medium">Click or drag to upload screenshot</p>
-                      <p className="text-[11px] text-slate-400 mt-1">PNG, JPG or WebP up to 5MB</p>
-                    </>
-                  )}
-                </div>
-              </div>
-              {formErrors.screenshot && (
-                <p className="mt-2 text-[11.5px] text-red-600 flex items-center gap-1">
-                  <Info size={12} /> {formErrors.screenshot}
-                </p>
-              )}
+              <label className="block text-[13px] font-bold text-slate-700 mb-1">Screenshot Link</label>
+              <input
+                type="text"
+                className="w-full px-4 py-2 rounded-lg border border-slate-200 text-[13px]"
+                value={screenshot}
+                onChange={(e) => setScreenshot(e.target.value)}
+              />
+              {formErrors.screenshot && <p className="text-red-500 text-[11px] mt-1">{formErrors.screenshot}</p>}
             </div>
-
             <div>
-              <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">
-                Notes
-              </label>
+              <label className="block text-[13px] font-bold text-slate-700 mb-1">Notes</label>
               <textarea
+                rows={3}
+                className="w-full px-4 py-2 rounded-lg border border-slate-200 text-[13px]"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add any final performance notes, observations, or handover details..."
-                className="w-full h-24 text-[13px] border border-slate-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-400 transition-all resize-none placeholder:text-slate-400 bg-slate-50/50"
               />
             </div>
-
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-100 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleFinalSubmit}
-                className="flex items-center gap-2 px-6 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-[13px] font-semibold transition-all shadow-sm"
-              >
-                Complete Campaign <CheckCircle2 size={16} />
-              </button>
-            </div>
+            <button onClick={handleFinalSubmit} className="w-full py-2.5 bg-orange-600 text-white rounded-lg font-bold">
+              Finalize Campaign
+            </button>
           </div>
         </Modal>
       </div>
