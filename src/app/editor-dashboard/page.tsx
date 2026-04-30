@@ -2,22 +2,19 @@
 
 import React, { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
-import Modal from '@/components/ui/Modal';
-import { Film, Camera, CheckCircle2, Timer, Circle, Calendar, ChevronRight, ArrowRight, UserPlus, Info } from 'lucide-react';
+import { Film, CheckCircle2, Timer, Circle, Calendar, ChevronRight, AlertCircle } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/context/AuthContext';
 import { useTasks } from '@/context/TaskContext';
-import { Task, TaskStatus, TaskPriority } from '@/lib/types';
-
+import { Task, TaskStatus, TaskPriority } from '@/types';
+import TaskCompletionModal from '@/components/TaskCompletionModal';
 
 const workflowStages = ['Shooting', 'Raw Upload', 'Editing', 'Ads', 'Complete'];
 
-const statusConfig: Record<TaskStatus, { label: string; color: string; bg: string; icon: React.ElementType }> = {
+const statusConfig: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
   pending: { label: 'Pending', color: 'text-slate-600', bg: 'bg-slate-100', icon: Circle },
-  SHOOTER_DONE: { label: 'Ready to Edit', color: 'text-blue-600', bg: 'bg-blue-50', icon: Camera },
   in_progress: { label: 'In Progress', color: 'text-amber-700', bg: 'bg-amber-100', icon: Timer },
   completed: { label: 'Completed', color: 'text-emerald-700', bg: 'bg-emerald-100', icon: CheckCircle2 },
-  EDITOR_DONE: { label: 'Editor Done', color: 'text-emerald-700', bg: 'bg-emerald-100', icon: CheckCircle2 },
 };
 
 const priorityDot: Record<TaskPriority, string> = {
@@ -39,12 +36,8 @@ function getDaysLeft(deadline: string) {
 }
 
 const teamMembers = [
-  { id: 'tm1', name: 'John Doe', role: 'Editor' },
-  { id: 'tm2', name: 'Jane Smith', role: 'Ads Manager' },
-  { id: 'tm3', name: 'Amara Diallo', role: 'Editor' },
-  { id: 'tm4', name: 'Jin Park', role: 'Editor' },
+  { id: 'tm3', name: 'Sofia Nguyen', role: 'Ads Manager' },
   { id: 'tm5', name: 'Sofia Nguyen', role: 'Ads Manager' },
-  { id: 'tm6', name: 'Alex', role: 'Client' },
 ];
 
 export default function EditorDashboardPage() {
@@ -53,14 +46,15 @@ export default function EditorDashboardPage() {
   const { tasks: allTasks, updateTask } = useTasks();
   const tasks = allTasks.filter(t => t.role === 'Editor');
   const [activeTab, setActiveTab] = useState<TaskStatus>('pending');
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [step, setStep] = useState(1);
-  const [notes, setNotes] = useState('');
-  const [sendTo, setSendTo] = useState('');
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const stats = {
     pending: tasks.filter((t) => t.status === 'pending').length,
@@ -72,54 +66,19 @@ export default function EditorDashboardPage() {
     if (newStatus === 'completed') {
       if (task.status === 'completed') return;
       setSelectedTask(task);
-      setStep(1);
-      setNotes('');
-      setSendTo('');
-      setFormErrors({});
       setIsModalOpen(true);
     } else {
       updateTask(task.id, { status: newStatus });
     }
   };
 
-  const handleFinalSubmit = () => {
-    const errors: Record<string, string> = {};
-    if (!notes.trim()) errors.notes = 'Notes are required';
-    if (!sendTo) errors.sendTo = 'Please select a team member';
-
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      return;
-    }
-
-    if (selectedTask) {
-      const selectedMember = teamMembers.find(m => m.id === sendTo);
-      const newNote = {
-        role: 'Editor' as const,
-        message: notes,
-        timestamp: new Date().toISOString()
-      };
-      
-      updateTask(selectedTask.id, {
-        status: 'EDITOR_DONE', // Use new workflow status
-        editorNotes: notes,
-        roleNotes: [...(selectedTask.roleNotes || []), newNote],
-        previousNotes: `${selectedTask.shooterNotes ? `SHOOTER: ${selectedTask.shooterNotes}\n\n` : ''}EDITOR: ${notes}`,
-        assignedTo: selectedMember?.name,
-        nextRole: selectedMember?.role as any,
-        forwardedBy: user?.name // Track who forwarded it
-      });
-      setIsModalOpen(false);
-      setSelectedTask(null);
-    }
+  const onCompleteTask = (taskId: string, notes: string, nextMember?: { name: string; role: string }, screenshot?: string) => {
+    updateTask(taskId, { status: 'completed' }, notes, nextMember, screenshot);
   };
 
-  const filteredTasks = tasks.filter(t => {
-    // Show in progress/pending if it's currently assigned to Editor role
-    if (activeTab === 'completed') return t.status === 'completed' || t.status === 'EDITOR_DONE';
-    // Tasks waiting for edit show up in pending if Shooter finished them
-    return (t.role === 'Editor' && t.status === activeTab) || (activeTab === 'pending' && t.status === 'SHOOTER_DONE');
-  });
+  const filteredTasks = tasks.filter(t => t.status === activeTab);
+
+  if (!mounted) return <div className="min-h-screen bg-slate-50" />;
 
   return (
     <AppLayout>
@@ -142,7 +101,7 @@ export default function EditorDashboardPage() {
             { label: 'In Progress', value: stats.inProgress, color: 'text-amber-600', bg: 'bg-amber-50' },
             { label: 'Completed', value: stats.completed, color: 'text-emerald-600', bg: 'bg-emerald-50' },
           ].map((s) => (
-            <div key={s.label} className="bg-white rounded-xl border border-slate-200 px-4 py-3.5 shadow-sm col-span-1">
+            <div key={s.label} className="bg-white rounded-xl border border-slate-200 px-4 py-3.5 shadow-sm">
               <p className={`text-[24px] font-bold ${s.color}`}>{s.value}</p>
               <p className="text-[12px] text-slate-500 mt-0.5">{s.label}</p>
             </div>
@@ -169,7 +128,6 @@ export default function EditorDashboardPage() {
               );
             })}
           </div>
-          <p className="text-[12px] text-slate-500 mt-3">Your role: <span className="font-semibold text-purple-700">Editing</span> — complete edits to pass content to the Ads Manager.</p>
         </div>
 
         {/* Task List */}
@@ -196,19 +154,23 @@ export default function EditorDashboardPage() {
           <div className="space-y-3">
             {filteredTasks.length === 0 ? (
               <div className="bg-white rounded-xl border border-dashed border-slate-200 py-12 text-center">
-                <p className="text-[13px] text-slate-400 font-medium font-inter">No tasks found in {activeTab.replace('_', ' ')}</p>
+                <p className="text-[13px] text-slate-400 font-medium">No tasks found in {activeTab}</p>
               </div>
             ) : (
               filteredTasks.map((task) => {
-                const StatusIcon = statusConfig[task.status].icon;
-                const overdue = isOverdue(task.deadline, task.status);
+                const overdue = isOverdue(task.deadline, task.status as TaskStatus);
                 const daysLeft = getDaysLeft(task.deadline);
-                const isCompleted = task.status === 'completed';
 
                 return (
                   <div
                     key={task.id}
-                    className={`bg-white rounded-xl border shadow-sm p-4 ${overdue ? 'border-red-200' : 'border-slate-200'}`}
+                    className={`rounded-xl border shadow-sm p-4 transition-all ${
+                      task.status === 'completed' 
+                        ? 'bg-emerald-50/30 border-emerald-100' 
+                        : overdue 
+                          ? 'bg-white border-red-200' 
+                          : 'bg-white border-slate-200'
+                    }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -216,40 +178,39 @@ export default function EditorDashboardPage() {
                         <div className="flex-1 min-w-0">
                           <p className="text-[14px] font-semibold text-slate-900 truncate">{task.title}</p>
                           <p className="text-[12px] text-slate-500 mt-0.5">{task.client} · {task.campaign}</p>
-                          <p className="text-[12px] text-slate-400 mt-1 line-clamp-1">{task.description}</p>
                         </div>
                       </div>
                       <div className="relative">
+                        {overdue && <AlertCircle size={14} className="text-red-500 absolute -left-5 top-1/2 -translate-y-1/2" />}
                         <select
-                          value={task.status === 'EDITOR_DONE' ? 'completed' : (task.status === 'SHOOTER_DONE' ? 'pending' : task.status)}
+                          value={task.status}
                           onChange={(e) => handleStatusChange(task, e.target.value as TaskStatus)}
-                          className={`appearance-none pl-2.5 pr-8 py-1 rounded-lg text-[12px] font-medium transition-all cursor-pointer outline-none border-none ${statusConfig[task.status === 'EDITOR_DONE' ? 'completed' : (task.status === 'SHOOTER_DONE' ? 'pending' : task.status)].bg} ${statusConfig[task.status === 'EDITOR_DONE' ? 'completed' : (task.status === 'SHOOTER_DONE' ? 'pending' : task.status)].color} hover:opacity-80`}
+                          className={`appearance-none pl-2.5 pr-8 py-1 rounded-lg text-[12px] font-medium transition-all cursor-pointer outline-none border-none ${(statusConfig[task.status] || statusConfig.pending).bg} ${(statusConfig[task.status] || statusConfig.pending).color} hover:opacity-80`}
                         >
                           <option value="pending">Pending</option>
                           <option value="in_progress">In Progress</option>
                           <option value="completed">Completed</option>
                         </select>
-                        <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none" size={12} />
+                        <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none text-slate-400" size={12} />
                       </div>
                     </div>
 
-                    {/* Enhanced Notes History Display */}
+                    {/* Notes History */}
                     {(task.roleNotes && task.roleNotes.length > 0) && (
-                      <div className="mt-3 pt-3 border-t border-slate-100 space-y-2.5">
-                        <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Notes:</p>
+                      <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">
                         {task.roleNotes.map((note, idx) => (
-                          <div key={idx} className="bg-slate-50 rounded-lg p-2.5 border border-slate-100 flex gap-2.5">
+                          <div key={idx} className="bg-slate-50 rounded-lg p-2.5 flex gap-2.5 border border-slate-100">
                             <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 mt-0.5 ${
                               note.role === 'Shooter' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
                             }`}>
-                              <span className="text-[10px] font-bold">{note.role.charAt(0)}</span>
+                              <span className="text-[10px] font-bold">{(note.role || 'E').charAt(0)}</span>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-2 mb-0.5">
-                                <p className="text-[12px] font-semibold text-slate-800">{note.role} Notes: {note.author || note.role}</p>
+                              <div className="flex items-center justify-between mb-0.5">
+                                <p className="text-[11px] font-bold text-slate-700">{note.role} Notes</p>
                                 <p className="text-[10px] text-slate-400">{new Date(note.timestamp).toLocaleDateString()}</p>
                               </div>
-                              <p className="text-[12.5px] text-slate-600 leading-relaxed font-inter italic">"{note.message}"</p>
+                              <p className="text-[12px] text-slate-600 italic">"{note.message}"</p>
                             </div>
                           </div>
                         ))}
@@ -260,7 +221,7 @@ export default function EditorDashboardPage() {
                       <div className={`flex items-center gap-1.5 text-[12px] ${overdue ? 'text-red-600 font-semibold' : 'text-slate-500'}`}>
                         <Calendar size={12} />
                         {overdue ? 'Overdue · ' : ''}{formatDeadline(task.deadline)}
-                        {!overdue && !isCompleted && (
+                        {!overdue && task.status !== 'completed' && (
                           <span className={`ml-1 ${daysLeft <= 3 ? 'text-red-500 font-semibold' : 'text-slate-400'}`}>
                             ({daysLeft > 0 ? `${daysLeft}d left` : 'Today'})
                           </span>
@@ -268,12 +229,12 @@ export default function EditorDashboardPage() {
                       </div>
                       <div className="flex items-center gap-1 text-[12px] text-slate-400">
                         <Film size={12} />
-                        From: {task.fromShooter}
+                        From: {task.fromShooter || 'Shooter'}
                       </div>
-                      {isCompleted && (
+                      {task.status === 'completed' && (
                         <div className="flex items-center gap-1 text-[12px] text-emerald-600 font-medium ml-auto">
                           <CheckCircle2 size={12} />
-                          {task.assignedTo ? `Passed to ${task.assignedTo} (${task.nextRole})` : 'Passed to Ads Manager'}
+                          {task.forwardedBy ? `Passed to ${task.assignedTo} (${task.role})` : 'Task Finalized'}
                         </div>
                       )}
                     </div>
@@ -284,82 +245,14 @@ export default function EditorDashboardPage() {
           </div>
         </div>
 
-        {/* Completion Flow Modal */}
-        <Modal
+        <TaskCompletionModal 
           open={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          title="Complete Edit"
-          subtitle={selectedTask?.title}
-          size="md"
-        >
-          <div className="p-6 pt-2">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">
-                  Submission Notes <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  rows={4}
-                  placeholder="Provide details like edited file locations, Drive links, or specific instructions for the next person."
-                  className={`w-full px-4 py-3 rounded-xl border text-[13.5px] outline-none transition-all resize-none ${
-                    formErrors.notes ? 'border-red-300 bg-red-50 focus:ring-red-100' : 'border-slate-200 focus:ring-4 focus:ring-violet-50 focus:border-violet-300'
-                  }`}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                />
-                {formErrors.notes && (
-                  <p className="mt-1.5 text-[11.5px] text-red-600 flex items-center gap-1">
-                    <Info size={12} /> {formErrors.notes}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">
-                  Send Forward To <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <UserPlus size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <select
-                    className={`w-full pl-10 pr-4 py-3 rounded-xl border text-[13.5px] outline-none transition-all appearance-none bg-white ${
-                      formErrors.sendTo ? 'border-red-300 bg-red-50 focus:ring-red-100' : 'border-slate-200 focus:ring-4 focus:ring-violet-50 focus:border-violet-300'
-                    }`}
-                    value={sendTo}
-                    onChange={(e) => setSendTo(e.target.value)}
-                  >
-                    <option value="">Select team member…</option>
-                    {teamMembers.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name} ({m.role})
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronRight className="absolute right-3.5 top-1/2 -translate-y-1/2 rotate-90 text-slate-400 pointer-events-none" size={14} />
-                </div>
-                {formErrors.sendTo && (
-                  <p className="mt-1.5 text-[11.5px] text-red-600 flex items-center gap-1">
-                    <Info size={12} /> {formErrors.sendTo}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleFinalSubmit}
-                  className="flex items-center gap-2 px-6 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[13px] font-semibold shadow-md shadow-violet-100 transition-all active:scale-[0.98]"
-                >
-                  Complete Edit <CheckCircle2 size={16} />
-                </button>
-              </div>
-            </div>
-          </div>
-        </Modal>
+          task={selectedTask}
+          onComplete={onCompleteTask}
+          userRole="Editor"
+          teamMembers={teamMembers}
+        />
       </div>
     </AppLayout>
   );

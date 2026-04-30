@@ -1,15 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { BarChart3, TrendingUp, DollarSign, Users, Target, Download, ChevronDown } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell,  } from 'recharts';
-import type { CampaignReport } from '@/lib/types';
-import Icon from '@/components/ui/AppIcon';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
+import { CampaignReport } from '@/types';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAdsData } from '@/context/AdsDataContext';
-
 
 // ─── Mock report data ─────────────────────────────────────────────────────────
 const campaignReports: CampaignReport[] = [
@@ -33,8 +31,6 @@ const stageDistribution = [
   { name: 'Complete',  value: 1, color: '#10b981' },
 ];
 
-const ROAS_COLORS = ['#6366f1', '#8b5cf6', '#f59e0b', '#10b981'];
-
 const stageBadge: Record<string, string> = {
   Shooting: 'bg-blue-100 text-blue-700',
   'Raw Upload': 'bg-slate-100 text-slate-600',
@@ -45,12 +41,17 @@ const stageBadge: Record<string, string> = {
 
 export default function ReportsPage() {
   useRoleGuard(['Owner', 'Manager']);
-  const [dateRange, setDateRange] = useState('last_30');
+  const [dateRange, setDateRange] = useState<string>('last_30');
   const { adsMetrics } = useAdsData();
+  const [mounted, setMounted] = useState(false);
 
-  const totalSpend = adsMetrics.totalSpend;
-  const totalLeads = adsMetrics.totalLeads;
-  const avgRoas = adsMetrics.avgRoas.toFixed(1);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const totalSpend = adsMetrics?.totalSpend ?? 0;
+  const totalLeads = adsMetrics?.totalLeads ?? 0;
+  const avgRoas = (adsMetrics?.avgRoas ?? 0).toFixed(1);
   const totalBudget = campaignReports.reduce((s, c) => s + c.budget, 0);
 
   const summaryStats = [
@@ -61,9 +62,10 @@ export default function ReportsPage() {
   ];
 
   function handleExport() {
-    // BACKEND INTEGRATION: GET /api/reports/export?format=csv
     toast.info('Export coming soon — reporting API required');
   }
+
+  if (!mounted) return <div className="min-h-screen bg-slate-50" />;
 
   return (
     <AppLayout>

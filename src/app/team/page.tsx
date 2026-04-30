@@ -3,10 +3,10 @@
 import React, { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import Modal from '@/components/ui/Modal';
-import { Users, Plus, Pencil, Trash2, Search, X, Mail, Camera, Film, Megaphone, UserCheck, Crown, CheckCircle2, XCircle,  } from 'lucide-react';
+import { Users, Plus, Pencil, Trash2, Search, X, Mail, Camera, Film, Megaphone, UserCheck, Crown, CheckCircle2, XCircle, TrendingUp,  } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
-import type { UserRole } from '@/lib/types';
+import type { UserRole } from '@/types';
 import Icon from '@/components/ui/AppIcon';
 
 
@@ -27,6 +27,7 @@ const roleConfig: Record<UserRole, { color: string; bg: string; icon: React.Elem
   Shooter:      { color: 'text-blue-700',   bg: 'bg-blue-100',   icon: Camera },
   Editor:       { color: 'text-purple-700', bg: 'bg-purple-100', icon: Film },
   'Ads Manager':{ color: 'text-orange-700', bg: 'bg-orange-100', icon: Megaphone },
+  'Social Media Manager': { color: 'text-pink-700', bg: 'bg-pink-100', icon: TrendingUp },
   Client:       { color: 'text-indigo-700', bg: 'bg-indigo-100', icon: UserCheck },
 };
 
@@ -36,10 +37,11 @@ const avatarColors: Record<UserRole, string> = {
   Shooter:      'bg-blue-600',
   Editor:       'bg-purple-600',
   'Ads Manager':'bg-orange-600',
+  'Social Media Manager': 'bg-pink-600',
   Client:      'bg-indigo-600',
 };
 
-const ALL_ROLES: UserRole[] = ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager'];
+const ALL_ROLES: UserRole[] = ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager', 'Social Media Manager'];
 
 const initialMembers: TeamMember[] = [
   { id: 'm1', name: 'Alex Owens',    email: 'alex@agencyflow.io',   role: 'Owner',        status: 'active',   joinedAt: '2025-11-01', tasksCompleted: 42, tasksActive: 3 },
@@ -47,6 +49,7 @@ const initialMembers: TeamMember[] = [
   { id: 'm3', name: 'Marco Reyes',   email: 'marco@agencyflow.io',  role: 'Shooter',      status: 'active',   joinedAt: '2025-12-01', tasksCompleted: 19, tasksActive: 2 },
   { id: 'm4', name: 'Jin Park',      email: 'jin@agencyflow.io',    role: 'Editor',       status: 'active',   joinedAt: '2025-12-10', tasksCompleted: 15, tasksActive: 3 },
   { id: 'm5', name: 'Sofia Nguyen',  email: 'sofia@agencyflow.io',  role: 'Ads Manager',  status: 'active',   joinedAt: '2026-01-05', tasksCompleted: 11, tasksActive: 2 },
+  { id: 'm7', name: 'Sam Rivera',    email: 'sam@agencyflow.io',    role: 'Social Media Manager', status: 'active', joinedAt: '2026-03-10', tasksCompleted: 8, tasksActive: 4 },
   { id: 'm6', name: 'Daniel Kim',    email: 'daniel@agencyflow.io', role: 'Shooter',      status: 'inactive', joinedAt: '2026-02-01', tasksCompleted: 4,  tasksActive: 0 },
 ];
 

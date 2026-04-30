@@ -11,19 +11,17 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'AgencyFlow — Campaign Workflow Automation for Marketing Agencies',
-  description: 'AgencyFlow automates campaign workflows for marketing agencies — routing tasks, tracking ad performance, and managing 50+ clients from a single dashboard.',
+  title: 'AgencyFlow — Campaign Workflow Automation',
+  description: 'AgencyFlow automates campaign workflows for marketing agencies.',
   icons: {
     icon: [{ url: '/favicon.ico', type: 'image/x-icon' }],
   },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body className="antialiased">
         <AuthProvider>
           <AdsDataProvider>
             <TaskProvider>
@@ -32,8 +30,18 @@ export default function RootLayout({
           </AdsDataProvider>
         </AuthProvider>
 
-        <script type="module" async src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Fagencyflow7064back.builtwithrocket.new&_be=https%3A%2F%2Fappanalytics.rocket.new&_v=0.1.18" />
-        <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.2" /></body>
+        {/* Third-party Analytics/Scripts */}
+        <script 
+          type="module" 
+          async 
+          src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Fagencyflow7064back.builtwithrocket.new&_be=https%3A%2F%2Fappanalytics.rocket.new&_v=0.1.18" 
+        />
+        <script 
+          type="module" 
+          defer 
+          src="https://static.rocket.new/rocket-shot.js?v=0.0.2" 
+        />
+      </body>
     </html>
   );
 }

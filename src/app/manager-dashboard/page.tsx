@@ -4,43 +4,21 @@ import React, { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Users, CheckCircle2, Timer, Circle, Calendar, ChevronRight, Camera, Film, Megaphone, AlertCircle } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
+import { useTasks } from '@/context/TaskContext';
+import { Task, TaskStatus, TaskPriority, TaskRole } from '@/types';
+import TaskCompletionModal from '@/components/TaskCompletionModal';
 
-type TaskStatus = 'pending' | 'in_progress' | 'completed';
-type TaskPriority = 'low' | 'medium' | 'high';
-type TaskRole = 'Shooter' | 'Editor' | 'Ads Manager';
-
-interface ManagedTask {
-  id: string;
-  title: string;
-  assignedTo: string;
-  role: TaskRole;
-  client: string;
-  campaign: string;
-  deadline: string;
-  status: TaskStatus;
-  priority: TaskPriority;
-}
-
-const allTasks: ManagedTask[] = [
-  { id: 'mt1', title: 'Shoot product photos for NovaBrew launch', assignedTo: 'Marco Reyes', role: 'Shooter', client: 'Jordan Lee', campaign: 'NovaBrew Spring Launch', deadline: '2026-04-15', status: 'in_progress', priority: 'high' },
-  { id: 'mt2', title: 'Edit raw footage for PulseWear reel', assignedTo: 'Jin Park', role: 'Editor', client: 'Samantha Cruz', campaign: 'PulseWear Q2 Reel', deadline: '2026-04-18', status: 'pending', priority: 'high' },
-  { id: 'mt3', title: 'Run Meta ads for GreenRoot campaign', assignedTo: 'Sofia Nguyen', role: 'Ads Manager', client: 'Ethan Patel', campaign: 'GreenRoot Awareness', deadline: '2026-04-20', status: 'in_progress', priority: 'medium' },
-  { id: 'mt4', title: 'Shoot behind-the-scenes for LuxeHome', assignedTo: 'Marco Reyes', role: 'Shooter', client: 'Mia Tanaka', campaign: 'LuxeHome Interior Series', deadline: '2026-04-22', status: 'pending', priority: 'medium' },
-  { id: 'mt5', title: 'Edit NovaBrew promo video', assignedTo: 'Jin Park', role: 'Editor', client: 'Jordan Lee', campaign: 'NovaBrew Spring Launch', deadline: '2026-04-25', status: 'pending', priority: 'high' },
-  { id: 'mt6', title: 'Launch Google Ads for PulseWear', assignedTo: 'Sofia Nguyen', role: 'Ads Manager', client: 'Samantha Cruz', campaign: 'PulseWear Q2 Reel', deadline: '2026-04-28', status: 'completed', priority: 'low' },
-  { id: 'mt7', title: 'Shoot event coverage for GreenRoot', assignedTo: 'Marco Reyes', role: 'Shooter', client: 'Ethan Patel', campaign: 'GreenRoot Awareness', deadline: '2026-04-12', status: 'completed', priority: 'medium' },
-  { id: 'mt8', title: 'Edit LuxeHome showcase reel', assignedTo: 'Jin Park', role: 'Editor', client: 'Mia Tanaka', campaign: 'LuxeHome Interior Series', deadline: '2026-04-30', status: 'pending', priority: 'low' },
-];
+interface ManagedTask extends Task {}
 
 const workflowStages = ['Shooting', 'Raw Upload', 'Editing', 'Ads', 'Complete'];
 
-const roleConfig: Record<TaskRole, { color: string; bg: string; icon: React.ElementType }> = {
+const roleConfig: Record<TaskRole | string, { color: string; bg: string; icon: React.ElementType }> = {
   Shooter: { color: 'text-blue-700', bg: 'bg-blue-100', icon: Camera },
   Editor: { color: 'text-purple-700', bg: 'bg-purple-100', icon: Film },
   'Ads Manager': { color: 'text-orange-700', bg: 'bg-orange-100', icon: Megaphone },
 };
 
-const statusConfig: Record<TaskStatus, { label: string; color: string; bg: string; icon: React.ElementType }> = {
+const statusConfig: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
   pending: { label: 'Pending', color: 'text-slate-600', bg: 'bg-slate-100', icon: Circle },
   in_progress: { label: 'In Progress', color: 'text-amber-700', bg: 'bg-amber-100', icon: Timer },
   completed: { label: 'Completed', color: 'text-emerald-700', bg: 'bg-emerald-100', icon: CheckCircle2 },
@@ -52,7 +30,7 @@ const priorityDot: Record<TaskPriority, string> = {
   high: 'bg-red-500',
 };
 
-function isOverdue(deadline: string, status: TaskStatus) {
+function isOverdue(deadline: string, status: string) {
   return status !== 'completed' && new Date(deadline) < new Date();
 }
 
@@ -73,7 +51,17 @@ const roleFilters: { label: string; value: TaskRole | 'all' }[] = [
 
 export default function ManagerDashboardPage() {
   useRoleGuard(['Owner', 'Manager']);
+  const { tasks: allTasks, updateTask } = useTasks();
   const [roleFilter, setRoleFilter] = useState<TaskRole | 'all'>('all');
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const filtered = allTasks.filter((t) => roleFilter === 'all' || t.role === roleFilter);
 
@@ -85,10 +73,29 @@ export default function ManagerDashboardPage() {
   };
 
   const teamMembers = [
-    { name: 'Marco Reyes', role: 'Shooter', tasks: allTasks.filter((t) => t.assignedTo === 'Marco Reyes'), color: 'bg-blue-600' },
-    { name: 'Jin Park', role: 'Editor', tasks: allTasks.filter((t) => t.assignedTo === 'Jin Park'), color: 'bg-purple-600' },
-    { name: 'Sofia Nguyen', role: 'Ads Manager', tasks: allTasks.filter((t) => t.assignedTo === 'Sofia Nguyen'), color: 'bg-orange-600' },
+    { id: 'tm1', name: 'Marco Reyes', role: 'Shooter', color: 'bg-blue-600' },
+    { id: 'tm2', name: 'Jin Park', role: 'Editor', color: 'bg-purple-600' },
+    { id: 'tm3', name: 'Sofia Nguyen', role: 'Ads Manager', color: 'bg-orange-600' },
+    { id: 'tm4', name: 'Amara Diallo', role: 'Editor', color: 'bg-purple-600' },
+    { id: 'tm5', name: 'Priya Sharma', role: 'Manager', color: 'bg-teal-600' },
+    { id: 'tm6', name: 'Alex Rivera', role: 'Owner', color: 'bg-violet-600' },
   ];
+
+  const handleStatusChange = (task: Task, newStatus: TaskStatus) => {
+    if (newStatus === 'completed') {
+      if (task.status === 'completed') return;
+      setSelectedTask(task);
+      setIsModalOpen(true);
+    } else {
+      updateTask(task.id, { status: newStatus });
+    }
+  };
+
+  const onCompleteTask = (taskId: string, notes: string, nextMember?: { name: string; role: string }, screenshot?: string) => {
+    updateTask(taskId, { status: 'completed' }, notes, nextMember, screenshot);
+  };
+
+  if (!mounted) return <div className="min-h-screen bg-slate-50" />;
 
   return (
     <AppLayout>
@@ -123,9 +130,10 @@ export default function ManagerDashboardPage() {
         <div className="bg-white rounded-xl border border-slate-200 p-5 mb-6 shadow-sm">
           <h2 className="text-[14px] font-semibold text-slate-800 mb-4">Team Overview</h2>
           <div className="grid grid-cols-3 gap-3">
-            {teamMembers.map((member) => {
-              const done = member.tasks.filter((t) => t.status === 'completed').length;
-              const pct = member.tasks.length > 0 ? Math.round((done / member.tasks.length) * 100) : 0;
+            {teamMembers.slice(0,3).map((member) => {
+              const mTasks = allTasks.filter(t => t.assignedTo === member.name);
+              const done = mTasks.filter((t) => t.status === 'completed').length;
+              const pct = mTasks.length > 0 ? Math.round((done / mTasks.length) * 100) : 0;
               return (
                 <div key={member.name} className="rounded-lg border border-slate-100 p-3">
                   <div className="flex items-center gap-2 mb-2">
@@ -138,44 +146,13 @@ export default function ManagerDashboardPage() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-[11px] text-slate-500">{done}/{member.tasks.length} done</span>
+                    <span className="text-[11px] text-slate-500">{done}/{mTasks.length} done</span>
                     <span className="text-[11px] font-semibold text-slate-700">{pct}%</span>
                   </div>
                   <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <div className={`h-full rounded-full ${member.color}`} style={{ width: `${pct}%` }} />
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Workflow Stage Progress */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5 mb-6 shadow-sm">
-          <h2 className="text-[14px] font-semibold text-slate-800 mb-4">Active Workflow Stages</h2>
-          <div className="flex items-center gap-1">
-            {workflowStages.map((stage, idx) => {
-              const stageTaskMap: Record<string, TaskRole[]> = {
-                Shooting: ['Shooter'],
-                'Raw Upload': ['Shooter'],
-                Editing: ['Editor'],
-                Ads: ['Ads Manager'],
-                Complete: [],
-              };
-              const stageTasks = allTasks.filter((t) => stageTaskMap[stage]?.includes(t.role));
-              const activeTasks = stageTasks.filter((t) => t.status === 'in_progress').length;
-              const isActive = activeTasks > 0;
-              return (
-                <React.Fragment key={stage}>
-                  <div className="flex-1 text-center">
-                    <div className={`h-2 rounded-full mb-2 ${isActive ? 'bg-teal-500' : 'bg-slate-200'}`} />
-                    <span className={`text-[11px] font-medium ${isActive ? 'text-teal-700' : 'text-slate-400'}`}>{stage}</span>
-                    {isActive && <p className="text-[10px] text-teal-500 mt-0.5">{activeTasks} active</p>}
-                  </div>
-                  {idx < workflowStages.length - 1 && (
-                    <ChevronRight size={14} className="text-slate-300 flex-shrink-0 mb-4" />
-                  )}
-                </React.Fragment>
               );
             })}
           </div>
@@ -202,14 +179,20 @@ export default function ManagerDashboardPage() {
           </div>
           <div className="space-y-2.5">
             {filtered.map((task) => {
-              const StatusIcon = statusConfig[task.status].icon;
-              const RoleIcon = roleConfig[task.role].icon;
-              const overdue = isOverdue(task.deadline, task.status);
+              const RoleIcon = roleConfig[task.role]?.icon || Megaphone;
+              const overdue = isOverdue(task.deadline, task.status as TaskStatus);
               const daysLeft = getDaysLeft(task.deadline);
+
               return (
                 <div
                   key={task.id}
-                  className={`bg-white rounded-xl border shadow-sm p-4 ${overdue ? 'border-red-200' : 'border-slate-200'}`}
+                  className={`rounded-xl border shadow-sm p-4 transition-all ${
+                    task.status === 'completed' 
+                      ? 'bg-emerald-50/30 border-emerald-100' 
+                      : overdue 
+                        ? 'bg-white border-red-200' 
+                        : 'bg-white border-slate-200'
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -217,31 +200,65 @@ export default function ManagerDashboardPage() {
                       <div className="flex-1 min-w-0">
                         <p className="text-[13.5px] font-semibold text-slate-900 truncate">{task.title}</p>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <span className={`flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${roleConfig[task.role].bg} ${roleConfig[task.role].color}`}>
+                          <span className={`flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${roleConfig[task.role]?.bg || 'bg-slate-100'} ${roleConfig[task.role]?.color || 'text-slate-600'}`}>
                             <RoleIcon size={10} />
                             {task.assignedTo}
                           </span>
-                          <span className="text-[11px] text-slate-400">{task.client} · {task.campaign}</span>
+                          <span className="text-[11px] text-slate-400">{task.client} {task.brand ? `(${task.brand})` : ''} · {task.campaign}</span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {overdue && <AlertCircle size={14} className="text-red-500" />}
-                      <span className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[12px] font-medium ${statusConfig[task.status].bg} ${statusConfig[task.status].color}`}>
-                        <StatusIcon size={12} />
-                        {statusConfig[task.status].label}
-                      </span>
+                    
+                    <div className="relative">
+                      {overdue && <AlertCircle size={14} className="text-red-500 absolute -left-5 top-1/2 -translate-y-1/2" />}
+                      <select
+                        value={task.status}
+                        onChange={(e) => handleStatusChange(task, e.target.value as TaskStatus)}
+                        className={`appearance-none pl-2.5 pr-8 py-1 rounded-lg text-[12px] font-medium transition-all cursor-pointer outline-none border-none ${(statusConfig[task.status] || statusConfig.pending).bg} ${(statusConfig[task.status] || statusConfig.pending).color} hover:opacity-80`}
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                      </select>
+                      <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none text-slate-400" size={12} />
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 mt-2.5 pt-2.5 border-t border-slate-100">
-                    <Calendar size={11} className={overdue ? 'text-red-500' : 'text-slate-400'} />
-                    <span className={`text-[11.5px] ${overdue ? 'text-red-600 font-semibold' : 'text-slate-500'}`}>
+                  
+                  {/* Notes History */}
+                  {(task.roleNotes && task.roleNotes.length > 0) && (
+                    <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">
+                      {task.roleNotes.map((note, idx) => (
+                        <div key={idx} className="bg-slate-50 rounded-lg p-2 flex gap-2">
+                          <div className="w-5 h-5 rounded bg-teal-100 text-teal-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span className="text-[9px] font-bold">{note.role.charAt(0)}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-0.5">
+                              <p className="text-[11px] font-bold text-slate-700">{note.role} Notes</p>
+                              <p className="text-[10px] text-slate-400">{new Date(note.timestamp).toLocaleDateString()}</p>
+                            </div>
+                            <p className="text-[12px] text-slate-600 italic">"{note.message}"</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-slate-100">
+                    <div className={`flex items-center gap-1.5 text-[12px] ${overdue ? 'text-red-600 font-semibold' : 'text-slate-500'}`}>
+                      <Calendar size={11} className={overdue ? 'text-red-500' : 'text-slate-400'} />
                       {overdue ? 'Overdue · ' : ''}{formatDeadline(task.deadline)}
-                    </span>
-                    {!overdue && task.status !== 'completed' && (
-                      <span className={`text-[11px] ml-1 ${daysLeft <= 3 ? 'text-red-500 font-semibold' : 'text-slate-400'}`}>
-                        ({daysLeft > 0 ? `${daysLeft}d left` : 'Today'})
-                      </span>
+                      {!overdue && task.status !== 'completed' && (
+                        <span className={`text-[11px] ml-1 ${daysLeft <= 3 ? 'text-red-500 font-semibold' : 'text-slate-400'}`}>
+                          ({daysLeft > 0 ? `${daysLeft}d left` : 'Today'})
+                        </span>
+                      )}
+                    </div>
+                    {task.status === 'completed' && (
+                      <div className="flex items-center gap-1 text-[12px] text-emerald-600 font-medium">
+                        <CheckCircle2 size={12} />
+                        {task.forwardedBy ? `Passed to ${task.assignedTo} (${task.role})` : 'Task Finalized'}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -249,6 +266,15 @@ export default function ManagerDashboardPage() {
             })}
           </div>
         </div>
+
+        <TaskCompletionModal 
+          open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          task={selectedTask}
+          onComplete={onCompleteTask}
+          userRole="Manager"
+          teamMembers={teamMembers}
+        />
       </div>
     </AppLayout>
   );

@@ -5,6 +5,7 @@ import AppLayout from '@/components/AppLayout';
 import Modal from '@/components/ui/Modal';
 import { Plus, Pencil, Trash2, Search, Briefcase, AlertTriangle, X, IndianRupee, History } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
+import { useAuth } from '@/context/AuthContext';
 import { useAdsData } from '@/context/AdsDataContext';
 import { toast, Toaster } from 'sonner';
 
@@ -50,6 +51,7 @@ const emptyForm = {
 
 export default function ClientManagementPage() {
   useRoleGuard(['Owner', 'Manager','Ads Manager']);
+  const { user } = useAuth();
   const { adsMetrics, updateAdsMetrics } = useAdsData();
   const [clients, setClients] = useState<Client[]>(() => {
     if (typeof window !== 'undefined') {
@@ -258,13 +260,15 @@ export default function ClientManagementPage() {
             <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">Client Management</h1>
             <p className="text-[13px] text-slate-500 mt-0.5">{clients.length} clients total</p>
           </div>
-          <button
-            onClick={openAdd}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-700 active:scale-[0.98] text-white text-[13.5px] font-semibold transition-all duration-150 shadow-sm"
-          >
-            <Plus size={16} />
-            Add Client
-          </button>
+          {user?.role === 'Owner' && (
+            <button
+              onClick={openAdd}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-700 active:scale-[0.98] text-white text-[13.5px] font-semibold transition-all duration-150 shadow-sm"
+            >
+              <Plus size={16} />
+              Add Client
+            </button>
+          )}
         </div>
 
         {/* Search */}
@@ -291,16 +295,20 @@ export default function ClientManagementPage() {
               <tr className="border-b border-slate-100 bg-slate-50">
                 <th className="px-5 py-3 text-[11px] font-600 uppercase tracking-wider text-slate-400">Client</th>
                 <th className="px-5 py-3 text-[11px] font-600 uppercase tracking-wider text-slate-400">Brand</th>
-                <th className="px-5 py-3 text-[11px] font-600 uppercase tracking-wider text-slate-400 text-right">Package</th>
-                <th className="px-5 py-3 text-[11px] font-600 uppercase tracking-wider text-slate-400 text-right">Total Paid</th>
-                <th className="px-5 py-3 text-[11px] font-600 uppercase tracking-wider text-slate-400">Plan</th>
-                <th className="px-5 py-3 text-[11px] font-600 uppercase tracking-wider text-slate-400 text-right">Actions</th>
+                {user?.role === 'Owner' && (
+                  <>
+                    <th className="px-5 py-3 text-[11px] font-600 uppercase tracking-wider text-slate-400 text-right">Package</th>
+                    <th className="px-5 py-3 text-[11px] font-600 uppercase tracking-wider text-slate-400 text-right">Total Paid</th>
+                    <th className="px-5 py-3 text-[11px] font-600 uppercase tracking-wider text-slate-400">Plan</th>
+                    <th className="px-5 py-3 text-[11px] font-600 uppercase tracking-wider text-slate-400 text-right">Actions</th>
+                  </>
+                )}
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-14 text-center">
+                  <td colSpan={user?.role === 'Owner' ? 6 : 2} className="px-5 py-14 text-center">
                     <div className="flex flex-col items-center gap-2 text-slate-400">
                       <Briefcase size={32} className="opacity-30" />
                       <p className="text-[13px]">No clients found</p>
@@ -326,59 +334,63 @@ export default function ClientManagementPage() {
                         </div>
                       </td>
                       <td className="px-5 py-3.5 text-[13px] text-slate-600">{client.brand}</td>
-                      <td className="px-5 py-3.5 text-[13px] font-medium text-slate-600 text-right">
-                        ₹{client.packageAmount.toLocaleString()}
-                      </td>
-                      <td className="px-5 py-3.5 text-[13px] font-bold text-emerald-600 text-right">
-                        ₹{totalPaid.toLocaleString()}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
-                            client.planType === 'monthly' ? 'bg-violet-100 text-violet-700' : 
-                            client.planType === 'weekly' ? 'bg-emerald-100 text-emerald-700' :
-                            'bg-amber-100 text-amber-700'
-                          }`}
-                        >
-                          {client.planType.charAt(0).toUpperCase() + client.planType.slice(1)}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => openPayment(client)}
-                          className="p-1.5 rounded-lg hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 transition-colors"
-                          title="Record Payment"
-                        >
-                          <IndianRupee size={14} />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setActiveClient(client);
-                            setViewPaymentsOpen(true);
-                          }}
-                          className="p-1.5 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-colors"
-                          title="View Payments"
-                        >
-                          <History size={14} />
-                        </button>
-                        <button
-                          onClick={() => openEdit(client)}
-                          className="p-1.5 rounded-lg hover:bg-violet-50 text-slate-400 hover:text-violet-600 transition-colors"
-                          title="Edit client"
-                        >
-                          <Pencil size={14} />
-                        </button>
-                        <button
-                          onClick={() => openDelete(client)}
-                          className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
-                          title="Delete client"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                      {user?.role === 'Owner' && (
+                        <>
+                          <td className="px-5 py-3.5 text-[13px] font-medium text-slate-600 text-right">
+                            ₹{client.packageAmount.toLocaleString()}
+                          </td>
+                          <td className="px-5 py-3.5 text-[13px] font-bold text-emerald-600 text-right">
+                            ₹{totalPaid.toLocaleString()}
+                          </td>
+                          <td className="px-5 py-3.5">
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
+                                client.planType === 'monthly' ? 'bg-violet-100 text-violet-700' : 
+                                client.planType === 'weekly' ? 'bg-emerald-100 text-emerald-700' :
+                                'bg-amber-100 text-amber-700'
+                              }`}
+                            >
+                              {client.planType.charAt(0).toUpperCase() + client.planType.slice(1)}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3.5 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                onClick={() => openPayment(client)}
+                                className="p-1.5 rounded-lg hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 transition-colors"
+                                title="Record Payment"
+                              >
+                                <IndianRupee size={14} />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setActiveClient(client);
+                                  setViewPaymentsOpen(true);
+                                }}
+                                className="p-1.5 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-colors"
+                                title="View Payments"
+                              >
+                                <History size={14} />
+                              </button>
+                              <button
+                                onClick={() => openEdit(client)}
+                                className="p-1.5 rounded-lg hover:bg-violet-50 text-slate-400 hover:text-violet-600 transition-colors"
+                                title="Edit client"
+                              >
+                                <Pencil size={14} />
+                              </button>
+                              <button
+                                onClick={() => openDelete(client)}
+                                className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
+                                title="Delete client"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </>
+                      )}
+                    </tr>
                 );
               })
             )}

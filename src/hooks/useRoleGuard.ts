@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { ROLE_HOME } from '@/context/AuthContext';
-import type { UserRole } from '@/lib/types';
+import type { UserRole } from '@/types';
 
 /**
  * Redirects the user away from the current page if their role is not in allowedRoles.

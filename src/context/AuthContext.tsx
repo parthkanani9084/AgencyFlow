@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import type { AuthUser, UserRole } from '@/lib/types';
+import type { AuthUser, UserRole } from '@/types';
 
 // ─── Demo credentials (mirrors LoginForm) ─────────────────────────────────────
 const DEMO_USERS: (AuthUser & { password: string })[] = [
@@ -12,6 +12,7 @@ const DEMO_USERS: (AuthUser & { password: string })[] = [
   { id: 'u4', name: 'Jin Park',      email: 'jin.park@agencyflow.io',      password: 'Editor@2026',     role: 'Editor',      avatarInitials: 'JP' },
   { id: 'u5', name: 'Sofia Nguyen',  email: 'sofia.nguyen@agencyflow.io',  password: 'AdsManager@2026', role: 'Ads Manager', avatarInitials: 'SN' },
   { id: 'u6', name: 'Jordan Lee',    email: 'jordan.lee@novabrew.com',     password: 'Client@2026',     role: 'Client',      avatarInitials: 'JL' },
+  { id: 'u7', name: 'Sam Rivera',    email: 'sam.rivera@agencyflow.io',    password: 'Social@2026',     role: 'Social Media Manager', avatarInitials: 'SR' },
 ];
 
 // Role → default landing page
@@ -21,6 +22,7 @@ export const ROLE_HOME: Record<UserRole, string> = {
   Shooter:     '/shooter-dashboard',
   Editor:      '/editor-dashboard',
   'Ads Manager': '/ads-manager-dashboard',
+  'Social Media Manager': '/social-media-manager-dashboard',
   Client:      '/client/campaigns',
 };
 
