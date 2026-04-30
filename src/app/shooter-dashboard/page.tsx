@@ -44,7 +44,6 @@ export default function ShooterDashboardPage() {
   useRoleGuard(['Owner', 'Shooter']);
   const { user } = useAuth();
   const { tasks: allTasks, updateTask } = useTasks();
-  const tasks = allTasks.filter(t => t.role === 'Shooter');
   const [activeTab, setActiveTab] = useState<TaskStatus>('pending');
   const [mounted, setMounted] = React.useState(false);
 
@@ -56,11 +55,26 @@ export default function ShooterDashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
-  const stats = {
-    pending: tasks.filter((t) => t.status === 'pending').length,
-    inProgress: tasks.filter((t) => t.status === 'in_progress').length,
-    completed: tasks.filter((t) => t.status === 'completed').length,
-  };
+  const tasks = React.useMemo(() => {
+    return allTasks.filter(t => 
+      t.role === 'Shooter' || 
+      t.roleNotes?.some(n => n.role === 'Shooter') ||
+      t.fromShooter === 'Marco Reyes' ||
+      t.forwardedBy === 'Marco Reyes'
+    );
+  }, [allTasks]);
+
+  const getEffectiveStatus = React.useCallback((t: Task): TaskStatus => {
+    const isHandedOff = t.role !== 'Shooter' && t.roleNotes?.some(n => n.role === 'Shooter');
+    if (isHandedOff) return 'completed';
+    return t.status as TaskStatus;
+  }, []);
+
+  const stats = React.useMemo(() => ({
+    pending: tasks.filter((t) => getEffectiveStatus(t) === 'pending').length,
+    inProgress: tasks.filter((t) => getEffectiveStatus(t) === 'in_progress').length,
+    completed: tasks.filter((t) => getEffectiveStatus(t) === 'completed').length,
+  }), [tasks, getEffectiveStatus]);
 
   const handleStatusChange = (task: Task, newStatus: TaskStatus) => {
     if (newStatus === 'completed') {
@@ -76,7 +90,9 @@ export default function ShooterDashboardPage() {
     updateTask(taskId, { status: 'completed' }, notes, nextMember, screenshot);
   };
 
-  const filteredTasks = tasks.filter(t => t.status === activeTab);
+  const filteredTasks = React.useMemo(() => {
+    return tasks.filter(t => getEffectiveStatus(t) === activeTab);
+  }, [tasks, getEffectiveStatus, activeTab]);
 
   if (!mounted) return <div className="min-h-screen bg-slate-50" />;
 
@@ -164,7 +180,7 @@ export default function ShooterDashboardPage() {
                   <div
                     key={task.id}
                     className={`rounded-xl border shadow-sm p-4 transition-all ${
-                      task.status === 'completed' 
+                      getEffectiveStatus(task) === 'completed' 
                         ? 'bg-emerald-50/30 border-emerald-100' 
                         : overdue 
                           ? 'bg-white border-red-200' 
@@ -182,9 +198,9 @@ export default function ShooterDashboardPage() {
                       <div className="relative">
                         {overdue && <AlertCircle size={14} className="text-red-500 absolute -left-5 top-1/2 -translate-y-1/2" />}
                         <select
-                          value={task.status}
+                          value={getEffectiveStatus(task)}
                           onChange={(e) => handleStatusChange(task, e.target.value as TaskStatus)}
-                          className={`appearance-none pl-2.5 pr-8 py-1 rounded-lg text-[12px] font-medium transition-all cursor-pointer outline-none border-none ${(statusConfig[task.status] || statusConfig.pending).bg} ${(statusConfig[task.status] || statusConfig.pending).color} hover:opacity-80`}
+                          className={`appearance-none pl-2.5 pr-8 py-1 rounded-lg text-[12px] font-medium transition-all cursor-pointer outline-none border-none ${(statusConfig[getEffectiveStatus(task)] || statusConfig.pending).bg} ${(statusConfig[getEffectiveStatus(task)] || statusConfig.pending).color} hover:opacity-80`}
                         >
                           <option value="pending">Pending</option>
                           <option value="in_progress">In Progress</option>
@@ -243,7 +259,7 @@ export default function ShooterDashboardPage() {
           onClose={() => setIsModalOpen(false)}
           task={selectedTask}
           onComplete={onCompleteTask}
-          userRole="Shooter"
+          userRole={user?.role || 'Shooter'}
           teamMembers={teamMembers}
         />
       </div>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import AppLayout from '@/components/AppLayout';
 import Modal from '@/components/ui/Modal';
-import { Plus, Search, X, CheckSquare, AlertCircle, ChevronDown, User, Pencil, Trash2, CheckCircle2, Circle, Timer, Camera, Film, Megaphone } from 'lucide-react';
+import { Plus, Search, X, CheckSquare, AlertCircle, ChevronDown, User, Pencil, Trash2, CheckCircle2, Circle, Timer, Camera, Film, Megaphone, TrendingUp } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useTasks } from '@/context/TaskContext';
 import { useAuth } from '@/context/AuthContext';
@@ -16,6 +16,7 @@ const ROLE_CONFIG: Record<string, { color: string; bg: string; icon: React.Eleme
   Shooter: { color: 'text-blue-700', bg: 'bg-blue-100', icon: Camera },
   Editor: { color: 'text-purple-700', bg: 'bg-purple-100', icon: Film },
   'Ads Manager': { color: 'text-orange-700', bg: 'bg-orange-100', icon: Megaphone },
+  'Social Media Manager': { color: 'text-pink-700', bg: 'bg-pink-100', icon: TrendingUp },
   Owner: { color: 'text-violet-700', bg: 'bg-violet-100', icon: User },
   Manager: { color: 'text-teal-700', bg: 'bg-teal-100', icon: User },
 };
@@ -37,6 +38,7 @@ const ROLE_FILTERS: { label: string; value: TaskRole | 'all' }[] = [
   { label: 'Shooter', value: 'Shooter' },
   { label: 'Editor', value: 'Editor' },
   { label: 'Ads Manager', value: 'Ads Manager' },
+
 ];
 
 const EMPTY_FORM = {
@@ -77,7 +79,7 @@ const checkIsOverdue = (deadline: string, status: TaskStatus) => {
  * Strictly refactored to maintain UI parity while improving type safety and stability.
  */
 export default function TaskManagementPage() {
-  useRoleGuard(['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager']);
+  useRoleGuard(['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager', 'Social Media Manager']);
   
   const { user } = useAuth();
   const { tasks: rawTasks, addTask, updateTask, deleteTask } = useTasks();
@@ -93,7 +95,7 @@ export default function TaskManagementPage() {
 
   // 1. RBAC & Visibility Logic (Localized for stability)
   const isRestricted = useMemo(() => 
-    user?.role && ['Shooter', 'Editor', 'Ads Manager', 'Social Media Manager'].includes(user.role)
+    user?.role && ['Shooter', 'Editor', 'Ads Manager'].includes(user.role)
   , [user?.role]);
 
   const [roleFilter, setRoleFilter] = useState<TaskRole | 'all'>('all');
@@ -107,7 +109,7 @@ export default function TaskManagementPage() {
 
   const tasks = useMemo(() => {
     if (!user) return [];
-    if (user.role === 'Owner' || user.role === 'Manager') return rawTasks;
+    if (user.role === 'Owner' || user.role === 'Manager' || user.role === 'Social Media Manager') return rawTasks;
     return rawTasks.filter(t => t.assignedTo === user.name || t.role === user.role);
   }, [rawTasks, user]);
 

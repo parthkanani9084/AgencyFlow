@@ -26,12 +26,8 @@ const TEAM_MEMBERS = [
   { id: 'tm6', name: 'Priya Sharma', role: 'Manager' },
 ];
 
-/**
- * Ads Manager Dashboard
- * Refactored for extreme simplicity, flat architecture, and strict global typing.
- */
 export default function AdsManagerDashboardPage() {
-  useRoleGuard(['Owner', 'Ads Manager']);
+  useRoleGuard(['Owner', 'Ads Manager', 'Social Media Manager']);
   const { user } = useAuth();
   const { tasks: allTasks, updateTask } = useTasks();
   
@@ -57,13 +53,20 @@ export default function AdsManagerDashboardPage() {
   }, []);
 
   // 2. Derived State (Simplified)
-  const tasks = allTasks.filter(t => t.role === 'Ads Manager');
-  const filteredTasks = tasks.filter(t => t.status === activeTab);
+  const tasks = allTasks.filter(t => t.role === 'Ads Manager' || t.roleNotes?.some(n => n.role === 'Ads Manager'));
+  
+  const getEffectiveStatus = (t: Task): TaskStatus => {
+    const isHandedOff = t.role !== 'Ads Manager' && t.roleNotes?.some(n => n.role === 'Ads Manager');
+    if (isHandedOff) return 'completed';
+    return t.status as TaskStatus;
+  };
+
+  const filteredTasks = tasks.filter(t => getEffectiveStatus(t) === activeTab);
   
   const stats = {
-    pending: tasks.filter(t => t.status === 'pending').length,
-    inProgress: tasks.filter(t => t.status === 'in_progress').length,
-    completed: tasks.filter(t => t.status === 'completed').length,
+    pending: tasks.filter(t => getEffectiveStatus(t) === 'pending').length,
+    inProgress: tasks.filter(t => getEffectiveStatus(t) === 'in_progress').length,
+    completed: tasks.filter(t => getEffectiveStatus(t) === 'completed').length,
   };
 
   // 3. Handlers
@@ -83,14 +86,17 @@ export default function AdsManagerDashboardPage() {
 
   // 4. Helper Logic (Flat)
   const isOverdue = (deadline: string, status: TaskStatus) => {
+    if (!deadline) return false;
     return status !== 'completed' && new Date(deadline) < new Date();
   };
 
   const formatDeadline = (deadline: string) => {
+    if (!deadline) return 'No deadline';
     return new Date(deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   const getDaysLeft = (deadline: string) => {
+    if (!deadline) return 0;
     return Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000);
   };
 
@@ -132,104 +138,107 @@ export default function AdsManagerDashboardPage() {
         {/* Reporting Summary Section */}
         <TodayReportingCard user={user} campaigns={allCampaigns} />
 
-        {/* Tab Selection */}
-        <div className="flex items-center justify-between mb-6 pt-6 border-t border-slate-100">
-          <h2 className="text-[14px] font-semibold text-slate-800 uppercase tracking-wider">Assigned Tasks</h2>
-          <div className="bg-slate-100 p-1 rounded-lg flex items-center gap-1">
-            {[
-              { id: 'in_progress', label: 'In Progress' },
-              { id: 'pending', label: 'Pending' },
-              { id: 'completed', label: 'Completed' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as TaskStatus)}
-                className={`px-4 py-1.5 rounded-md text-[12px] font-bold transition-all ${activeTab === tab.id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Dynamic Task Listing */}
-        <div className="space-y-3">
-          {filteredTasks.length === 0 ? (
-            <div className="bg-white rounded-xl border border-dashed border-slate-200 py-12 text-center">
-              <p className="text-[13px] text-slate-400 font-medium">No tasks found in {activeTab}</p>
-            </div>
-          ) : (
-            filteredTasks.map((task) => {
-              const overdue = isOverdue(task.deadline, task.status);
-              const daysLeft = getDaysLeft(task.deadline);
-              const config = STATUS_CONFIG[task.status] || STATUS_CONFIG.pending;
-
-              return (
-                <div 
-                  key={task.id} 
-                  className={`rounded-xl border shadow-sm p-4 transition-all hover:shadow-md ${task.status === 'completed' ? 'bg-emerald-50/30 border-emerald-100' : overdue ? 'bg-white border-red-200 shadow-sm shadow-red-50' : 'bg-white border-slate-100'}`}
+        {/* Task List */}
+        <div className="space-y-4 pt-6 border-t border-slate-100">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-[14px] font-semibold text-slate-800">Assigned Tasks</h2>
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+              {(['in_progress', 'pending', 'completed'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-all ${
+                    activeTab === tab
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3 flex-1 min-w-0">
-                      <span className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${PRIORITY_DOT[task.priority]}`} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[14px] font-bold text-slate-900 truncate">{task.title}</p>
-                        <p className="text-[12px] text-slate-500 mt-0.5">{task.client} {task.brand ? `(${task.brand})` : ''} · {task.campaign}</p>
+                  {tab === 'in_progress' ? 'In Progress' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Dynamic Task Listing */}
+          <div className="space-y-3">
+            {filteredTasks.length === 0 ? (
+              <div className="bg-white rounded-xl border border-dashed border-slate-200 py-12 text-center">
+                <p className="text-[13px] text-slate-400 font-medium">No tasks found in {activeTab}</p>
+              </div>
+            ) : (
+              filteredTasks.map((task) => {
+                const overdue = task.deadline ? isOverdue(task.deadline, task.status) : false;
+                const daysLeft = task.deadline ? getDaysLeft(task.deadline) : 0;
+                const config = STATUS_CONFIG[task.status] || STATUS_CONFIG.pending;
+
+                return (
+                  <div 
+                    key={task.id} 
+                    className={`rounded-xl border shadow-sm p-4 transition-all hover:shadow-md ${getEffectiveStatus(task) === 'completed' ? 'bg-emerald-50/30 border-emerald-100' : overdue ? 'bg-white border-red-200 shadow-sm shadow-red-50' : 'bg-white border-slate-100'}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <span className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${PRIORITY_DOT[task.priority]}`} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[14px] font-bold text-slate-900 truncate">{task.title}</p>
+                          <p className="text-[12px] text-slate-500 mt-0.5">{task.client} {task.brand ? `(${task.brand})` : ''} · {task.campaign}</p>
+                        </div>
+                      </div>
+                      <div className="relative">
+                        {overdue && <AlertCircle size={14} className="text-red-500 absolute -left-5 top-1/2 -translate-y-1/2" />}
+                        <select
+                          value={getEffectiveStatus(task)}
+                          onChange={(e) => handleStatusChange(task, e.target.value as TaskStatus)}
+                          className={`appearance-none pl-2.5 pr-8 py-1 rounded-lg text-[12px] font-bold transition-all cursor-pointer outline-none border-none ${STATUS_CONFIG[getEffectiveStatus(task)]?.bg || STATUS_CONFIG.pending.bg} ${STATUS_CONFIG[getEffectiveStatus(task)]?.color || STATUS_CONFIG.pending.color} hover:opacity-80`}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="in_progress">In Progress</option>
+                          <option value="completed">Completed</option>
+                        </select>
+                        <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none text-slate-400" size={12} />
                       </div>
                     </div>
-                    <div className="relative">
-                      {overdue && <AlertCircle size={14} className="text-red-500 absolute -left-5 top-1/2 -translate-y-1/2" />}
-                      <select
-                        value={task.status}
-                        onChange={(e) => handleStatusChange(task, e.target.value as TaskStatus)}
-                        className={`appearance-none pl-2.5 pr-8 py-1 rounded-lg text-[12px] font-bold transition-all cursor-pointer outline-none border-none ${config.bg} ${config.color} hover:opacity-80`}
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="completed">Completed</option>
-                      </select>
-                      <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none text-slate-400" size={12} />
-                    </div>
-                  </div>
 
-                  {/* Audit / Relay History */}
-                  {task.roleNotes && task.roleNotes.length > 0 && (
-                    <div className="mt-4 mb-4 space-y-2 border-t border-slate-100 pt-4">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">History Log:</p>
-                      {task.roleNotes.map((note, idx) => (
-                        <div key={idx} className="bg-slate-50 p-2.5 rounded-lg border border-slate-100/50">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-[11px] font-bold text-slate-700">{note.role} · {note.author}</span>
-                            <span className="text-[10px] text-slate-400">{new Date(note.timestamp).toLocaleDateString()}</span>
+                    {/* Audit / Relay History */}
+                    {task.roleNotes && task.roleNotes.length > 0 && (
+                      <div className="mt-4 mb-4 space-y-2 border-t border-slate-100 pt-4">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">History Log:</p>
+                        {task.roleNotes.map((note, idx) => (
+                          <div key={idx} className="bg-slate-50 p-2.5 rounded-lg border border-slate-100/50">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-[11px] font-bold text-slate-700">{note.role} · {note.author}</span>
+                              <span className="text-[10px] text-slate-400">{new Date(note.timestamp).toLocaleDateString()}</span>
+                            </div>
+                            <p className="text-[12px] text-slate-600 italic leading-relaxed">"{note.message}"</p>
                           </div>
-                          <p className="text-[12px] text-slate-600 italic leading-relaxed">"{note.message}"</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Footer Information */}
-                  <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
-                    <div className={`flex items-center gap-1.5 text-[12px] ${overdue ? 'text-red-600 font-bold' : 'text-slate-500 font-medium'}`}>
-                      <Calendar size={14} />
-                      {overdue ? 'Overdue · ' : ''}{formatDeadline(task.deadline)}
-                      {!overdue && task.status !== 'completed' && (
-                        <span className={`ml-1 ${daysLeft <= 3 ? 'text-red-500 font-bold' : 'text-slate-400'}`}>
-                          ({daysLeft > 0 ? `${daysLeft}d left` : 'Today'})
-                        </span>
-                      )}
-                    </div>
-                    {task.status === 'completed' && (
-                      <div className="flex items-center gap-1 text-[12px] text-emerald-600 font-bold">
-                        <CheckCircle2 size={12} />
-                        {task.forwardedBy ? `Finalized by ${task.forwardedBy}` : 'Task Finalized'}
+                        ))}
                       </div>
                     )}
+
+                    {/* Footer Information */}
+                    <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+                      <div className={`flex items-center gap-1.5 text-[12px] ${overdue ? 'text-red-600 font-bold' : 'text-slate-500 font-medium'}`}>
+                        <Calendar size={14} />
+                        {overdue ? 'Overdue · ' : ''}
+                        {task.deadline ? formatDeadline(task.deadline) : 'No deadline'}
+                        {!overdue && task.status !== 'completed' && task.deadline && (
+                          <span className={`ml-1 ${daysLeft <= 3 ? 'text-red-500 font-bold' : 'text-slate-400'}`}>
+                            ({daysLeft > 0 ? `${daysLeft}d left` : 'Today'})
+                          </span>
+                        )}
+                      </div>
+                      {task.status === 'completed' && (
+                        <div className="flex items-center gap-1 text-[12px] text-emerald-600 font-bold">
+                          <CheckCircle2 size={12} />
+                          {task.forwardedBy ? `Finalized by ${task.forwardedBy}` : 'Task Finalized'}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })
-          )}
+                );
+              })
+            )}
+          </div>
         </div>
 
         {/* Completion Modal */}
@@ -238,7 +247,7 @@ export default function AdsManagerDashboardPage() {
           onClose={() => setIsModalOpen(false)}
           task={selectedTask}
           onComplete={onCompleteTask}
-          userRole="Ads Manager"
+          userRole={user?.role || 'Ads Manager'}
           teamMembers={TEAM_MEMBERS}
         />
       </div>

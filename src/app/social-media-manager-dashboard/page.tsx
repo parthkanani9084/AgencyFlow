@@ -138,7 +138,7 @@ export default function SocialMediaManagerDashboardPage() {
           </div>
           <button 
             onClick={() => setIsAddModalOpen(true)}
-            className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl text-[13px] font-bold transition-all active:scale-[0.98] shadow-md shadow-slate-200"
+            className="inline-flex items-center gap-2 bg-violet-700 hover:bg-violet-800 text-white px-4 py-2.5 rounded-xl text-[13px] font-bold transition-all active:scale-[0.98] shadow-md"
           >
             <Plus size={16} />
             Add New Reel
@@ -276,7 +276,7 @@ export default function SocialMediaManagerDashboardPage() {
               </button>
               <button 
                 onClick={handleAddReel}
-                className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[13px] font-bold transition-all shadow-md active:scale-[0.98]"
+                className="px-6 py-2.5 rounded-xl bg-violet-700 hover:bg-violet-800 text-white text-[13px] font-bold transition-all shadow-md active:scale-[0.98]"
               >
                 Schedule Reel
               </button>

@@ -7,7 +7,7 @@ import { Toaster } from 'sonner';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 
 export default function CampaignManagementPage() {
-  useRoleGuard(['Owner', 'Manager', 'Ads Manager']);
+  useRoleGuard(['Owner', 'Manager', 'Ads Manager', 'Social Media Manager']);
 
   return (
     <AppLayout>

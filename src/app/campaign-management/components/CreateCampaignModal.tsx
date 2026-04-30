@@ -9,7 +9,7 @@ import Modal from '@/components/ui/Modal';
 interface CampaignFormValues {
   name: string;
   client: string;
-  platform: string;
+  platforms: string[];
   objective: string;
   dailyBudget: string;
   location: string;
@@ -59,7 +59,7 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
     defaultValues: {
       name: '',
       client: '',
-      platform: '',
+      platforms: [],
       objective: '',
       dailyBudget: '',
       location: '',
@@ -81,7 +81,7 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
   const handleNext = async (e: React.MouseEvent) => {
     e.preventDefault();
     const fieldsToValidate = step === 1
-      ? (['name', 'platform', 'objective', 'dailyBudget', 'adsAssignee', 'deadline'] as const)
+      ? (['name', 'platforms', 'objective', 'dailyBudget', 'adsAssignee', 'deadline'] as const)
       : ([] as any);
     
     if (fieldsToValidate.length > 0) {
@@ -102,7 +102,7 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
       name: data.name,
       client: data.client,
       status: 'draft' as const,
-      stage: 'Briefing' as const,
+      stage: 'in draft' as const,
       assignee: teamMembers.find((m) => m.id === data.adsAssignee)?.name ?? 'Unassigned',
       assigneeInitials: (teamMembers.find((m) => m.id === data.adsAssignee)?.name ?? 'UN').split(' ').map((n) => n[0]).join(''),
       deadline: data.deadline,
@@ -110,7 +110,7 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
       budget: `₹${Number(data.dailyBudget).toLocaleString()}/day`,
       leads: 0,
       roas: 0,
-      platform: data.platform as any,
+      platform: data.platforms.length > 1 ? 'Multi' : (data.platforms[0] || 'Meta'),
       progress: 0,
       createdAt: new Date().toLocaleDateString(),
     };
@@ -170,18 +170,26 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
 
               <div className="grid grid-cols-2 gap-4">
                 {/* 2. Ad Platform */}
-                <div>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Ad Platform <span className="text-red-500">*</span></label>
-                  <select
-                    className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all bg-white ${errors.platform ? 'border-red-400' : 'border-slate-200'}`}
-                    {...register('platform', { required: 'Select platform' })}
-                  >
-                    <option value="">Select platform…</option>
-                    {['Facebook', 'Instagram', 'Google', 'TikTok', 'LinkedIn', 'Multi'].map((p) => <option key={`plat-${p}`} value={p}>{p}</option>)}
-                  </select>
+                <div className="col-span-2">
+                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-2">Ad Platform <span className="text-red-500">*</span></label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {['Facebook', 'Instagram', 'Google', 'TikTok', 'LinkedIn'].map((p) => (
+                      <label key={`plat-${p}`} className="flex items-center gap-2 rounded-lg cursor-pointer transition-all">
+                        <input
+                          type="checkbox"
+                          value={p}
+                          className="w-4 h-4 rounded text-violet-600 focus:ring-violet-500/20 border-slate-300"
+                          {...register('platforms', { validate: (val) => val.length > 0 || 'Select at least one platform' })}
+                        />
+                        <span className="text-[13px] text-slate-600">{p}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {errors.platforms && <p className="mt-1 text-[11.5px] text-red-600">{errors.platforms.message as string}</p>}
                 </div>
-                {/* 3. Objective */}
-                <div>
+
+                {/* 3. Objective (Moved to full row or separate depending on space) */}
+                <div className="col-span-2">
                   <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Objective <span className="text-red-500">*</span></label>
                   <select
                     className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all bg-white ${errors.objective ? 'border-red-400' : 'border-slate-200'}`}

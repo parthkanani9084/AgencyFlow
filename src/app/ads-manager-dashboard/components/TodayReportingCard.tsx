@@ -64,7 +64,7 @@ export default function TodayReportingCard({ user, campaigns }: TodayReportingCa
       <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50">
         <div className="flex items-center gap-2">
           <TrendingUp size={16} className="text-violet-600" />
-          <h3 className="text-[13.5px] font-bold text-slate-800 uppercase tracking-tight">Today's Performance Overview</h3>
+          <h3 className="text-[13.5px] font-bold text-slate-800 uppercase">Today's Performance Overview</h3>
         </div>
       </div>
       

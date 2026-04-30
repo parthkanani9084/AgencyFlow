@@ -15,10 +15,14 @@ export const reelAgent = {
 
     return reels
       .filter(reel => {
-        // Validation: Must have a valid scheduled date and belong to user
+        // Validation: Must have a valid scheduled date
         const hasValidDate = !!reel.scheduledDate && !isNaN(Date.parse(reel.scheduledDate));
+        
+        // RBAC: Owners, Managers and Social Media Managers see all reels. Others see only their own.
+        const canSeeAll = user.role === 'Owner' || user.role === 'Manager' || user.role === 'Social Media Manager';
         const isAssigned = reel.assignedToUserId === user.id;
-        return hasValidDate && isAssigned;
+        
+        return hasValidDate && (canSeeAll || isAssigned);
       })
       .map(reel => {
         // AI Agent Decision: Map Reel fields to Task interface for UI reuse

@@ -38,7 +38,7 @@ const accentColors = [
 ];
 
 export default function SettingsPage() {
-  useRoleGuard(['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager']);
+  useRoleGuard(['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager', 'Social Media Manager']);
   const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');

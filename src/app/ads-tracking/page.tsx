@@ -74,7 +74,7 @@ const dateRanges = [
 ];
 
 export default function AdsTrackingPage() {
-  useRoleGuard(['Owner', 'Ads Manager']);
+  useRoleGuard(['Owner', 'Ads Manager', 'Social Media Manager']);
   const { user } = useAuth();
   const { adsMetrics, updateAdsMetrics } = useAdsData();
   const [dateRange, setDateRange] = useState('30d');

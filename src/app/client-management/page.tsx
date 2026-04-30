@@ -50,7 +50,7 @@ const emptyForm = {
 };
 
 export default function ClientManagementPage() {
-  useRoleGuard(['Owner', 'Manager','Ads Manager']);
+  useRoleGuard(['Owner', 'Manager', 'Ads Manager', 'Social Media Manager']);
   const { user } = useAuth();
   const { adsMetrics, updateAdsMetrics } = useAdsData();
   const [clients, setClients] = useState<Client[]>(() => {

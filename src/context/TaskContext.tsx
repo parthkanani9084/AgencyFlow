@@ -17,47 +17,94 @@ interface TaskContextType {
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
-export const DEMO_VERSION = 'v1.7'; // Incremented for clean migration
+export const DEMO_VERSION = 'v1.9'; // Incremented to force fresh data sync with 12 tasks
 
 export const INITIAL_TASKS: Task[] = [
+  // --- SHOOTER TASKS ---
   {
-    id: 's1', title: 'Studio Photography: New Arrival Lineup', assignedTo: 'Marco Reyes',
-    role: 'Shooter', client: 'Luxe Apparel', brand: 'Luxe Apparel', campaign: 'Spring Collection Launch', campaignId: 'c_spring',
-    deadline: '2026-04-20', status: 'completed', priority: 'high',
-    description: 'Capture the full spring line-up in the studio.',
-    forwardedBy: 'Marco Reyes',
-    roleNotes: [{ role: 'Shooter', message: 'Uploaded 50+ raw shots. The lighting was set to "Warm Morning".', timestamp: new Date(Date.now() - 172800000).toISOString(), author: 'Marco Reyes' }],
+    id: 't1', title: 'Product Shoot: Summer Footwear', assignedTo: 'Marco Reyes',
+    role: 'Shooter', client: 'Luxe Apparel', campaign: 'Summer Collection',
+    deadline: '2026-05-10', status: 'pending', priority: 'high',
+    description: 'Capture detailed shots of the upcoming footwear line.'
   },
   {
-    id: 's2', title: 'Cinematic Teaser Edit: Spring Lookbook', assignedTo: 'Jin Park',
-    role: 'Editor', client: 'Luxe Apparel', brand: 'Luxe Apparel', campaign: 'Spring Collection Launch', campaignId: 'c_spring',
-    deadline: '2026-04-25', status: 'in_progress', priority: 'high',
-    description: 'Create a cinematic 30s teaser from the studio shots.',
-    forwardedBy: 'Marco Reyes',
-    roleNotes: [{ role: 'Shooter', message: 'Uploaded 50+ raw shots.', timestamp: new Date(Date.now() - 172800000).toISOString(), author: 'Marco Reyes' }],
+    id: 't2', title: 'Lifestyle Photography: Beach Vibes', assignedTo: 'Marco Reyes',
+    role: 'Shooter', client: 'Luxe Apparel', campaign: 'Summer Collection',
+    deadline: '2026-05-12', status: 'in_progress', priority: 'medium',
+    description: 'Outdoor shoot at Santa Monica beach.'
   },
   {
-    id: 's3', title: 'Facebook & IG Ad Setup: Spring Launch', assignedTo: 'Sofia Nguyen',
-    role: 'Ads Manager', client: 'Luxe Apparel', brand: 'Luxe Apparel', campaign: 'Spring Collection Launch', campaignId: 'c_spring',
-    deadline: '2026-05-01', status: 'pending', priority: 'medium',
-    description: 'Setup and deploy Meta ads for the Spring collection.',
-    forwardedBy: 'Jin Park',
+    id: 't3', title: 'Studio Session: Accessory Closeups', assignedTo: 'Marco Reyes',
+    role: 'Shooter', client: 'TechWorld', campaign: 'Cyber-Week Sale',
+    deadline: '2026-04-20', status: 'completed', priority: 'low',
+    description: 'Focus on small gadgets and accessories.',
+    roleNotes: [{ role: 'Shooter', message: 'All raws uploaded to the main server.', timestamp: new Date(Date.now() - 864000000).toISOString(), author: 'Marco Reyes' }]
+  },
+
+  // --- EDITOR TASKS ---
+  {
+    id: 't4', title: 'Color Grading: Spring Lookbook', assignedTo: 'Jin Park',
+    role: 'Editor', client: 'Luxe Apparel', campaign: 'Spring Launch',
+    deadline: '2026-05-15', status: 'pending', priority: 'high',
+    description: 'Apply the warm morning preset to all shots.'
+  },
+  {
+    id: 't5', title: 'Reel Edit: 15s Product Teaser', assignedTo: 'Jin Park',
+    role: 'Editor', client: 'TechWorld', campaign: 'Cyber-Week Sale',
+    deadline: '2026-05-18', status: 'in_progress', priority: 'medium',
+    description: 'Fast-paced edit with energetic music.'
+  },
+  {
+    id: 't6', title: 'Final Export: Cinematic Campaign Video', assignedTo: 'Jin Park',
+    role: 'Editor', client: 'Global Fit', campaign: 'Brand Awareness',
+    deadline: '2026-04-25', status: 'completed', priority: 'high',
+    description: 'Deliver in 4K for YouTube and 1080p for IG.',
     roleNotes: [
-      { role: 'Shooter', message: 'Uploaded 50+ raw shots.', timestamp: new Date(Date.now() - 259200000).toISOString(), author: 'Marco Reyes' },
-      { role: 'Editor', message: 'Promo edit finalized with brand colors.', timestamp: new Date(Date.now() - 86400000).toISOString(), author: 'Jin Park' }
-    ],
+      { role: 'Shooter', message: 'Raw footage provided.', timestamp: new Date(Date.now() - 1728000000).toISOString(), author: 'Marco Reyes' },
+      { role: 'Editor', message: 'Final exports uploaded to Dropbox.', timestamp: new Date(Date.now() - 864000000).toISOString(), author: 'Jin Park' }
+    ]
+  },
+
+  // --- ADS MANAGER TASKS ---
+  {
+    id: 't7', title: 'Ad Set Creation: Meta Conversion Ads', assignedTo: 'Sofia Nguyen',
+    role: 'Ads Manager', client: 'Luxe Apparel', campaign: 'Summer Sale',
+    deadline: '2026-05-20', status: 'pending', priority: 'high',
+    description: 'Targeting women aged 18-35 interested in sustainable fashion.'
   },
   {
-    id: 'w2', title: 'Multi-Channel Campaign Deployment: Cyber-Week', assignedTo: 'Sofia Nguyen',
-    role: 'Ads Manager', client: 'TechWorld', brand: 'TechWorld', campaign: 'Cyber-Week Sale', campaignId: 'c_cyber',
-    deadline: '2026-05-01', status: 'in_progress', priority: 'high',
-    description: 'Scaling ads across Meta, TikTok, and Google.',
-    forwardedBy: 'Jin Park',
-    platform: 'Meta', budget: 15000, spent: 4500, leads: 820,
-    roleNotes: [
-      { role: 'Shooter', message: 'Product photography finished.', timestamp: new Date(Date.now() - 345600000).toISOString(), author: 'Marco Reyes' },
-      { role: 'Editor', message: 'Vertical and horizontal edits delivered.', timestamp: new Date(Date.now() - 172800000).toISOString(), author: 'Jin Park' }
-    ],
+    id: 't8', title: 'Budget Optimization: Google Search Ads', assignedTo: 'Sofia Nguyen',
+    role: 'Ads Manager', client: 'TechWorld', campaign: 'Electronics Extravaganza',
+    deadline: '2026-05-22', status: 'in_progress', priority: 'medium',
+    description: 'Adjusting bids based on top performing keywords.'
+  },
+  {
+    id: 't9', title: 'Performance Audit: Q1 Meta Retargeting', assignedTo: 'Sofia Nguyen',
+    role: 'Ads Manager', client: 'Beauty Glow', campaign: 'Always-On Retargeting',
+    deadline: '2026-04-28', status: 'completed', priority: 'low',
+    description: 'Analyze pixel performance and ROAS.',
+    roleNotes: [{ role: 'Ads Manager', message: 'ROAS improved by 20% after audience refresh.', timestamp: new Date(Date.now() - 432000000).toISOString(), author: 'Sofia Nguyen' }]
+  },
+
+  // --- MANAGER TASKS ---
+  {
+    id: 't10', title: 'Client Strategy Meeting: Q3 Roadmap', assignedTo: 'Priya Sharma',
+    role: 'Manager', client: 'Luxe Apparel', campaign: 'Q3 Strategy',
+    deadline: '2026-05-25', status: 'pending', priority: 'high',
+    description: 'Drafting the marketing objectives for the next quarter.'
+  },
+  {
+    id: 't11', title: 'Resource Planning: New Hire Onboarding', assignedTo: 'Priya Sharma',
+    role: 'Manager', client: 'Internal', campaign: 'Team Growth',
+    deadline: '2026-05-28', status: 'in_progress', priority: 'medium',
+    description: 'Finalizing the training modules for new editors.'
+  },
+  {
+    id: 't12', title: 'Contract Renewal: TechWorld Partnership', assignedTo: 'Priya Sharma',
+    role: 'Manager', client: 'TechWorld', campaign: 'Account Management',
+    deadline: '2026-04-30', status: 'completed', priority: 'high',
+    description: 'Review and sign the annual service agreement.',
+    roleNotes: [{ role: 'Manager', message: 'Agreement signed and uploaded to legal folder.', timestamp: new Date(Date.now() - 86400000).toISOString(), author: 'Priya Sharma' }]
   }
 ];
 
@@ -133,7 +180,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         let roleNotes = [...(task.roleNotes || [])];
         if (isCompleting && notes) {
           const newNote: TaskNote = {
-            role: (user?.role as TaskRole) || task.role,
+            role: task.role, // Capture the stage/role of the task when note was added
             message: notes,
             timestamp,
             author: user?.name || 'Team Member'

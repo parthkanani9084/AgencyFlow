@@ -21,35 +21,26 @@ export const reelService = {
     await new Promise(resolve => setTimeout(resolve, 500));
 
     const savedReels = typeof window !== 'undefined' ? localStorage.getItem('agencyflow_reels') : null;
-    let reels: Reel[] = savedReels ? JSON.parse(savedReels) : [
-      {
-        id: 'r1',
-        title: 'Spring Collection Reel #1',
-        campaignId: 'c_spring',
-        assignedToUserId: userId,
-        scheduledDate: new Date(Date.now() + 86400000).toISOString(),
-        status: 'Production',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: 'r2',
-        title: 'Behind the Scenes: Luxe Shoot',
-        campaignId: 'c_spring',
-        assignedToUserId: userId,
-        scheduledDate: new Date(Date.now() + 172800000).toISOString(),
-        status: 'Production',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: 'r3',
-        title: 'Cyber Week Teaser #1',
-        campaignId: 'c_cyber',
-        assignedToUserId: userId,
-        scheduledDate: new Date(Date.now() - 86400000).toISOString(),
-        status: 'Upload',
-        createdAt: new Date().toISOString()
-      }
-    ];
+    let reels: Reel[] = savedReels ? JSON.parse(savedReels) : [];
+
+    // For Demo purposes: If we have fewer than 5 reels, inject a robust set of dummy data
+    if (reels.length < 5) {
+      const dummyReels: Reel[] = [
+        { id: 'r1', title: 'Spring Collection Reel #1', campaignId: 'c_spring', assignedToUserId: userId, scheduledDate: new Date(Date.now() + 86400000).toISOString(), status: 'Production', createdAt: new Date().toISOString() },
+        { id: 'r2', title: 'Behind the Scenes: Luxe Shoot', campaignId: 'c_spring', assignedToUserId: userId, scheduledDate: new Date(Date.now() + 172800000).toISOString(), status: 'Production', createdAt: new Date().toISOString() },
+        { id: 'r3', title: 'Cyber Week Teaser #1', campaignId: 'c_cyber', assignedToUserId: userId, scheduledDate: new Date(Date.now() - 86400000).toISOString(), status: 'Production', createdAt: new Date().toISOString() },
+        { id: 'r4', title: 'Trending Gear Review', campaignId: 'c_cyber', assignedToUserId: userId, scheduledDate: new Date(Date.now() + 259200000).toISOString(), status: 'Scheduled', createdAt: new Date().toISOString() },
+        { id: 'r5', title: 'Daily Driver Spotlight', campaignId: 'c_gt', assignedToUserId: userId, scheduledDate: new Date(Date.now() + 345600000).toISOString(), status: 'Scheduled', createdAt: new Date().toISOString() },
+        { id: 'r6', title: 'Customer Success Story', campaignId: 'c_gt', assignedToUserId: userId, scheduledDate: new Date(Date.now()).toISOString(), status: 'Production', createdAt: new Date().toISOString() },
+        { id: 'r7', title: 'Product Unboxing: 4K Camera', campaignId: 'c_cyber', assignedToUserId: userId, scheduledDate: new Date(Date.now() - 172800000).toISOString(), status: 'Upload', createdAt: new Date().toISOString() },
+        { id: 'r8', title: 'How-To: Professional Lighting', campaignId: 'c_spring', assignedToUserId: userId, scheduledDate: new Date(Date.now() - 259200000).toISOString(), status: 'Upload', createdAt: new Date().toISOString() },
+        { id: 'r9', title: 'Weekend Vlog Teaser', campaignId: 'c_gt', assignedToUserId: userId, scheduledDate: new Date(Date.now() + 432000000).toISOString(), status: 'Scheduled', createdAt: new Date().toISOString() },
+      ];
+      
+      // Merge and remove duplicates by ID
+      const allReels = [...reels, ...dummyReels];
+      reels = Array.from(new Map(allReels.map(r => [r.id, r])).values());
+    }
 
     // AI Agent enrichment: Attach clientName via relations
     return reelAgent.enrichReelData(reels, MOCK_CAMPAIGNS);

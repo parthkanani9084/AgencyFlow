@@ -35,16 +35,20 @@ function getDaysLeft(deadline: string) {
   return Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000);
 }
 
-const teamMembers = [
-  { id: 'tm3', name: 'Sofia Nguyen', role: 'Ads Manager' },
-  { id: 'tm5', name: 'Sofia Nguyen', role: 'Ads Manager' },
-];
+  const teamMembers = [
+    { id: 'm1', name: 'Alex Owens', role: 'Owner' },
+    { id: 'm2', name: 'Priya Sharma', role: 'Manager' },
+    { id: 'm3', name: 'Marco Reyes', role: 'Shooter' },
+    { id: 'm4', name: 'Jin Park', role: 'Editor' },
+    { id: 'm5', name: 'Sofia Nguyen', role: 'Ads Manager' },
+    { id: 'm7', name: 'Sam Rivera', role: 'Social Media Manager' },
+  ];
 
 export default function EditorDashboardPage() {
-  useRoleGuard(['Owner', 'Editor']);
+  useRoleGuard(['Owner', 'Manager', 'Editor']);
   const { user } = useAuth();
   const { tasks: allTasks, updateTask } = useTasks();
-  const tasks = allTasks.filter(t => t.role === 'Editor');
+
   const [activeTab, setActiveTab] = useState<TaskStatus>('pending');
   const [mounted, setMounted] = React.useState(false);
 
@@ -55,11 +59,20 @@ export default function EditorDashboardPage() {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const tasks = allTasks.filter(t => 
+    t.role === 'Editor' || t.roleNotes?.some(n => n.role === 'Editor')
+  );
+
+  const getEffectiveStatus = (t: Task): TaskStatus => {
+    const isHandedOff = t.role !== 'Editor' && t.roleNotes?.some(n => n.role === 'Editor');
+    if (isHandedOff) return 'completed';
+    return t.status as TaskStatus;
+  };
 
   const stats = {
-    pending: tasks.filter((t) => t.status === 'pending').length,
-    inProgress: tasks.filter((t) => t.status === 'in_progress').length,
-    completed: tasks.filter((t) => t.status === 'completed').length,
+    pending: tasks.filter((t) => getEffectiveStatus(t) === 'pending').length,
+    inProgress: tasks.filter((t) => getEffectiveStatus(t) === 'in_progress').length,
+    completed: tasks.filter((t) => getEffectiveStatus(t) === 'completed').length,
   };
 
   const handleStatusChange = (task: Task, newStatus: TaskStatus) => {
@@ -76,7 +89,7 @@ export default function EditorDashboardPage() {
     updateTask(taskId, { status: 'completed' }, notes, nextMember, screenshot);
   };
 
-  const filteredTasks = tasks.filter(t => t.status === activeTab);
+  const filteredTasks = tasks.filter(t => getEffectiveStatus(t) === activeTab);
 
   if (!mounted) return <div className="min-h-screen bg-slate-50" />;
 
@@ -161,11 +174,13 @@ export default function EditorDashboardPage() {
                 const overdue = isOverdue(task.deadline, task.status as TaskStatus);
                 const daysLeft = getDaysLeft(task.deadline);
 
+                const displayStatus = getEffectiveStatus(task);
+
                 return (
                   <div
                     key={task.id}
                     className={`rounded-xl border shadow-sm p-4 transition-all ${
-                      task.status === 'completed' 
+                      displayStatus === 'completed' 
                         ? 'bg-emerald-50/30 border-emerald-100' 
                         : overdue 
                           ? 'bg-white border-red-200' 
@@ -183,15 +198,18 @@ export default function EditorDashboardPage() {
                       <div className="relative">
                         {overdue && <AlertCircle size={14} className="text-red-500 absolute -left-5 top-1/2 -translate-y-1/2" />}
                         <select
-                          value={task.status}
+                          value={displayStatus}
+                          disabled={task.role !== 'Editor' && user?.role !== 'Owner' && user?.role !== 'Manager'}
                           onChange={(e) => handleStatusChange(task, e.target.value as TaskStatus)}
-                          className={`appearance-none pl-2.5 pr-8 py-1 rounded-lg text-[12px] font-medium transition-all cursor-pointer outline-none border-none ${(statusConfig[task.status] || statusConfig.pending).bg} ${(statusConfig[task.status] || statusConfig.pending).color} hover:opacity-80`}
+                          className={`appearance-none pl-2.5 pr-8 py-1 rounded-lg text-[12px] font-medium transition-all outline-none border-none ${(statusConfig[displayStatus] || statusConfig.pending).bg} ${(statusConfig[displayStatus] || statusConfig.pending).color} ${(task.role === 'Editor' || user?.role === 'Owner' || user?.role === 'Manager') ? 'cursor-pointer hover:opacity-80' : 'cursor-not-allowed opacity-70'}`}
                         >
                           <option value="pending">Pending</option>
                           <option value="in_progress">In Progress</option>
                           <option value="completed">Completed</option>
                         </select>
-                        <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none text-slate-400" size={12} />
+                        {(task.role === 'Editor' || user?.role === 'Owner' || user?.role === 'Manager') && (
+                          <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none text-slate-400" size={12} />
+                        )}
                       </div>
                     </div>
 
@@ -231,12 +249,14 @@ export default function EditorDashboardPage() {
                         <Film size={12} />
                         From: {task.fromShooter || 'Shooter'}
                       </div>
-                      {task.status === 'completed' && (
-                        <div className="flex items-center gap-1 text-[12px] text-emerald-600 font-medium ml-auto">
-                          <CheckCircle2 size={12} />
-                          {task.forwardedBy ? `Passed to ${task.assignedTo} (${task.role})` : 'Task Finalized'}
-                        </div>
-                      )}
+                      <div className="flex items-center gap-1 text-[12px] font-medium ml-auto">
+                        {(task.status === 'completed' || (task.role !== 'Editor' && task.roleNotes?.some(n => n.role === 'Editor'))) && (
+                          <div className="flex items-center gap-1 text-emerald-600 font-medium">
+                            <CheckCircle2 size={12} />
+                            {task.role !== 'Editor' ? `Passed to ${task.assignedTo} (${task.role})` : 'Task Finalized'}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -250,7 +270,7 @@ export default function EditorDashboardPage() {
           onClose={() => setIsModalOpen(false)}
           task={selectedTask}
           onComplete={onCompleteTask}
-          userRole="Editor"
+          userRole={user?.role || 'Editor'}
           teamMembers={teamMembers}
         />
       </div>

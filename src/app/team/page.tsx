@@ -56,7 +56,7 @@ const initialMembers: TeamMember[] = [
 const emptyForm = { name: '', email: '', role: 'Shooter' as UserRole };
 
 export default function TeamPage() {
-  useRoleGuard(['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager']);
+  useRoleGuard(['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager', 'Social Media Manager']);
 
   const [members, setMembers] = useState<TeamMember[]>(initialMembers);
   const [search, setSearch] = useState('');

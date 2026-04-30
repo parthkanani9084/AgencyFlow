@@ -41,7 +41,7 @@ type FilterTab = 'all' | 'unread';
  * Refactored for simplicity, flat logic, and strict global typing.
  */
 export default function NotificationsPage() {
-  useRoleGuard(['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager']);
+  useRoleGuard(['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager', 'Social Media Manager']);
   const { notifications, markNotifRead, clearNotifications } = useTasks();
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [mounted, setMounted] = useState(false);

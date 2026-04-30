@@ -1,22 +1,36 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import Modal from '@/components/ui/Modal';
-import { History, User, Clock, CheckCircle2, ArrowRight, Activity, DollarSign, Tag, Layers, Calendar, UserPlus } from 'lucide-react';
+import { 
+  History, 
+  Clock, 
+  ArrowRight, 
+  Activity, 
+  DollarSign, 
+  Tag, 
+  Layers, 
+  Calendar, 
+  UserPlus,
+  ChevronDown,
+  Search,
+  TrendingUp,
+  BarChart3
+} from 'lucide-react';
 import { auditService } from '@/lib/services/auditService';
-import { Campaign } from '@/types';
+import { Campaign, AuditLog } from '@/types';
 
-const fieldLabels: Record<string, { label: string; icon: React.ElementType; color: string }> = {
-  name: { label: 'Campaign Name', icon: Tag, color: 'text-blue-600' },
-  status: { label: 'Status Change', icon: Activity, color: 'text-emerald-600' },
-  stage: { label: 'Workflow Stage', icon: Layers, color: 'text-violet-600' },
-  budget: { label: 'Budget Adjusted', icon: DollarSign, color: 'text-amber-600' },
-  deadline: { label: 'Deadline Moved', icon: Calendar, color: 'text-rose-600' },
-  assignee: { label: 'Assignee Changed', icon: UserPlus, color: 'text-indigo-600' },
-  platform: { label: 'Platform Updated', icon: Activity, color: 'text-sky-600' },
-  leads: { label: 'Leads Updated', icon: Activity, color: 'text-emerald-600' },
-  roas: { label: 'ROAS Logged', icon: Activity, color: 'text-emerald-600' },
-  spend: { label: 'Spend Logged', icon: DollarSign, color: 'text-amber-600' },
+const fieldLabels: Record<string, { label: string; icon: React.ElementType }> = {
+  name: { label: 'Campaign Name', icon: Tag },
+  status: { label: 'Status', icon: Activity },
+  stage: { label: 'Workflow Stage', icon: Layers },
+  budget: { label: 'Budget', icon: DollarSign },
+  deadline: { label: 'Deadline', icon: Calendar },
+  assignee: { label: 'Assignee', icon: UserPlus },
+  platform: { label: 'Platform', icon: Activity },
+  leads: { label: 'Leads', icon: TrendingUp },
+  roas: { label: 'ROAS', icon: BarChart3 },
+  spend: { label: 'Spend', icon: DollarSign },
 };
 
 interface Props {
@@ -26,95 +40,151 @@ interface Props {
 }
 
 export default function CampaignHistoryModal({ open, onClose, campaign }: Props) {
-  if (!campaign) return null;
+  const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
 
-  const { totalEdits, history, } = auditService.getEditHistory(campaign);
+  const { totalEdits, history } = useMemo(() => {
+    if (!campaign) return { totalEdits: 0, history: [] };
+    return auditService.getEditHistory(campaign);
+  }, [campaign]);
+
+  const toggleLog = (id: string) => {
+    setExpandedLogs(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const filteredHistory = useMemo(() => {
+    return (history || []);
+  }, [history]);
+
+  if (!campaign) return null;
 
   return (
     <Modal 
       open={open} 
       onClose={onClose} 
-      title="Campaign Edit History" 
-      subtitle={`Detailed audit log for ${campaign.name}`}
+      title="Audit Log" 
+      subtitle={campaign.name}
       size="lg"
     >
-      <div className="p-6">
-        {/* Summary Stats */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-            <div className="flex items-center gap-2 mb-1 text-slate-500">
-              <History size={14} />
-              <span className="text-[11px] font-bold uppercase tracking-wider">Total Edits</span>
-            </div>
-            <p className="text-[20px] font-bold text-slate-900">{totalEdits}</p>
+      <div className="flex flex-col h-[70vh]">
+        {/* Header: Info */}
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-1.5 text-[13px] font-semibold text-slate-900">
+            <History size={16} className="text-violet-500" />
+            <span>Audit Trail</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-[12px] text-slate-500">
+            <span><strong className="text-slate-900">{totalEdits}</strong> Total Changes</span>
           </div>
         </div>
 
-        {/* Timeline */}
-        <div className="space-y-6 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[1px] before:bg-slate-200">
-          {history.length === 0 ? (
-            <div className="pl-8 py-4 text-center text-slate-400 text-[13px]">
-              No edit history found for this campaign.
+        {/* List Content */}
+        <div className="flex-1 overflow-y-auto px-6 py-4 bg-white">
+          {filteredHistory.length === 0 ? (
+            <div className="py-20 text-center">
+              <p className="text-[13px] text-slate-400">No activity logs found for this campaign.</p>
             </div>
           ) : (
-            history.map((log, idx) => (
-              <div key={log.id || idx} className="relative pl-8">
-                <div className="absolute left-0 top-1.5 w-[22px] h-[22px] rounded-full bg-white border-2 border-violet-500 flex items-center justify-center z-10 shadow-sm">
-                  <div className="w-1.5 h-1.5 rounded-full bg-violet-600" />
-                </div>
-                
-                <div className="bg-white border border-slate-100 rounded-xl p-4 shadow-sm hover:border-violet-200 transition-colors">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-600">
-                        {log.editedBy.name.charAt(0)}
-                      </div>
-                      <span className="text-[13px] font-bold text-slate-900">{log.editedBy.name}</span>
-                      <span className="text-[11px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 font-medium">{log.editedBy.role}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-slate-400">
-                      <Clock size={12} />
-                      <span className="text-[11.5px] font-medium">{new Date(log.timestamp).toLocaleString()}</span>
-                    </div>
-                  </div>
+            <div className="space-y-1">
+              {filteredHistory.map((log) => {
+                const logId = log.id || `${log.timestamp}-${log.editedBy.userId}`;
+                const isExpanded = expandedLogs.has(logId);
+                const changeCount = Object.keys(log.changes || {}).length;
 
-                  {log.changes && Object.keys(log.changes).length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-slate-50 space-y-3">
-                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Audit Details</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-                        {Object.entries(log.changes).map(([field, vals]: [string, any]) => {
-                          const config = fieldLabels[field] || { label: field, icon: Activity, color: 'text-slate-500' };
-                          const FieldIcon = config.icon;
-                          
-                          return (
-                            <div key={field} className="group">
-                              <div className="flex items-center gap-1.5 mb-1.5">
-                                <FieldIcon size={12} className={config.color} />
-                                <span className="text-[11.5px] font-bold text-slate-700">{config.label}</span>
-                              </div>
-                              <div className="flex items-center gap-2 bg-slate-50/50 p-2 rounded-lg border border-slate-100 group-hover:border-violet-100 transition-colors">
-                                <span className="text-[12px] text-slate-400 line-through truncate max-w-[90px]">{String(vals.from || 'None')}</span>
-                                <ArrowRight size={12} className="text-slate-300 flex-shrink-0" />
-                                <span className="text-[12px] text-slate-900 font-bold truncate max-w-[120px]">{String(vals.to || 'None')}</span>
-                              </div>
-                            </div>
-                          );
-                        })}
+                return (
+                  <div key={logId} className="group border-b border-slate-50 last:border-0">
+                    <div 
+                      onClick={() => toggleLog(logId)}
+                      className="flex items-center py-3.5 px-2 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
+                    >
+                      {/* Left: User Info */}
+                      <div className="flex items-center gap-3 w-[200px] shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[11px] font-bold text-slate-600 border border-slate-200">
+                          {log.editedBy.name.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[13px] font-semibold text-slate-900 truncate">{log.editedBy.name}</p>
+                          <p className="text-[11px] text-slate-400 font-medium uppercase tracking-tight">{log.editedBy.role}</p>
+                        </div>
+                      </div>
+
+                      {/* Center: Activity Summary */}
+                      <div className="flex-1 min-w-0 px-4">
+                        <p className="text-[13px] text-slate-600 truncate">
+                          Updated <span className="font-semibold text-violet-600">{changeCount}</span> {changeCount === 1 ? 'field' : 'fields'}
+                          <span className="text-slate-400 mx-2">•</span>
+                          <span className="text-slate-400">
+                            {Object.keys(log.changes || {}).map(f => fieldLabels[f]?.label || f).join(', ')}
+                          </span>
+                        </p>
+                      </div>
+
+                      {/* Right: Timestamp & Action */}
+                      <div className="flex items-center gap-4 shrink-0">
+                        <div className="text-right">
+                          <p className="text-[12px] font-medium text-slate-900">
+                            {new Date(log.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </p>
+                          <p className="text-[11px] text-slate-400">
+                            {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                        <ChevronDown 
+                          size={16} 
+                          className={`text-slate-300 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+                        />
                       </div>
                     </div>
-                  )}
-                </div>
-              </div>
-            ))
+
+                    {/* Detailed Diff View */}
+                    {isExpanded && (
+                      <div className="ml-11 mr-2 mb-4 bg-slate-50/50 rounded-xl border border-slate-100 overflow-hidden animate-in slide-in-from-top-2 duration-200">
+                        <div className="divide-y divide-slate-100">
+                          {Object.entries(log.changes || {}).map(([field, vals]: [string, any]) => {
+                            const config = fieldLabels[field] || { label: field, icon: Activity };
+                            const Icon = config.icon;
+                            return (
+                              <div key={field} className="flex items-center gap-4 p-3 px-4">
+                                <div className="w-6 h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
+                                  <Icon size={12} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">{config.label}</p>
+                                  <div className="flex items-center gap-3 mt-0.5">
+                                    <span className="text-[12.5px] text-slate-400 line-through truncate max-w-[150px]">
+                                      {String(vals.from || 'Empty')}
+                                    </span>
+                                    <ArrowRight size={12} className="text-slate-300 shrink-0" />
+                                    <span className="text-[12.5px] text-slate-900 font-bold">
+                                      {String(vals.to || 'Empty')}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
 
-        <div className="mt-8 flex justify-end">
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/30">
+          <p className="text-[12px] text-slate-400 italic">Logs are immutable and reflect real-time activity.</p>
           <button 
             onClick={onClose}
-            className="px-6 py-2 rounded-lg bg-slate-900 text-white text-[13px] font-semibold hover:bg-slate-800 transition-colors"
+            className="px-6 py-2 bg-slate-900 text-white text-[13px] font-semibold rounded-lg hover:bg-slate-800 transition-all shadow-sm active:scale-95"
           >
-            Close History
+            Done
           </button>
         </div>
       </div>

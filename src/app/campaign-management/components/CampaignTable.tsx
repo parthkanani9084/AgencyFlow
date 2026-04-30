@@ -1,16 +1,19 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Search, Plus, ChevronUp, ChevronDown, ChevronsUpDown, Edit2, Trash2, Eye, X, CheckSquare, Download, Megaphone, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/context/AuthContext';
 import CreateCampaignModal from './CreateCampaignModal';
 import DeleteConfirmModal from './DeleteConfirmModal';
 import EditCampaignModal from './EditCampaignModal';
 import LogPerformanceModal from './LogPerformanceModal';
+import CampaignHistoryModal from './CampaignHistoryModal';
+import { History } from 'lucide-react';
 
 
 type CampaignStatus = 'active' | 'draft' | 'paused' | 'completed' | 'archived';
-type WorkflowStage = 'Briefing' | 'Shooting' | 'Editing' | 'Ads Setup' | 'Ads Live' | 'Review' | 'Completed';
+type WorkflowStage = 'in draft' | 'in review' | 'process' | 'publish';
 type Platform = 'Meta' | 'Facebook' | 'Instagram' | 'Google' | 'TikTok' | 'LinkedIn' | 'Multi';
 
 interface Campaign {
@@ -27,8 +30,8 @@ interface Campaign {
   leads: number;
   roas: number;
   platform: Platform;
-  progress: number;
   createdAt: string;
+  auditLogs?: any[];
   performanceHistory?: {
     id: string;
     date: string;
@@ -39,22 +42,22 @@ interface Campaign {
 }
 
 const allCampaigns: Campaign[] = [
-  { id: 'camp-001', name: 'Spring Collection Launch', client: 'Luma Apparel', status: 'active', stage: 'Ads Live', assignee: 'Sofia Nguyen', assigneeInitials: 'SN', deadline: '04/18/2026', spend: '$8,420', budget: '$12,000', leads: 624, roas: 5.8, platform: 'Meta', progress: 82, createdAt: '03/01/2026' },
-  { id: 'camp-002', name: 'Q2 Lead Generation Drive', client: 'Nexus Capital', status: 'active', stage: 'Ads Live', assignee: 'Sofia Nguyen', assigneeInitials: 'SN', deadline: '04/30/2026', spend: '$12,100', budget: '$18,000', leads: 891, roas: 4.9, platform: 'Google', progress: 91, createdAt: '03/05/2026' },
-  { id: 'camp-003', name: 'Product Reveal Reel', client: 'Orion Fitness', status: 'active', stage: 'Editing', assignee: 'Jin Park', assigneeInitials: 'JP', deadline: '04/12/2026', spend: '$3,200', budget: '$7,500', leads: 210, roas: 3.1, platform: 'TikTok', progress: 45, createdAt: '03/10/2026' },
-  { id: 'camp-004', name: 'B2B Awareness Push', client: 'Synapse Tech', status: 'active', stage: 'Ads Live', assignee: 'Sofia Nguyen', assigneeInitials: 'SN', deadline: '04/25/2026', spend: '$6,750', budget: '$10,000', leads: 178, roas: 4.2, platform: 'LinkedIn', progress: 74, createdAt: '03/12/2026' },
-  { id: 'camp-005', name: 'Summer Sale Blitz', client: 'Coral Beauty', status: 'active', stage: 'Shooting', assignee: 'Marco Reyes', assigneeInitials: 'MR', deadline: '04/10/2026', spend: '$1,800', budget: '$9,000', leads: 94, roas: 2.4, platform: 'Meta', progress: 18, createdAt: '03/20/2026' },
-  { id: 'camp-006', name: 'Reactivation Campaign', client: 'Pulse Nutrition', status: 'active', stage: 'Review', assignee: 'Priya Sharma', assigneeInitials: 'PS', deadline: '04/11/2026', spend: '$4,500', budget: '$6,000', leads: 312, roas: 3.9, platform: 'Meta', progress: 96, createdAt: '02/28/2026' },
-  { id: 'camp-007', name: 'Brand Awareness Wave', client: 'Helios Solar', status: 'paused', stage: 'Ads Setup', assignee: 'Sofia Nguyen', assigneeInitials: 'SN', deadline: '04/22/2026', spend: '$2,100', budget: '$8,500', leads: 67, roas: 1.8, platform: 'Google', progress: 38, createdAt: '03/15/2026' },
-  { id: 'camp-008', name: 'Influencer Collab Push', client: 'Bloom Skincare', status: 'active', stage: 'Editing', assignee: 'Jin Park', assigneeInitials: 'JP', deadline: '04/14/2026', spend: '$5,600', budget: '$11,000', leads: 445, roas: 4.1, platform: 'TikTok', progress: 60, createdAt: '03/18/2026' },
-  { id: 'camp-009', name: 'Retargeting Funnel Q2', client: 'Nexus Capital', status: 'active', stage: 'Ads Live', assignee: 'Sofia Nguyen', assigneeInitials: 'SN', deadline: '05/05/2026', spend: '$7,300', budget: '$14,000', leads: 534, roas: 4.6, platform: 'Multi', progress: 55, createdAt: '03/22/2026' },
-  { id: 'camp-010', name: 'Gym Membership Drive', client: 'Orion Fitness', status: 'draft', stage: 'Briefing', assignee: 'Priya Sharma', assigneeInitials: 'PS', deadline: '04/28/2026', spend: '$0', budget: '$6,000', leads: 0, roas: 0, platform: 'Meta', progress: 5, createdAt: '04/01/2026' },
-  { id: 'camp-011', name: 'End-of-Season Clearance', client: 'Luma Apparel', status: 'completed', stage: 'Completed', assignee: 'Sofia Nguyen', assigneeInitials: 'SN', deadline: '03/31/2026', spend: '$9,800', budget: '$10,000', leads: 728, roas: 5.2, platform: 'Meta', progress: 100, createdAt: '02/15/2026' },
-  { id: 'camp-012', name: 'Tech Event Sponsorship', client: 'Synapse Tech', status: 'active', stage: 'Shooting', assignee: 'Marco Reyes', assigneeInitials: 'MR', deadline: '04/16/2026', spend: '$2,400', budget: '$7,000', leads: 88, roas: 2.1, platform: 'LinkedIn', progress: 22, createdAt: '03/28/2026' },
+  { id: 'camp-001', name: 'Spring Collection Launch', client: 'Luma Apparel', status: 'active', stage: 'publish', assignee: 'Sofia Nguyen', assigneeInitials: 'SN', deadline: '04/18/2026', spend: '$8,420', budget: '$12,000', leads: 624, roas: 5.8, platform: 'Meta', createdAt: '03/01/2026' },
+  { id: 'camp-002', name: 'Q2 Lead Generation Drive', client: 'Nexus Capital', status: 'active', stage: 'publish', assignee: 'Sofia Nguyen', assigneeInitials: 'SN', deadline: '04/30/2026', spend: '$12,100', budget: '$18,000', leads: 891, roas: 4.9, platform: 'Google', createdAt: '03/05/2026' },
+  { id: 'camp-003', name: 'Product Reveal Reel', client: 'Orion Fitness', status: 'active', stage: 'process', assignee: 'Jin Park', assigneeInitials: 'JP', deadline: '04/12/2026', spend: '$3,200', budget: '$7,500', leads: 210, roas: 3.1, platform: 'TikTok', createdAt: '03/10/2026' },
+  { id: 'camp-004', name: 'B2B Awareness Push', client: 'Synapse Tech', status: 'active', stage: 'publish', assignee: 'Sofia Nguyen', assigneeInitials: 'SN', deadline: '04/25/2026', spend: '$6,750', budget: '$10,000', leads: 178, roas: 4.2, platform: 'LinkedIn', createdAt: '03/12/2026' },
+  { id: 'camp-005', name: 'Summer Sale Blitz', client: 'Coral Beauty', status: 'active', stage: 'process', assignee: 'Marco Reyes', assigneeInitials: 'MR', deadline: '04/10/2026', spend: '$1,800', budget: '$9,000', leads: 94, roas: 2.4, platform: 'Meta', createdAt: '03/20/2026' },
+  { id: 'camp-006', name: 'Reactivation Campaign', client: 'Pulse Nutrition', status: 'active', stage: 'in review', assignee: 'Priya Sharma', assigneeInitials: 'PS', deadline: '04/11/2026', spend: '$4,500', budget: '$6,000', leads: 312, roas: 3.9, platform: 'Meta', createdAt: '02/28/2026' },
+  { id: 'camp-007', name: 'Brand Awareness Wave', client: 'Helios Solar', status: 'paused', stage: 'process', assignee: 'Sofia Nguyen', assigneeInitials: 'SN', deadline: '04/22/2026', spend: '$2,100', budget: '$8,500', leads: 67, roas: 1.8, platform: 'Google', createdAt: '03/15/2026' },
+  { id: 'camp-008', name: 'Influencer Collab Push', client: 'Bloom Skincare', status: 'active', stage: 'process', assignee: 'Jin Park', assigneeInitials: 'JP', deadline: '04/14/2026', spend: '$5,600', budget: '$11,000', leads: 445, roas: 4.1, platform: 'TikTok', createdAt: '03/18/2026' },
+  { id: 'camp-009', name: 'Retargeting Funnel Q2', client: 'Nexus Capital', status: 'active', stage: 'publish', assignee: 'Sofia Nguyen', assigneeInitials: 'SN', deadline: '05/05/2026', spend: '$7,300', budget: '$14,000', leads: 534, roas: 4.6, platform: 'Multi', createdAt: '03/22/2026' },
+  { id: 'camp-010', name: 'Gym Membership Drive', client: 'Orion Fitness', status: 'draft', stage: 'in draft', assignee: 'Priya Sharma', assigneeInitials: 'PS', deadline: '04/28/2026', spend: '$0', budget: '$6,000', leads: 0, roas: 0, platform: 'Meta', createdAt: '04/01/2026' },
+  { id: 'camp-011', name: 'End-of-Season Clearance', client: 'Luma Apparel', status: 'completed', stage: 'publish', assignee: 'Sofia Nguyen', assigneeInitials: 'SN', deadline: '03/31/2026', spend: '$9,800', budget: '$10,000', leads: 728, roas: 5.2, platform: 'Meta', createdAt: '02/15/2026' },
+  { id: 'camp-012', name: 'Tech Event Sponsorship', client: 'Synapse Tech', status: 'active', stage: 'process', assignee: 'Marco Reyes', assigneeInitials: 'MR', deadline: '04/16/2026', spend: '$2,400', budget: '$7,000', leads: 88, roas: 2.1, platform: 'LinkedIn', createdAt: '03/28/2026' },
 ];
 
 const statusOptions: CampaignStatus[] = ['active', 'draft', 'paused', 'completed', 'archived'];
-const stageOptions: WorkflowStage[] = ['Briefing', 'Shooting', 'Editing', 'Ads Setup', 'Ads Live', 'Review', 'Completed'];
+const stageOptions: WorkflowStage[] = ['in draft', 'in review', 'process', 'publish'];
 const platformOptions: Platform[] = ['Meta', 'Facebook', 'Instagram', 'Google', 'TikTok', 'LinkedIn', 'Multi'];
 const clientOptions = [...new Set(allCampaigns.map((c) => c.client))].sort();
 
@@ -67,13 +70,10 @@ const statusBadge: Record<CampaignStatus, string> = {
 };
 
 const stageBadge: Record<WorkflowStage, string> = {
-  'Briefing': 'bg-slate-100 text-slate-600',
-  'Shooting': 'bg-amber-50 text-amber-700',
-  'Editing': 'bg-violet-50 text-violet-700',
-  'Ads Setup': 'bg-blue-50 text-blue-600',
-  'Ads Live': 'bg-emerald-50 text-emerald-700',
-  'Review': 'bg-sky-50 text-sky-700',
-  'Completed': 'bg-slate-100 text-slate-500',
+  'in draft': 'bg-slate-100 text-slate-600',
+  'in review': 'bg-sky-50 text-sky-700',
+  'process': 'bg-violet-50 text-violet-700',
+  'publish': 'bg-emerald-50 text-emerald-700',
 };
 
 const platformBadge: Record<Platform, string> = {
@@ -86,10 +86,11 @@ const platformBadge: Record<Platform, string> = {
   Multi: 'bg-violet-50 text-violet-700',
 };
 
-type SortField = 'name' | 'client' | 'deadline' | 'leads' | 'roas' | 'spend' | 'progress';
+type SortField = 'name' | 'client' | 'deadline' | 'leads' | 'roas' | 'spend';
 type SortDir = 'asc' | 'desc';
 
 export default function CampaignTable() {
+  const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<CampaignStatus | ''>('');
   const [clientFilter, setClientFilter] = useState('');
@@ -104,13 +105,17 @@ export default function CampaignTable() {
   const [editTarget, setEditTarget] = useState<Campaign | null>(null);
   const [logTarget, setLogTarget] = useState<Campaign | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Campaign | null>(null);
-  const [campaigns, setCampaigns] = useState<Campaign[]>(() => {
+  const [historyTarget, setHistoryTarget] = useState<Campaign | null>(null);
+  const [campaigns, setCampaigns] = useState<Campaign[]>(allCampaigns);
+
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('agencyflow_campaigns');
-      return saved ? JSON.parse(saved) : allCampaigns;
+      if (saved) {
+        setCampaigns(JSON.parse(saved));
+      }
     }
-    return allCampaigns;
-  });
+  }, []);
 
   // Persist to localStorage
   React.useEffect(() => {
@@ -121,6 +126,13 @@ export default function CampaignTable() {
 
   const filtered = useMemo(() => {
     let data = campaigns;
+
+    // RBAC: Filter campaigns based on user role
+    // Owners, Managers and Social Media Managers see all campaigns. Others see only assigned campaigns.
+    if (user && user.role !== 'Owner' && user.role !== 'Manager' && user.role !== 'Social Media Manager') {
+      data = data.filter((c) => c.assignee === user.name);
+    }
+
     if (search) data = data.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()) || c.client.toLowerCase().includes(search.toLowerCase()));
     if (statusFilter) data = data.filter((c) => c.status === statusFilter);
     if (clientFilter) data = data.filter((c) => c.client === clientFilter);
@@ -136,7 +148,7 @@ export default function CampaignTable() {
       return sortDir === 'asc' ? cmp : -cmp;
     });
     return data;
-  }, [campaigns, search, statusFilter, clientFilter, stageFilter, platformFilter, sortField, sortDir]);
+  }, [campaigns, user, search, statusFilter, clientFilter, stageFilter, platformFilter, sortField, sortDir]);
 
   const totalPages = Math.ceil(filtered.length / perPage);
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
@@ -359,18 +371,14 @@ export default function CampaignTable() {
                     ROAS <SortIcon field="roas" />
                   </button>
                 </th>
-                <th className="text-left px-3 py-3 text-slate-500 font-semibold">
-                  <button onClick={() => handleSort('progress')} className="flex items-center gap-1 hover:text-slate-700 transition-colors">
-                    Progress <SortIcon field="progress" />
-                  </button>
-                </th>
+
                 <th className="px-4 py-3 w-20 text-slate-500 font-semibold text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
               {paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={13} className="py-16 text-center">
+                  <td colSpan={12} className="py-16 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center">
                         <Megaphone size={22} className="text-slate-400" />
@@ -491,20 +499,7 @@ export default function CampaignTable() {
                           {campaign.roas > 0 ? `${campaign.roas}×` : '—'}
                         </span>
                       </td>
-                      <td className="px-3 py-3 min-w-[120px]">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all ${
-                                campaign.progress >= 80 ? 'bg-emerald-500' :
-                                campaign.progress >= 40 ? 'bg-violet-500': 'bg-amber-400'
-                              }`}
-                              style={{ width: `${campaign.progress}%` }}
-                            />
-                          </div>
-                          <span className="text-[11px] text-slate-500 tabular-nums w-8 text-right">{campaign.progress}%</span>
-                        </div>
-                      </td>
+
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-center gap-0.5">
                             <button
@@ -528,6 +523,15 @@ export default function CampaignTable() {
                             >
                               <Trash2 size={13} />
                             </button>
+                            {user?.role === 'Owner' && (
+                              <button
+                                title="View edit history"
+                                onClick={() => setHistoryTarget(campaign)}
+                                className="p-1.5 rounded-lg hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition-colors"
+                              >
+                                <History size={13} />
+                              </button>
+                            )}
                           </div>
                         </td>
                     </tr>
@@ -648,6 +652,12 @@ export default function CampaignTable() {
         campaign={logTarget}
         onClose={() => setLogTarget(null)}
         onSuccess={handleLogSuccess}
+      />
+
+      <CampaignHistoryModal
+        open={!!historyTarget}
+        onClose={() => setHistoryTarget(null)}
+        campaign={historyTarget as any}
       />
 
       <DeleteConfirmModal
