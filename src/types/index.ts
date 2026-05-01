@@ -5,6 +5,7 @@
 
 // --- Roles ---
 export type UserRole =
+  | "Super Admin"
   | "Owner"
   | "Manager"
   | "Shooter"
@@ -210,4 +211,5 @@ export interface TeamMember {
   joinedAt: string;
   tasksCompleted: number;
   tasksActive: number;
+  agencyName?: string;
 }

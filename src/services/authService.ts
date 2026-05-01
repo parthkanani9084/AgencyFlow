@@ -1,0 +1,46 @@
+import { SUPER_ADMIN_CREDENTIALS, mockOTPs } from '@/mock-data/super-admin';
+import { AuthUser } from '@/types';
+
+export const authService = {
+  async loginWithPassword(email: string, password: string): Promise<{ success: boolean; user?: AuthUser; error?: string }> {
+    if (email === SUPER_ADMIN_CREDENTIALS.email && password === SUPER_ADMIN_CREDENTIALS.password) {
+      const user: AuthUser = {
+        id: 'sa1',
+        name: 'Super Admin',
+        email: email,
+        role: 'Super Admin',
+        avatarInitials: 'SA',
+      };
+      return { success: true, user };
+    }
+    return { success: false, error: 'Invalid credentials' };
+  },
+
+  async requestOTP(email: string): Promise<{ success: boolean; error?: string }> {
+    if (email !== SUPER_ADMIN_CREDENTIALS.email) {
+      return { success: false, error: 'Email not found' };
+    }
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    mockOTPs[email] = otp;
+    console.log(`[MOCK OTP for ${email}]: ${otp}`);
+    return { success: true };
+  },
+
+  async verifyOTP(email: string, otp: string): Promise<{ success: boolean; user?: AuthUser; error?: string }> {
+    // Explicitly allow '123456' for the Super Admin for testing convenience
+    const isHardcodedValid = email === SUPER_ADMIN_CREDENTIALS.email && otp === '123456';
+    
+    if (isHardcodedValid || (mockOTPs[email] && mockOTPs[email] === otp)) {
+      if (mockOTPs[email]) delete mockOTPs[email];
+      const user: AuthUser = {
+        id: 'sa1',
+        name: 'Super Admin',
+        email: email,
+        role: 'Super Admin',
+        avatarInitials: 'SA',
+      };
+      return { success: true, user };
+    }
+    return { success: false, error: 'Invalid OTP' };
+  }
+};

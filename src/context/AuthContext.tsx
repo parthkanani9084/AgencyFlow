@@ -17,6 +17,7 @@ const DEMO_USERS: (AuthUser & { password: string })[] = [
 
 // Role → default landing page
 export const ROLE_HOME: Record<UserRole, string> = {
+  'Super Admin': '/superadmin/dashboard',
   Owner:       '/dashboard',
   Manager:     '/manager-dashboard',
   Shooter:     '/shooter-dashboard',
@@ -27,13 +28,14 @@ export const ROLE_HOME: Record<UserRole, string> = {
 };
 
 // Pages accessible without login
-const PUBLIC_PATHS = ['/sign-up-login-screen'];
+const PUBLIC_PATHS = ['/sign-up-login-screen', '/superadmin/login', '/superadmin/verify'];
 
 // ─── Context shape ────────────────────────────────────────────────────────────
 interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  setAuthenticatedUser: (user: AuthUser) => void;
   logout: () => void;
 }
 
@@ -61,8 +63,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isLoading) return;
     const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+    
+    // 1. Handle authenticated users on public pages
+    if (user && isPublic) {
+      console.log('[AuthGuard] Authenticated user on public page:', { role: user.role, pathname });
+      
+      // Super Admin specifically handles /superadmin/login
+      if (user.role === 'Super Admin') {
+        router.replace(ROLE_HOME['Super Admin']);
+        return;
+      }
+      
+      // Regular users handle other public pages
+      if (user.role !== 'Super Admin' && !pathname.startsWith('/superadmin')) {
+        router.replace(ROLE_HOME[user.role] || '/dashboard');
+        return;
+      }
+    }
+
+    // 2. Handle unauthenticated users on protected pages
     if (!user && !isPublic) {
-      router.replace('/sign-up-login-screen');
+      console.log('[AuthGuard] Unauthenticated user on protected page:', pathname);
+      if (pathname.startsWith('/superadmin')) {
+        router.replace('/superadmin/login');
+      } else {
+        router.replace('/sign-up-login-screen');
+      }
+    } 
+    
+    // 3. Handle unauthorized access to super-admin routes
+    else if (user && pathname.startsWith('/superadmin') && user.role !== 'Super Admin' && !isPublic) {
+      console.log('[AuthGuard] Unauthorized access attempt:', { role: user.role, pathname });
+      router.replace(ROLE_HOME[user.role] || '/dashboard');
     }
   }, [user, isLoading, pathname, router]);
 
@@ -77,14 +109,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { success: true };
   }, []);
 
+  const setAuthenticatedUser = useCallback((user: AuthUser) => {
+    setUser(user);
+    sessionStorage.setItem('af_user', JSON.stringify(user));
+  }, []);
+
   const logout = useCallback(() => {
+    const isSuperAdmin = user?.role === 'Super Admin';
     setUser(null);
     sessionStorage.removeItem('af_user');
-    router.push('/sign-up-login-screen');
-  }, [router]);
+    router.push(isSuperAdmin ? '/superadmin/login' : '/sign-up-login-screen');
+  }, [router, user]);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, setAuthenticatedUser }}>
       {children}
     </AuthContext.Provider>
   );

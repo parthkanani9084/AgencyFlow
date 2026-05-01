@@ -10,7 +10,6 @@ import {
   Users,
   CheckSquare,
   BarChart3,
-  FileUp,
   Bell,
   Settings,
   ChevronLeft,
@@ -24,8 +23,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import type { UserRole } from '@/types';
-import Icon from '@/components/ui/AppIcon';
 import { useTasks } from '@/context/TaskContext';
+import { ROLES } from '@/constants/roles';
 
 
 
@@ -55,29 +54,34 @@ export default function Sidebar() {
 
   const navItems: NavItem[] = [
     // Workspace
-    { id: 'nav-dashboard',     label: 'Dashboard',     icon: LayoutDashboard, href: '/dashboard',             group: 'main',      allowedRoles: ['Owner'] },
-    { id: 'nav-client-profile', label: 'My Profile',    icon: Users,           href: '/client/profile',       group: 'main',      allowedRoles: ['Client'] },
-    { id: 'nav-client-campaigns', label: 'My Campaigns', icon: Megaphone,      href: '/client/campaigns',     group: 'main',      allowedRoles: ['Client'] },
-    { id: 'nav-client-reels',     label: 'My Reels',        icon: Film,            href: '/client/reels',         group: 'main',      allowedRoles: ['Client'] },
-    { id: 'nav-campaigns',     label: 'Campaigns',     icon: Megaphone,       href: '/campaign-management',   badge: 3, group: 'main', allowedRoles: ['Owner', 'Manager','Ads Manager', 'Social Media Manager'] },
-    { id: 'nav-clients',       label: 'Clients',       icon: Briefcase,       href: '/client-management',     group: 'main',      allowedRoles: ['Owner', 'Manager','Ads Manager', 'Social Media Manager'] },
-    { id: 'nav-tasks',         label: 'Tasks',         icon: CheckSquare,     href: '/task-management',       badge: tasks.length, group: 'main', allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager', 'Social Media Manager'] },
+    { id: 'nav-dashboard',     label: 'Dashboard',     icon: LayoutDashboard, href: '/dashboard',             group: 'main',      allowedRoles: [ROLES.OWNER] },
+    { id: 'nav-client-profile', label: 'My Profile',    icon: Users,           href: '/client/profile',       group: 'main',      allowedRoles: [ROLES.CLIENT] },
+    { id: 'nav-client-campaigns', label: 'My Campaigns', icon: Megaphone,      href: '/client/campaigns',     group: 'main',      allowedRoles: [ROLES.CLIENT] },
+    { id: 'nav-client-reels',     label: 'My Reels',        icon: Film,            href: '/client/reels',         group: 'main',      allowedRoles: [ROLES.CLIENT] },
+    { id: 'nav-campaigns',     label: 'Campaigns',     icon: Megaphone,       href: '/campaign-management',   badge: 3, group: 'main', allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
+    { id: 'nav-clients',       label: 'Clients',       icon: Briefcase,       href: '/client-management',     group: 'main',      allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
+    { id: 'nav-tasks',         label: 'Tasks',         icon: CheckSquare,     href: '/task-management',       badge: tasks.length, group: 'main', allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
+    { id: 'nav-sa-dashboard',  label: 'Overview',      icon: LayoutDashboard, href: '/superadmin/dashboard',  group: 'main',      allowedRoles: [ROLES.SUPER_ADMIN] },
+    { id: 'nav-sa-owners',     label: 'Manage Owners', icon: Users,           href: '/superadmin/dashboard',  group: 'main',      allowedRoles: [ROLES.SUPER_ADMIN] },
 
     // Role Dashboards
-    { id: 'nav-manager',       label: 'Manager',       icon: UserCheck,       href: '/manager-dashboard',     group: 'roles',     allowedRoles: ['Owner', 'Manager'] },
-    { id: 'nav-shooter',       label: 'Shooter',       icon: Camera,          href: '/shooter-dashboard',     group: 'roles',     allowedRoles: ['Owner', 'Shooter'] },
-    { id: 'nav-editor',        label: 'Editor',        icon: Film,            href: '/editor-dashboard',      group: 'roles',     allowedRoles: ['Owner', 'Editor'] },
-    { id: 'nav-ads-mgr',       label: 'Ads Manager',   icon: Megaphone,       href: '/ads-manager-dashboard', group: 'roles',     allowedRoles: ['Owner', 'Ads Manager'] },
-    { id: 'nav-social-mgr',    label: 'Social Media',  icon: TrendingUp,      href: '/social-media-manager-dashboard', group: 'roles', allowedRoles: ['Owner', 'Social Media Manager'] },
+    { id: 'nav-manager',       label: 'Manager',       icon: UserCheck,       href: '/manager-dashboard',     group: 'roles',     allowedRoles: [ROLES.OWNER, ROLES.MANAGER] },
+    { id: 'nav-shooter',       label: 'Shooter',       icon: Camera,          href: '/shooter-dashboard',     group: 'roles',     allowedRoles: [ROLES.OWNER, ROLES.SHOOTER] },
+    { id: 'nav-editor',        label: 'Editor',        icon: Film,            href: '/editor-dashboard',      group: 'roles',     allowedRoles: [ROLES.OWNER, ROLES.EDITOR] },
+    { id: 'nav-ads-mgr',       label: 'Ads Manager',   icon: Megaphone,       href: '/ads-manager-dashboard', group: 'roles',     allowedRoles: [ROLES.OWNER, ROLES.ADS_MANAGER] },
+    { id: 'nav-social-mgr',    label: 'Social Media',  icon: TrendingUp,      href: '/social-media-manager-dashboard', group: 'roles', allowedRoles: [ROLES.OWNER, ROLES.SOCIAL_MEDIA_MANAGER] },
 
     // Analytics
-    { id: 'nav-ads',           label: 'Ads Tracking',  icon: TrendingUp,      href: '/ads-tracking',          group: 'analytics', allowedRoles: ['Owner', 'Ads Manager', 'Social Media Manager'] },
-    { id: 'nav-reports',       label: 'Reports',       icon: BarChart3,       href: '/reports',               group: 'analytics', allowedRoles: ['Owner', 'Manager'] },
+    { id: 'nav-ads',           label: 'Ads Tracking',  icon: TrendingUp,      href: '/ads-tracking',          group: 'analytics', allowedRoles: [ROLES.OWNER, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
+    { id: 'nav-reports',       label: 'Reports',       icon: BarChart3,       href: '/reports',               group: 'analytics', allowedRoles: [ROLES.OWNER, ROLES.MANAGER] },
 
     // Account
-    { id: 'nav-team',          label: 'Team',          icon: Users,           href: '/team',                  group: 'settings',  allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager', 'Social Media Manager'] },
-    { id: 'nav-notifications', label: 'Notifications', icon: Bell,            href: '/notifications',         badge: unreadCount > 0 ? unreadCount : undefined, group: 'settings', allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager', 'Social Media Manager'] },
-    { id: 'nav-settings',      label: 'Settings',      icon: Settings,        href: '/settings',              group: 'settings',  allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager', 'Social Media Manager'] },
+    { id: 'nav-team',          label: 'Team',          icon: Users,           href: '/team',                  group: 'settings',  allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
+    { id: 'nav-notifications', label: 'Notifications', icon: Bell,            href: '/notifications',         badge: unreadCount > 0 ? unreadCount : undefined, group: 'settings', allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
+    { id: 'nav-settings',      label: 'Settings',      icon: Settings,        href: '/settings',              group: 'settings',  allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
+    
+    // Super Admin - Settings
+    { id: 'nav-sa-settings',   label: 'System Settings', icon: Settings,      href: '/settings',              group: 'settings',  allowedRoles: [ROLES.SUPER_ADMIN] },
   ];
 
   // Filter nav items to only those the current user's role can access
