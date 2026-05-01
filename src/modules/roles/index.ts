@@ -1,14 +1,15 @@
 import { UserRole } from '@/types';
+import { ROLES } from '@/constants/roles';
 
 export const ROLE_HIERARCHY: Record<UserRole, number> = {
-  'Super Admin': 100,
-  'Owner': 80,
-  'Manager': 60,
-  'Ads Manager': 40,
-  'Social Media Manager': 40,
-  'Editor': 20,
-  'Shooter': 20,
-  'Client': 0,
+  [ROLES.SUPER_ADMIN]: 100,
+  [ROLES.OWNER]: 80,
+  [ROLES.MANAGER]: 60,
+  [ROLES.ADS_MANAGER]: 40,
+  [ROLES.SOCIAL_MEDIA_MANAGER]: 40,
+  [ROLES.EDITOR]: 20,
+  [ROLES.SHOOTER]: 20,
+  [ROLES.CLIENT]: 0,
 };
 
 export const hasPermission = (userRole: UserRole, requiredRole: UserRole): boolean => {

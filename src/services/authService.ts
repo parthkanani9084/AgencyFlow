@@ -1,5 +1,7 @@
 import { SUPER_ADMIN_CREDENTIALS, mockOTPs } from '@/mock-data/super-admin';
 import { AuthUser } from '@/types';
+import { ROLES } from '@/constants/roles';
+import { STATIC_STRINGS } from '@/utils/constants';
 
 export const authService = {
   async loginWithPassword(email: string, password: string): Promise<{ success: boolean; user?: AuthUser; error?: string }> {
@@ -8,12 +10,12 @@ export const authService = {
         id: 'sa1',
         name: 'Super Admin',
         email: email,
-        role: 'Super Admin',
+        role: ROLES.SUPER_ADMIN,
         avatarInitials: 'SA',
       };
       return { success: true, user };
     }
-    return { success: false, error: 'Invalid credentials' };
+    return { success: false, error: STATIC_STRINGS.LOGIN_INVALID_CREDENTIALS };
   },
 
   async requestOTP(email: string): Promise<{ success: boolean; error?: string }> {
@@ -36,11 +38,11 @@ export const authService = {
         id: 'sa1',
         name: 'Super Admin',
         email: email,
-        role: 'Super Admin',
+        role: ROLES.SUPER_ADMIN,
         avatarInitials: 'SA',
       };
       return { success: true, user };
     }
-    return { success: false, error: 'Invalid OTP' };
+    return { success: false, error: STATIC_STRINGS.LOGIN_INVALID_OTP };
   }
 };

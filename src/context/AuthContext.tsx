@@ -3,28 +3,29 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import type { AuthUser, UserRole } from '@/types';
+import { ROLES } from '@/constants/roles';
 
 // ─── Demo credentials (mirrors LoginForm) ─────────────────────────────────────
 const DEMO_USERS: (AuthUser & { password: string })[] = [
-  { id: 'u1', name: 'Alex Owens',    email: 'alex.owens@agencyflow.io',    password: 'Owner@2026',      role: 'Owner',       avatarInitials: 'AO' },
-  { id: 'u2', name: 'Priya Sharma',  email: 'priya.sharma@agencyflow.io',  password: 'Manager@2026',    role: 'Manager',     avatarInitials: 'PS' },
-  { id: 'u3', name: 'Marco Reyes',   email: 'marco.reyes@agencyflow.io',   password: 'Shooter@2026',    role: 'Shooter',     avatarInitials: 'MR' },
-  { id: 'u4', name: 'Jin Park',      email: 'jin.park@agencyflow.io',      password: 'Editor@2026',     role: 'Editor',      avatarInitials: 'JP' },
-  { id: 'u5', name: 'Sofia Nguyen',  email: 'sofia.nguyen@agencyflow.io',  password: 'AdsManager@2026', role: 'Ads Manager', avatarInitials: 'SN' },
-  { id: 'u6', name: 'Jordan Lee',    email: 'jordan.lee@novabrew.com',     password: 'Client@2026',     role: 'Client',      avatarInitials: 'JL' },
-  { id: 'u7', name: 'Sam Rivera',    email: 'sam.rivera@agencyflow.io',    password: 'Social@2026',     role: 'Social Media Manager', avatarInitials: 'SR' },
+  { id: 'u1', name: 'Alex Owens',    email: 'alex.owens@agencyflow.io',    password: 'Owner@2026',      role: ROLES.OWNER,       avatarInitials: 'AO' },
+  { id: 'u2', name: 'Priya Sharma',  email: 'priya.sharma@agencyflow.io',  password: 'Manager@2026',    role: ROLES.MANAGER,     avatarInitials: 'PS' },
+  { id: 'u3', name: 'Marco Reyes',   email: 'marco.reyes@agencyflow.io',   password: 'Shooter@2026',    role: ROLES.SHOOTER,     avatarInitials: 'MR' },
+  { id: 'u4', name: 'Jin Park',      email: 'jin.park@agencyflow.io',      password: 'Editor@2026',     role: ROLES.EDITOR,      avatarInitials: 'JP' },
+  { id: 'u5', name: 'Sofia Nguyen',  email: 'sofia.nguyen@agencyflow.io',  password: 'AdsManager@2026', role: ROLES.ADS_MANAGER, avatarInitials: 'SN' },
+  { id: 'u6', name: 'Jordan Lee',    email: 'jordan.lee@novabrew.com',     password: 'Client@2026',     role: ROLES.CLIENT,      avatarInitials: 'JL' },
+  { id: 'u7', name: 'Sam Rivera',    email: 'sam.rivera@agencyflow.io',    password: 'Social@2026',     role: ROLES.SOCIAL_MEDIA_MANAGER, avatarInitials: 'SR' },
 ];
 
 // Role → default landing page
 export const ROLE_HOME: Record<UserRole, string> = {
-  'Super Admin': '/superadmin/dashboard',
-  Owner:       '/dashboard',
-  Manager:     '/manager-dashboard',
-  Shooter:     '/shooter-dashboard',
-  Editor:      '/editor-dashboard',
-  'Ads Manager': '/ads-manager-dashboard',
-  'Social Media Manager': '/social-media-manager-dashboard',
-  Client:      '/client/campaigns',
+  [ROLES.SUPER_ADMIN]: '/superadmin/dashboard',
+  [ROLES.OWNER]:       '/dashboard',
+  [ROLES.MANAGER]:     '/manager-dashboard',
+  [ROLES.SHOOTER]:     '/shooter-dashboard',
+  [ROLES.EDITOR]:      '/editor-dashboard',
+  [ROLES.ADS_MANAGER]: '/ads-manager-dashboard',
+  [ROLES.SOCIAL_MEDIA_MANAGER]: '/social-media-manager-dashboard',
+  [ROLES.CLIENT]:      '/client/campaigns',
 };
 
 // Pages accessible without login
@@ -69,13 +70,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('[AuthGuard] Authenticated user on public page:', { role: user.role, pathname });
       
       // Super Admin specifically handles /superadmin/login
-      if (user.role === 'Super Admin') {
-        router.replace(ROLE_HOME['Super Admin']);
+      if (user.role === ROLES.SUPER_ADMIN) {
+        router.replace(ROLE_HOME[ROLES.SUPER_ADMIN]);
         return;
       }
       
       // Regular users handle other public pages
-      if (user.role !== 'Super Admin' && !pathname.startsWith('/superadmin')) {
+      if (user.role !== ROLES.SUPER_ADMIN && !pathname.startsWith('/superadmin')) {
         router.replace(ROLE_HOME[user.role] || '/dashboard');
         return;
       }
@@ -92,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } 
     
     // 3. Handle unauthorized access to super-admin routes
-    else if (user && pathname.startsWith('/superadmin') && user.role !== 'Super Admin' && !isPublic) {
+    else if (user && pathname.startsWith('/superadmin') && user.role !== ROLES.SUPER_ADMIN && !isPublic) {
       console.log('[AuthGuard] Unauthorized access attempt:', { role: user.role, pathname });
       router.replace(ROLE_HOME[user.role] || '/dashboard');
     }
@@ -115,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
-    const isSuperAdmin = user?.role === 'Super Admin';
+    const isSuperAdmin = user?.role === ROLES.SUPER_ADMIN;
     setUser(null);
     sessionStorage.removeItem('af_user');
     router.push(isSuperAdmin ? '/superadmin/login' : '/sign-up-login-screen');

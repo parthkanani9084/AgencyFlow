@@ -41,7 +41,7 @@ const teamMembers = [
 ];
 
 export default function ShooterDashboardPage() {
-  useRoleGuard(['Owner', 'Shooter']);
+  useRoleGuard(['Owner', 'Shooter', 'Manager']);
   const { user } = useAuth();
   const { tasks: allTasks, updateTask } = useTasks();
   const [activeTab, setActiveTab] = useState<TaskStatus>('pending');

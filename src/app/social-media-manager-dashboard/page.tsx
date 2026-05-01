@@ -15,7 +15,7 @@ import { reelAgent } from '@/lib/agent/reelAgent';
 import ReelsSchedule from './components/ReelsSchedule';
 
 export default function SocialMediaManagerDashboardPage() {
-  useRoleGuard(['Owner', 'Social Media Manager']);
+  useRoleGuard(['Owner', 'Social Media Manager', 'Manager']);
   const { user } = useAuth();
   
   const [reels, setReels] = useState<Reel[]>([]);

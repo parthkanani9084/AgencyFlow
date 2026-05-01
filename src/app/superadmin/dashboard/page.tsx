@@ -5,6 +5,7 @@ import SuperAdminDashboardView from '@/modules/super-admin/ui/SuperAdminDashboar
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import { ROLES } from '@/constants/roles';
 
 export default function SuperAdminDashboardPage() {
   const { user, isLoading } = useAuth();
@@ -21,8 +22,8 @@ export default function SuperAdminDashboardPage() {
       router.replace('/superadmin/login');
       return;
     }
-
-    if (user.role !== 'Super Admin') {
+    
+    if (user.role !== ROLES.SUPER_ADMIN) {
       console.log('[SuperAdminDashboardPage] Invalid role:', user.role);
       router.replace('/dashboard');
       return;
@@ -37,7 +38,7 @@ export default function SuperAdminDashboardPage() {
     );
   }
 
-  if (!user || user.role !== 'Super Admin') {
+  if (!user || user.role !== ROLES.SUPER_ADMIN) {
     return null;
   }
 

@@ -17,6 +17,7 @@ import { TeamMember } from '@/types';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import AddEditOwnerModal from './AddEditOwnerModal';
+import { SUPER_ADMIN_ACTIONS, STATIC_STRINGS } from '@/utils/constants';
 
 export default function SuperAdminDashboardView() {
   const { logout, user } = useAuth();
@@ -31,7 +32,7 @@ export default function SuperAdminDashboardView() {
   const fetchOwners = async () => {
     setIsLoading(true);
     try {
-      const result = await superAdminAgent.processAction('get_owners', {});
+      const result = await superAdminAgent.processAction(SUPER_ADMIN_ACTIONS.GET_OWNERS, {});
       if (result.success) {
         setOwners(result.data);
       }
@@ -57,11 +58,11 @@ export default function SuperAdminDashboardView() {
   }, []);
 
   const handleDeleteOwner = async (id: string) => {
-    if (!confirm('Are you sure you want to remove this owner?')) return;
+    if (!confirm(STATIC_STRINGS.DASHBOARD_CONFIRM_DELETE)) return;
     
-    const result = await superAdminAgent.processAction('delete_owner', { id });
+    const result = await superAdminAgent.processAction(SUPER_ADMIN_ACTIONS.DELETE_OWNER, { id });
     if (result.success) {
-      toast.success('Owner removed');
+      toast.success(STATIC_STRINGS.DASHBOARD_OWNER_REMOVED);
       fetchOwners();
     } else {
 
@@ -88,7 +89,7 @@ export default function SuperAdminDashboardView() {
               <ShieldCheck size={20} className='text-white'/>
             </div>
             <div className="h-5 w-[1px] bg-slate-200 hidden sm:block" />
-            <h1 className="text-[15px] font-bold text-slate-900 hidden sm:block">Super Admin Dashboard</h1>
+            <h1 className="text-[15px] font-bold text-slate-900 hidden sm:block">{STATIC_STRINGS.DASHBOARD_TITLE}</h1>
           </div>
         </div>
         
@@ -118,7 +119,7 @@ export default function SuperAdminDashboardView() {
                   <div className="w-8 h-8 rounded-lg bg-white-100 flex items-center justify-center group-hover/item:bg-red-100/50 transition-colors">
                     <LogOut size={16} />
                   </div>
-                  Logout
+                  {STATIC_STRINGS.DASHBOARD_LOGOUT}
                 </button>
               </div>
             </div>
@@ -134,7 +135,7 @@ export default function SuperAdminDashboardView() {
               <Building2 size={24} />
             </div>
             <div>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Total Agencies</p>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{STATIC_STRINGS.DASHBOARD_TOTAL_AGENCIES}</p>
               <p className="text-2xl font-bold text-slate-900">{owners.length}</p>
             </div>
           </div>
@@ -156,9 +157,9 @@ export default function SuperAdminDashboardView() {
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
    <div>
-              <h2 className="text-[15px] font-bold text-slate-900">All Agency Owners</h2>
+              <h2 className="text-[15px] font-bold text-slate-900">{STATIC_STRINGS.DASHBOARD_ALL_AGENCY_OWNERS}</h2>
               
-              <p className="text-[13px] text-slate-600 mt-1">Manage all agency owner accounts and their access.</p>
+              <p className="text-[13px] text-slate-600 mt-1">{STATIC_STRINGS.DASHBOARD_MANAGE_DESCRIPTION}</p>
    </div>
             
             <div className="flex items-center gap-3">
@@ -168,7 +169,7 @@ export default function SuperAdminDashboardView() {
                 className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg text-[13px] font-bold transition-all whitespace-nowrap"
               >
                 <Plus size={16} />
-                Create Owner
+                {STATIC_STRINGS.DASHBOARD_CREATE_OWNER}
               </button>
             </div>
           </div>
@@ -177,12 +178,12 @@ export default function SuperAdminDashboardView() {
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Owner</th>
-                  <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">E-mail</th>
-                  <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Agency</th>
-                  <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Joined</th>
+                  <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">{STATIC_STRINGS.TABLE_OWNER}</th>
+                  <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">{STATIC_STRINGS.TABLE_EMAIL}</th>
+                  <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">{STATIC_STRINGS.TABLE_AGENCY}</th>
+                  <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">{STATIC_STRINGS.TABLE_JOINED}</th>
 
-                  <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+                  <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">{STATIC_STRINGS.TABLE_ACTIONS}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -195,7 +196,7 @@ export default function SuperAdminDashboardView() {
                 ) : filteredOwners.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center text-slate-400 text-[13px]">
-                      No owners found.
+                      {STATIC_STRINGS.DASHBOARD_NO_OWNERS}
                     </td>
                   </tr>
                 ) : (
@@ -258,7 +259,7 @@ export default function SuperAdminDashboardView() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-[2px]">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-[15px] font-bold text-slate-900">Create Owner Account</h3>
+              <h3 className="text-[15px] font-bold text-slate-900">{STATIC_STRINGS.DASHBOARD_CREATE_OWNER_MODAL_TITLE}</h3>
               <button onClick={() => setIsAddingOwner(false)} className="text-slate-400 hover:text-slate-600">
                 <X size={18} />
               </button>
@@ -279,7 +280,7 @@ export default function SuperAdminDashboardView() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-[2px]">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-[15px] font-bold text-slate-900">Edit Owner Account</h3>
+              <h3 className="text-[15px] font-bold text-slate-900">{STATIC_STRINGS.DASHBOARD_EDIT_OWNER_MODAL_TITLE}</h3>
               <button onClick={() => setEditingOwner(null)} className="text-slate-400 hover:text-slate-600">
                 <X size={18} />
               </button>

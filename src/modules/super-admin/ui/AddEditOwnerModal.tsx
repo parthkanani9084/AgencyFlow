@@ -6,6 +6,7 @@ import { Users, Building2, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { superAdminAgent } from '@/agents/superAdminAgent';
 import { TeamMember } from '@/types';
+import { SUPER_ADMIN_ACTIONS, STATIC_STRINGS } from '@/utils/constants';
 
 interface OwnerFormProps {
   owner?: TeamMember | null;
@@ -30,22 +31,22 @@ export default function AddEditOwnerModal({ owner, onClose, onSuccess }: OwnerFo
     try {
       let result;
       if (isEdit && owner) {
-        result = await superAdminAgent.processAction('update_owner', { 
+        result = await superAdminAgent.processAction(SUPER_ADMIN_ACTIONS.UPDATE_OWNER, { 
           id: owner.id, 
           data 
         });
       } else {
-        result = await superAdminAgent.processAction('add_owner', data);
+        result = await superAdminAgent.processAction(SUPER_ADMIN_ACTIONS.ADD_OWNER, data);
       }
 
       if (result.success) {
-        toast.success(isEdit ? 'Account updated' : 'Account created');
+        toast.success(isEdit ? STATIC_STRINGS.FORM_ACCOUNT_UPDATED : STATIC_STRINGS.FORM_ACCOUNT_CREATED);
         onSuccess();
       } else {
 
       }
     } catch (error) {
-      toast.error('System error');
+      toast.error(STATIC_STRINGS.FORM_SYSTEM_ERROR);
     } finally {
       setIsLoading(false);
     }
@@ -54,35 +55,35 @@ export default function AddEditOwnerModal({ owner, onClose, onSuccess }: OwnerFo
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
       <div className="space-y-1.5">
-        <label className="text-[12px] font-semibold text-slate-700 pl-1">Full Name</label>
+        <label className="text-[12px] font-semibold text-slate-700 pl-1">{STATIC_STRINGS.FORM_FULL_NAME}</label>
         <div className="relative">
           <Users size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input 
             type="text" 
             placeholder="Sarah Mitchell"
             className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 text-[13px] focus:ring-2 focus:ring-violet-500/10 focus:border-violet-500 outline-none transition-all"
-            {...register('name', { required: 'Name is required' })}
+            {...register('name', { required: STATIC_STRINGS.FORM_NAME_REQUIRED })}
           />
         </div>
         {errors.name && <p className="text-[10px] text-red-500 pl-1">{(errors.name as any).message}</p>}
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-[12px] font-semibold text-slate-700 pl-1">Agency Name</label>
+        <label className="text-[12px] font-semibold text-slate-700 pl-1">{STATIC_STRINGS.FORM_AGENCY_NAME}</label>
         <div className="relative">
           <Building2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input 
             type="text" 
             placeholder="Nova Media"
             className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 text-[13px] focus:ring-2 focus:ring-violet-500/10 focus:border-violet-500 outline-none transition-all"
-            {...register('agencyName', { required: 'Agency is required' })}
+            {...register('agencyName', { required: STATIC_STRINGS.FORM_AGENCY_REQUIRED })}
           />
         </div>
         {errors.agencyName && <p className="text-[10px] text-red-500 pl-1">{(errors.agencyName as any).message}</p>}
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-[12px] font-semibold text-slate-700 pl-1">Email Address</label>
+        <label className="text-[12px] font-semibold text-slate-700 pl-1">{STATIC_STRINGS.FORM_EMAIL_ADDRESS}</label>
         <div className="relative">
           <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input 
@@ -90,8 +91,8 @@ export default function AddEditOwnerModal({ owner, onClose, onSuccess }: OwnerFo
             placeholder="sarah@agency.com"
             className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 text-[13px] focus:ring-2 focus:ring-violet-500/10 focus:border-violet-500 outline-none transition-all"
             {...register('email', { 
-              required: 'Email is required',
-              pattern: { value: /^\S+@\S+\.\S+$/, message: 'Invalid format' }
+              required: STATIC_STRINGS.FORM_EMAIL_REQUIRED,
+              pattern: { value: /^\S+@\S+\.\S+$/, message: STATIC_STRINGS.FORM_INVALID_FORMAT }
             })}
           />
         </div>
@@ -104,14 +105,14 @@ export default function AddEditOwnerModal({ owner, onClose, onSuccess }: OwnerFo
           onClick={onClose}
           className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-100 transition-colors"
         >
-          Cancel
+          {STATIC_STRINGS.FORM_CANCEL}
         </button>
         <button 
           type="submit" 
           disabled={isLoading}
           className="px-6 py-2 bg-violet-600 text-white text-[13px] font-bold rounded-lg hover:bg-violet-700 transition-all active:scale-[0.98] disabled:opacity-50"
         >
-          {isLoading ? (isEdit ? 'Saving...' : 'Creating...') : (isEdit ? 'Save Changes' : 'Create Account')}
+          {isLoading ? (isEdit ? STATIC_STRINGS.FORM_SAVING : STATIC_STRINGS.FORM_CREATING) : (isEdit ? STATIC_STRINGS.FORM_SAVE_CHANGES : STATIC_STRINGS.FORM_CREATE_ACCOUNT)}
         </button>
       </div>
     </form>

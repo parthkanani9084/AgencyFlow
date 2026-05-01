@@ -66,13 +66,13 @@ export default function Sidebar() {
 
     // Role Dashboards
     { id: 'nav-manager',       label: 'Manager',       icon: UserCheck,       href: '/manager-dashboard',     group: 'roles',     allowedRoles: [ROLES.OWNER, ROLES.MANAGER] },
-    { id: 'nav-shooter',       label: 'Shooter',       icon: Camera,          href: '/shooter-dashboard',     group: 'roles',     allowedRoles: [ROLES.OWNER, ROLES.SHOOTER] },
-    { id: 'nav-editor',        label: 'Editor',        icon: Film,            href: '/editor-dashboard',      group: 'roles',     allowedRoles: [ROLES.OWNER, ROLES.EDITOR] },
-    { id: 'nav-ads-mgr',       label: 'Ads Manager',   icon: Megaphone,       href: '/ads-manager-dashboard', group: 'roles',     allowedRoles: [ROLES.OWNER, ROLES.ADS_MANAGER] },
-    { id: 'nav-social-mgr',    label: 'Social Media',  icon: TrendingUp,      href: '/social-media-manager-dashboard', group: 'roles', allowedRoles: [ROLES.OWNER, ROLES.SOCIAL_MEDIA_MANAGER] },
+    { id: 'nav-shooter',       label: 'Shooter',       icon: Camera,          href: '/shooter-dashboard',     group: 'roles',     allowedRoles: [ROLES.OWNER, ROLES.SHOOTER, ROLES.MANAGER] },
+    { id: 'nav-editor',        label: 'Editor',        icon: Film,            href: '/editor-dashboard',      group: 'roles',     allowedRoles: [ROLES.OWNER, ROLES.EDITOR, ROLES.MANAGER] },
+    { id: 'nav-ads-mgr',       label: 'Ads Manager',   icon: Megaphone,       href: '/ads-manager-dashboard', group: 'roles',     allowedRoles: [ROLES.OWNER, ROLES.ADS_MANAGER, ROLES.MANAGER] },
+    { id: 'nav-social-mgr',    label: 'Social Media',  icon: TrendingUp,      href: '/social-media-manager-dashboard', group: 'roles', allowedRoles: [ROLES.OWNER, ROLES.SOCIAL_MEDIA_MANAGER, ROLES.MANAGER] },
 
     // Analytics
-    { id: 'nav-ads',           label: 'Ads Tracking',  icon: TrendingUp,      href: '/ads-tracking',          group: 'analytics', allowedRoles: [ROLES.OWNER, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
+    { id: 'nav-ads',           label: 'Ads Tracking',  icon: TrendingUp,      href: '/ads-tracking',          group: 'analytics', allowedRoles: [ROLES.OWNER, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER, ROLES.MANAGER] },
     { id: 'nav-reports',       label: 'Reports',       icon: BarChart3,       href: '/reports',               group: 'analytics', allowedRoles: [ROLES.OWNER, ROLES.MANAGER] },
 
     // Account

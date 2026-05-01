@@ -27,7 +27,7 @@ const TEAM_MEMBERS = [
 ];
 
 export default function AdsManagerDashboardPage() {
-  useRoleGuard(['Owner', 'Ads Manager', 'Social Media Manager']);
+  useRoleGuard(['Owner', 'Ads Manager', 'Social Media Manager', 'Manager']);
   const { user } = useAuth();
   const { tasks: allTasks, updateTask } = useTasks();
   

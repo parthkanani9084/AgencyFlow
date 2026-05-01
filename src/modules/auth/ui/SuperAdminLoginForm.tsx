@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { authAgent } from '@/agents/authAgent';
 import AppLogo from '@/components/ui/AppLogo';
+import { AUTH_ACTIONS, STATIC_STRINGS } from '@/utils/constants';
 
 interface LoginFormValues {
   email: string;
@@ -96,21 +97,21 @@ export default function SuperAdminLoginForm() {
     if (isLoading) return;
     setIsLoading(true);
     try {
-      const result = await authAgent.processAction('login', { 
+      const result = await authAgent.processAction(AUTH_ACTIONS.LOGIN, { 
         email: data.email, 
         password: data.password 
       });
 
       if (result.success && result.user) {
         setAuthenticatedUser(result.user);
-        toast.success('Welcome back');
+        toast.success(STATIC_STRINGS.LOGIN_WELCOME_BACK);
         // Redirect handled by AuthContext
       } else {
-        toast.error(result.error ?? 'Invalid credentials');
+        toast.error(result.error ?? STATIC_STRINGS.LOGIN_INVALID_CREDENTIALS);
         setIsLoading(false);
       }
     } catch (e) {
-      toast.error('Login failed');
+      toast.error(STATIC_STRINGS.LOGIN_LOGIN_FAILED);
       setIsLoading(false);
     }
   };
@@ -119,19 +120,19 @@ export default function SuperAdminLoginForm() {
     if (isLoading) return;
     setIsLoading(true);
     try {
-      const result = await authAgent.processAction('request_otp', { email: data.email });
+      const result = await authAgent.processAction(AUTH_ACTIONS.REQUEST_OTP, { email: data.email });
       
       if (result.success) {
         setEmail(data.email);
         setOtpStep('verify');
         setOtpValues(['', '', '', '', '', '']);
         setSecondsRemaining(RESEND_COOLDOWN);
-        toast.success('OTP sent successfully');
+        toast.success(STATIC_STRINGS.LOGIN_OTP_SENT);
       } else {
         toast.error(result.error ?? 'Failed to send OTP');
       }
     } catch (e) {
-      toast.error('System error');
+      toast.error(STATIC_STRINGS.FORM_SYSTEM_ERROR);
     } finally {
       setIsLoading(false);
     }
@@ -144,7 +145,7 @@ export default function SuperAdminLoginForm() {
     console.log('[SuperAdminLogin] Starting verification...', { email, otp: finalOtp });
 
     try {
-      const result = await authAgent.processAction('verify_otp', { 
+      const result = await authAgent.processAction(AUTH_ACTIONS.VERIFY_OTP, { 
         email, 
         otp: finalOtp 
       });
@@ -153,11 +154,11 @@ export default function SuperAdminLoginForm() {
 
       if (result.success && result.user) {
         setAuthenticatedUser(result.user);
-        toast.success('OTP Verified');
+        toast.success(STATIC_STRINGS.LOGIN_OTP_VERIFIED);
         
         // Redirect handled by AuthContext
       } else {
-        toast.error(result.error ?? 'Invalid OTP');
+        toast.error(result.error ?? STATIC_STRINGS.LOGIN_INVALID_OTP);
         setIsLoading(false);
       }
     } catch (error) {
@@ -220,15 +221,15 @@ export default function SuperAdminLoginForm() {
           <div className="mt-6 xl:mt-10">
             <div className="inline-flex items-center gap-2 bg-violet-500/20 border border-violet-400/30 rounded-full px-3 py-1 mb-6">
               <Shield size={12} className="text-violet-400" />
-              <span className="text-violet-300 text-[12px] font-medium uppercase tracking-wider">Super Admin Control Vault</span>
+              <span className="text-violet-300 text-[12px] font-medium uppercase tracking-wider">{STATIC_STRINGS.LOGIN_CONTROL_VAULT}</span>
             </div>
             <h1 className="text-3xl xl:text-4xl font-bold text-white leading-tight">
-              Platform Governance
+              {STATIC_STRINGS.LOGIN_PLATFORM_GOVERNANCE}
               <br />
-              <span className="text-violet-400">redefined.</span>
+              <span className="text-violet-400">{STATIC_STRINGS.LOGIN_REDEFINED}</span>
             </h1>
             <p className="mt-4 text-slate-400 text-[14.5px] leading-relaxed max-w-sm">
-              The command center for AgencyFlow. Orchestrate roles, monitor system-wide performance, and manage high-level agency configurations.
+              {STATIC_STRINGS.LOGIN_DESCRIPTION}
             </p>
           </div>
 
@@ -249,9 +250,9 @@ export default function SuperAdminLoginForm() {
           <div className="mt-auto pt-10">
             <div className="grid grid-cols-3 gap-4 border-t border-white/10 pt-8">
               {[
-                { value: '500+', label: 'Total Agencies' },
-                { value: '1.2M+', label: 'Tasks Processed' },
-                { value: '99.9%', label: 'Uptime' },
+                { value: '500+', label: STATIC_STRINGS.DASHBOARD_TOTAL_AGENCIES },
+                { value: '1.2M+', label: STATIC_STRINGS.LOGIN_TASKS_PROCESSED },
+                { value: '99.9%', label: STATIC_STRINGS.LOGIN_UPTIME },
               ].map((stat) => (
                 <div key={`stat-${stat.label}`}>
                   <p className="text-2xl font-bold text-white tabular-nums">{stat.value}</p>
@@ -272,9 +273,9 @@ export default function SuperAdminLoginForm() {
           </div>
 
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-slate-900">Sign in</h2>
+            <h2 className="text-2xl font-bold text-slate-900">{STATIC_STRINGS.LOGIN_TITLE}</h2>
             <p className="mt-1 text-[13.5px] text-slate-500">
-              Super Admin Control Panel
+              {STATIC_STRINGS.LOGIN_SUBTITLE}
             </p>
           </div>
 
@@ -282,7 +283,7 @@ export default function SuperAdminLoginForm() {
             {authMode === 'password' ? (
               <form onSubmit={handleSubmit(onPasswordLogin)} className="space-y-5">
                 <div>
-                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Email</label>
+                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.LOGIN_EMAIL_LABEL}</label>
                   <div className="relative">
                     <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
@@ -290,14 +291,14 @@ export default function SuperAdminLoginForm() {
                       autoFocus
                       placeholder="admin@agencyflow.io"
                       className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 text-[13.5px] focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 outline-none transition-all"
-                      {...register('email', { required: 'Email is required' })}
+                      {...register('email', { required: STATIC_STRINGS.FORM_EMAIL_REQUIRED })}
                     />
                   </div>
                   {errors.email && <p className="mt-1 text-[11px] text-red-500">{errors.email.message}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Password</label>
+                  <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.LOGIN_PASSWORD_LABEL}</label>
                   <div className="relative">
                     <Key size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
@@ -322,7 +323,7 @@ export default function SuperAdminLoginForm() {
                   disabled={isLoading}
                   className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 rounded-lg text-[14px] flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
                 >
-                  {isLoading ? 'Verifying...' : 'Login'}
+                  {isLoading ? STATIC_STRINGS.LOGIN_VERIFYING : STATIC_STRINGS.LOGIN_BUTTON}
                   {!isLoading && <ArrowRight size={15} />}
                 </button>
               </form>
@@ -340,7 +341,7 @@ export default function SuperAdminLoginForm() {
                           autoFocus
                           placeholder="admin@agencyflow.io"
                           className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 text-[13.5px] focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 outline-none transition-all"
-                          {...register('email', { required: 'Email is required' })}
+                          {...register('email', { required: STATIC_STRINGS.FORM_EMAIL_REQUIRED })}
                         />
                       </div>
                       {errors.email && <p className="mt-1 text-[11px] text-red-500">{errors.email.message}</p>}
@@ -357,7 +358,7 @@ export default function SuperAdminLoginForm() {
                 ) : (
                   <div className="space-y-5">
                     <div>
-                      <label className="block text-[13px] font-semibold text-slate-700 mb-3 text-center">Verification Code</label>
+                      <label className="block text-[13px] font-semibold text-slate-700 mb-3 text-center">{STATIC_STRINGS.LOGIN_VERIFICATION_CODE}</label>
                       <div className="flex justify-between gap-2" onPaste={handlePaste}>
                         {otpValues.map((value, index) => (
                           <input
@@ -381,14 +382,14 @@ export default function SuperAdminLoginForm() {
                       onClick={() => handleOtpVerify(otpValues.join(''))}
                       className="w-full bg-violet-600 hover:bg-violet-700 text-white font-semibold py-2.5 rounded-lg text-[14px] flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
                     >
-                      {isLoading ? 'Verifying...' : 'Verify OTP'}
+                      {isLoading ? STATIC_STRINGS.LOGIN_VERIFYING : STATIC_STRINGS.LOGIN_VERIFY_OTP_BUTTON}
                     </button>
                     
                     {/* Resend Section */}
                     <div className="text-center">
                       {secondsRemaining > 0 ? (
                         <p className="text-[12px] text-slate-400 font-medium">
-                          Resend in <span className="text-slate-600 tabular-nums font-bold">{secondsRemaining}s</span>
+                          {STATIC_STRINGS.LOGIN_RESEND_IN} <span className="text-slate-600 tabular-nums font-bold">{secondsRemaining}s</span>
                         </p>
                       ) : (
                         <button 
@@ -397,7 +398,7 @@ export default function SuperAdminLoginForm() {
                           disabled={isLoading}
                           className="text-[12px] text-violet-600 hover:text-violet-700 font-bold transition-colors disabled:opacity-50"
                         >
-                          Resend OTP
+                          {STATIC_STRINGS.LOGIN_RESEND_OTP}
                         </button>
                       )}
                     </div>
@@ -411,7 +412,7 @@ export default function SuperAdminLoginForm() {
                       disabled={isLoading}
                       className="w-full text-center text-[12px] text-slate-400 hover:text-slate-600 disabled:opacity-50"
                     >
-                      Use different email
+                      {STATIC_STRINGS.LOGIN_DIFFERENT_EMAIL}
                     </button>
                   </div>
                 )}
@@ -426,7 +427,7 @@ export default function SuperAdminLoginForm() {
                 onClick={toggleAuthMode}
                 className="text-violet-600 hover:text-violet-700 text-[13px] font-semibold transition-colors"
               >
-                {authMode === 'password' ? 'Login with OTP' : 'Login with Password'}
+                {authMode === 'password' ? STATIC_STRINGS.LOGIN_LOGIN_WITH_OTP : STATIC_STRINGS.LOGIN_LOGIN_WITH_PASSWORD}
               </button>
             )}
           </div>
