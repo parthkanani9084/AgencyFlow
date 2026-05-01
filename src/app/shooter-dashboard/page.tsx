@@ -213,8 +213,10 @@ export default function ShooterDashboardPage() {
                     {/* Notes History */}
                     {(task.roleNotes && task.roleNotes.length > 0) && (
                       <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">
-                        {task.roleNotes.map((note, idx) => (
-                          <div key={idx} className="bg-slate-50 rounded-lg p-2.5 flex gap-2.5 border border-slate-100">
+                        {task.roleNotes
+                          .filter(note => note.role === 'Shooter')
+                          .map((note, idx) => (
+                            <div key={idx} className="bg-slate-50 rounded-lg p-2.5 flex gap-2.5 border border-slate-100">
                             <div className="w-6 h-6 rounded bg-blue-100 text-blue-700 flex items-center justify-center flex-shrink-0 mt-0.5">
                               <span className="text-[10px] font-bold">{(note.role || 'S').charAt(0)}</span>
                             </div>

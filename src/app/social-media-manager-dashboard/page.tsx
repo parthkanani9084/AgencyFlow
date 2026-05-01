@@ -183,7 +183,7 @@ export default function SocialMediaManagerDashboardPage() {
             <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
               <button 
                 onClick={() => setActiveTab('all')}
-                className={`px-4 py-2 rounded-lg text-[12.5px] font-bold transition-all whitespace-nowrap ${activeTab === 'all' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                className={`px-4 py-2 rounded-lg text-[12.5px] font-bold transition-all whitespace-nowrap ${activeTab === 'all' ? 'bg-violet-600 text-white' : 'bg-violet-100 text-slate-500 hover:bg-violet-200'}`}
               >
                 All Reels
               </button>
@@ -270,7 +270,7 @@ export default function SocialMediaManagerDashboardPage() {
             <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">
               <button 
                 onClick={() => setIsAddModalOpen(false)}
-                className="px-5 py-2.5 rounded-xl text-[13px] font-bold text-slate-500 hover:bg-slate-100 transition-all"
+                className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors"
               >
                 Cancel
               </button>

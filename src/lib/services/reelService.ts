@@ -6,6 +6,7 @@ const MOCK_CAMPAIGNS = [
   { id: 'c_spring', name: 'Spring Collection Launch', client: 'Luma Apparel' },
   { id: 'c_cyber', name: 'Cyber-Week Sale', client: 'TechWorld' },
   { id: 'c_gt', name: 'GT Showcase', client: 'Velocity Motors' },
+  { id: 'c_jordan', name: 'Personal Branding', client: 'Jordan Lee' },
 ];
 
 /**
@@ -31,10 +32,9 @@ export const reelService = {
         { id: 'r3', title: 'Cyber Week Teaser #1', campaignId: 'c_cyber', assignedToUserId: userId, scheduledDate: new Date(Date.now() - 86400000).toISOString(), status: 'Production', createdAt: new Date().toISOString() },
         { id: 'r4', title: 'Trending Gear Review', campaignId: 'c_cyber', assignedToUserId: userId, scheduledDate: new Date(Date.now() + 259200000).toISOString(), status: 'Scheduled', createdAt: new Date().toISOString() },
         { id: 'r5', title: 'Daily Driver Spotlight', campaignId: 'c_gt', assignedToUserId: userId, scheduledDate: new Date(Date.now() + 345600000).toISOString(), status: 'Scheduled', createdAt: new Date().toISOString() },
-        { id: 'r6', title: 'Customer Success Story', campaignId: 'c_gt', assignedToUserId: userId, scheduledDate: new Date(Date.now()).toISOString(), status: 'Production', createdAt: new Date().toISOString() },
-        { id: 'r7', title: 'Product Unboxing: 4K Camera', campaignId: 'c_cyber', assignedToUserId: userId, scheduledDate: new Date(Date.now() - 172800000).toISOString(), status: 'Upload', createdAt: new Date().toISOString() },
-        { id: 'r8', title: 'How-To: Professional Lighting', campaignId: 'c_spring', assignedToUserId: userId, scheduledDate: new Date(Date.now() - 259200000).toISOString(), status: 'Upload', createdAt: new Date().toISOString() },
-        { id: 'r9', title: 'Weekend Vlog Teaser', campaignId: 'c_gt', assignedToUserId: userId, scheduledDate: new Date(Date.now() + 432000000).toISOString(), status: 'Scheduled', createdAt: new Date().toISOString() },
+        { id: 'r_j1', title: 'Welcome Message Reel', campaignId: 'c_jordan', assignedToUserId: userId, scheduledDate: new Date(Date.now() + 86400000).toISOString(), status: 'Production', createdAt: new Date().toISOString() },
+        { id: 'r_j2', title: 'Weekly Insight #12', campaignId: 'c_jordan', assignedToUserId: userId, scheduledDate: new Date(Date.now() + 259200000).toISOString(), status: 'Scheduled', createdAt: new Date().toISOString() },
+        { id: 'r_j3', title: 'Case Study: Real Estate', campaignId: 'c_jordan', assignedToUserId: userId, scheduledDate: new Date(Date.now() - 86400000).toISOString(), status: 'Upload', createdAt: new Date().toISOString() },
       ];
       
       // Merge and remove duplicates by ID

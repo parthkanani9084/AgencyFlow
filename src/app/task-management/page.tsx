@@ -386,6 +386,7 @@ export default function TaskManagementPage() {
             <div>
               <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Role</label>
               <select value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as TaskRole }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px]">
+                <option value="Manager">Manager</option>
                 <option value="Shooter">Shooter</option>
                 <option value="Editor">Editor</option>
                 <option value="Ads Manager">Ads Manager</option>
@@ -406,7 +407,7 @@ export default function TaskManagementPage() {
             </div>
           </div>
           <div className="flex justify-end gap-2.5 pt-4 border-t">
-            <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-[13px] font-semibold text-slate-600">Cancel</button>
+            <button onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
             <button onClick={handleSave} className="px-5 py-2 rounded-lg bg-violet-600 text-white text-[13px] font-semibold">Save Changes</button>
           </div>
         </div>
@@ -417,7 +418,7 @@ export default function TaskManagementPage() {
         <div className="px-6 py-5">
           <p className="text-[13px] text-slate-600 mb-5">Are you sure you want to delete <span className="font-bold">"{deleteModal.task?.title}"</span>?</p>
           <div className="flex justify-end gap-2.5">
-            <button onClick={() => setDeleteModal({ open: false, task: null })} className="px-4 py-2 text-[13px] font-semibold text-slate-600">Cancel</button>
+            <button onClick={() => setDeleteModal({ open: false, task: null })} className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
             <button onClick={handleDelete} className="px-5 py-2 rounded-lg bg-red-600 text-white text-[13px] font-semibold">Delete</button>
           </div>
         </div>

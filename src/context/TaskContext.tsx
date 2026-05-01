@@ -169,18 +169,44 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     nextRoleMember?: { name: string; role: string }, 
     screenshot?: string
   ) => {
+    const taskToUpdate = tasks.find(t => t.id === id);
+    if (!taskToUpdate) return;
+
+    const isCompleting = updates.status === 'completed' && taskToUpdate.status !== 'completed';
+    let pendingNotification: any = null;
+
+    if (isCompleting && nextRoleMember) {
+      pendingNotification = {
+        type: 'handoff',
+        title: 'Task Handed Off',
+        message: `"${taskToUpdate.title}" handed off to ${nextRoleMember.name}.`,
+        actor: user?.name || 'Team Member',
+        targetId: taskToUpdate.id,
+        targetType: 'task'
+      };
+    } else if (isCompleting) {
+      pendingNotification = {
+        type: 'task_completed',
+        title: 'Task Completed',
+        message: `"${taskToUpdate.title}" has been finalized.`,
+        actor: user?.name || 'Team Member',
+        targetId: taskToUpdate.id,
+        targetType: 'task'
+      };
+    }
+
+    // 2. Perform the Task Update
     setTasks(prev => {
       return prev.map(task => {
         if (task.id !== id) return task;
 
-        const isCompleting = updates.status === 'completed' && task.status !== 'completed';
         const timestamp = new Date().toISOString();
         
-        // 1. Prepare Role Notes if completing
+        // Prepare Role Notes
         let roleNotes = [...(task.roleNotes || [])];
         if (isCompleting && notes) {
           const newNote: TaskNote = {
-            role: task.role, // Capture the stage/role of the task when note was added
+            role: task.role,
             message: notes,
             timestamp,
             author: user?.name || 'Team Member'
@@ -188,36 +214,18 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
           roleNotes.push(newNote);
         }
 
-        // 2. Handle Handoff Logic
+        // Handle Handoff Data
         let nextAssignment = {};
         if (isCompleting && nextRoleMember) {
           nextAssignment = {
-            status: 'pending', // Reset for next person
+            status: 'pending',
             assignedTo: nextRoleMember.name,
             role: nextRoleMember.role as TaskRole,
             forwardedBy: user?.name || task.assignedTo
           };
-          
-          addNotification({
-            type: 'handoff',
-            title: 'Task Handed Off',
-            message: `"${task.title}" handed off to ${nextRoleMember.name}.`,
-            actor: user?.name || 'Team Member',
-            targetId: task.id,
-            targetType: 'task'
-          });
-        } else if (isCompleting) {
-          addNotification({
-            type: 'task_completed',
-            title: 'Task Completed',
-            message: `"${task.title}" has been finalized.`,
-            actor: user?.name || 'Team Member',
-            targetId: task.id,
-            targetType: 'task'
-          });
         }
 
-        // 3. Prepare Audit Log
+        // Prepare Audit Log
         const log: ActivityLog = {
           id: `log-${Date.now()}`,
           status: updates.status || task.status,
@@ -237,6 +245,11 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         };
       });
     });
+
+    // 3. Add the notification if one was prepared
+    if (pendingNotification) {
+      addNotification(pendingNotification);
+    }
   };
 
   const deleteTask = (id: string) => {

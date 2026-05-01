@@ -56,6 +56,9 @@ export default function Sidebar() {
   const navItems: NavItem[] = [
     // Workspace
     { id: 'nav-dashboard',     label: 'Dashboard',     icon: LayoutDashboard, href: '/dashboard',             group: 'main',      allowedRoles: ['Owner'] },
+    { id: 'nav-client-profile', label: 'My Profile',    icon: Users,           href: '/client/profile',       group: 'main',      allowedRoles: ['Client'] },
+    { id: 'nav-client-campaigns', label: 'My Campaigns', icon: Megaphone,      href: '/client/campaigns',     group: 'main',      allowedRoles: ['Client'] },
+    { id: 'nav-client-reels',     label: 'My Reels',        icon: Film,            href: '/client/reels',         group: 'main',      allowedRoles: ['Client'] },
     { id: 'nav-campaigns',     label: 'Campaigns',     icon: Megaphone,       href: '/campaign-management',   badge: 3, group: 'main', allowedRoles: ['Owner', 'Manager','Ads Manager', 'Social Media Manager'] },
     { id: 'nav-clients',       label: 'Clients',       icon: Briefcase,       href: '/client-management',     group: 'main',      allowedRoles: ['Owner', 'Manager','Ads Manager', 'Social Media Manager'] },
     { id: 'nav-tasks',         label: 'Tasks',         icon: CheckSquare,     href: '/task-management',       badge: tasks.length, group: 'main', allowedRoles: ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager', 'Social Media Manager'] },
