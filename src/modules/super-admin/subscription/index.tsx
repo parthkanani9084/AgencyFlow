@@ -1,43 +1,39 @@
 'use client';
  
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { useSuperAdminStore } from '@/store/superAdminStore';
-import { useAuth } from '@/context/AuthContext';
-import { superAdminAgent } from '@/agents/superAdminAgent';
+import { mockService } from '@/services/mockService';
 import { toast } from 'sonner';
-import {  Zap, Crown, AlertTriangle, Clock,  User, Save, Power } from 'lucide-react';
+import { Zap, Crown, AlertTriangle, Clock, User, Save, Power } from 'lucide-react';
+import { Agency } from '@/modules/super-admin/types';
 
 interface ManagedAccountRowProps {
-  agency: any;
+  agency: Agency;
 }
 
 function ManagedAccountRow({ agency }: ManagedAccountRowProps) {
   const { refreshData } = useSuperAdminStore();
-  const { user: currentUser } = useAuth();
-  const [plan, setPlan] = React.useState(agency.subscription === 'Starter' ? 'Free Trial' : 'Premium');
-  const [expiry, setExpiry] = React.useState(agency.expiryDate.split('T')[0]);
+  const [plan, setPlan] = useState(agency.subscription === 'Starter' ? 'Free Trial' : 'Premium');
+  const [expiry, setExpiry] = useState(agency.expiryDate.split('T')[0]);
   
-  const daysLeft = Math.max(0, Math.ceil((new Date(expiry).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)));
+  const daysLeft = useMemo(() => 
+    Math.max(0, Math.ceil((new Date(expiry).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))),
+  [expiry]);
 
-  const handlePlanChange = (newPlan: string) => {
+  const handlePlanChange = useCallback((newPlan: string) => {
     setPlan(newPlan);
     if (newPlan === 'Free Trial') {
       const fifteenDays = new Date();
       fifteenDays.setDate(fifteenDays.getDate() + 15);
       setExpiry(fifteenDays.toISOString().split('T')[0]);
     }
-  };
+  }, []);
 
-  const handleEndNow = () => {
+  const handleEndNow = useCallback(() => {
     const today = new Date().toISOString().split('T')[0];
     setExpiry(today);
     
-    const promise = superAdminAgent.processAction({
-      module: 'business-agency',
-      action: 'update',
-      payload: { id: agency.id, data: { ...agency, expiryDate: today } },
-      role: currentUser?.role || ''
-    });
+    const promise = mockService.agency.update(agency.id, { expiryDate: today });
 
     toast.promise(promise, {
       loading: 'Terminating subscription...',
@@ -47,7 +43,7 @@ function ManagedAccountRow({ agency }: ManagedAccountRowProps) {
       },
       error: 'Failed to end subscription'
     });
-  };
+  }, [agency.id, agency.name, refreshData]);
 
   const hasChanges = useMemo(() => {
     const originalPlan = agency.subscription === 'Starter' ? 'Free Trial' : 'Premium';
@@ -55,20 +51,11 @@ function ManagedAccountRow({ agency }: ManagedAccountRowProps) {
     return plan !== originalPlan || expiry !== originalExpiry;
   }, [agency, plan, expiry]);
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     if (!hasChanges) return;
-    const promise = superAdminAgent.processAction({
-      module: 'business-agency',
-      action: 'update',
-      payload: { 
-        id: agency.id, 
-        data: { 
-          ...agency, 
-          subscription: plan === 'Free Trial' ? 'Starter' : 'Professional',
-          expiryDate: new Date(expiry).toISOString()
-        } 
-      },
-      role: currentUser?.role || ''
+    const promise = mockService.agency.update(agency.id, { 
+      subscription: plan === 'Free Trial' ? 'Starter' : 'Professional',
+      expiryDate: new Date(expiry).toISOString()
     });
 
     toast.promise(promise, {
@@ -79,10 +66,18 @@ function ManagedAccountRow({ agency }: ManagedAccountRowProps) {
       },
       error: 'Failed to save changes'
     });
-  };
+  }, [agency.id, agency.name, plan, expiry, hasChanges, refreshData]);
+
+  const formattedStartDate = useMemo(() => {
+    const d = new Date(agency.startDate);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  }, [agency.startDate]);
 
   return (
-    <tr key={agency.id} className="hover:bg-slate-50/30 transition-colors">
+    <tr className="hover:bg-slate-50/30 transition-colors">
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-400 flex items-center justify-center">
@@ -106,13 +101,7 @@ function ManagedAccountRow({ agency }: ManagedAccountRowProps) {
       </td>
       <td className="px-6 py-4">
         <p className="text-[12px] font-medium text-slate-500">
-          {(() => {
-            const d = new Date(agency.startDate);
-            const day = String(d.getDate()).padStart(2, '0');
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const year = d.getFullYear();
-            return `${day}/${month}/${year}`;
-          })()}
+          {formattedStartDate}
         </p>
       </td>
       <td className="px-6 py-4">
@@ -165,7 +154,7 @@ export default function SubscriptionView() {
       expiredSoon: 0,
       expired: 0,
       free: 0,
-      expiringList: [] as any[]
+      expiringList: [] as Agency[]
     };
 
     agencies.forEach(agency => {
@@ -308,26 +297,27 @@ export default function SubscriptionView() {
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50/50 border-b border-slate-100">
-              <tr>
-                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Owner</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Plan</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Started</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Expiry</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Days Left</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {agencies.map((agency) => (
-                <ManagedAccountRow key={agency.id} agency={agency} />
-              ))}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50/50 border-b border-slate-100">
+                <tr>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Owner</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Plan</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Started</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Expiry</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Days Left</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {agencies.map((agency) => (
+                  <ManagedAccountRow key={agency.id} agency={agency} />
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-
     </div>
   );
 }

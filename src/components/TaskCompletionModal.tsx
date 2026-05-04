@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import Modal from '@/components/ui/Modal';
 import { CheckCircle2, UserPlus, Info, ChevronRight, Image } from 'lucide-react';
-import { Task, TaskStatus } from '@/types';
-import { toast } from 'sonner';
+import { Task } from '@/types';
 
 interface TaskCompletionModalProps {
   open: boolean;
@@ -28,9 +27,11 @@ export default function TaskCompletionModal({
   const [sendTo, setSendTo] = useState('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  // Determine which roles are eligible for handoff based on current user role
-  const getEligibleNextRoles = () => {
-    const roleToCheck = userRole === 'Manager' || userRole === 'Owner' ? task?.role : userRole;
+  const eligibleRoles = useMemo(() => {
+    if (!task) return [];
+    
+    const roleToCheck = userRole === 'Manager' || userRole === 'Owner' ? task.role : userRole;
+    
     const roles = (() => {
       switch (roleToCheck) {
         case 'Shooter': return ['Editor'];
@@ -41,29 +42,35 @@ export default function TaskCompletionModal({
       }
     })();
 
-    if (roleToCheck === 'Editor') {
-      return roles;
-    }
+    if (roleToCheck === 'Editor') return roles;
     
+    // Default fallback for admin roles or non-editor handoffs
     return Array.from(new Set([...roles, 'Manager', 'Owner']));
-  };
+  }, [userRole, task]);
 
-  const eligibleRoles = getEligibleNextRoles();
-  const showHandoff = eligibleRoles.length > 0;
-  const isManagerOrOwner = userRole === 'Manager' || userRole === 'Owner';
-  const isAdsTask = task?.role === 'Ads Manager' || task?.role === 'Social Media Manager';
-  const isEditorTask = task?.role === 'Editor';
-  const needsScreenshot = isAdsTask; // Only Ads tasks need screenshots now, removing isEditorTask
+  const flags = useMemo(() => {
+    const isManagerOrOwner = userRole === 'Manager' || userRole === 'Owner';
+    const isAdsTask = task?.role === 'Ads Manager' || task?.role === 'Social Media Manager';
+    return {
+      showHandoff: eligibleRoles.length > 0,
+      isManagerOrOwner,
+      isAdsTask,
+      needsScreenshot: isAdsTask
+    };
+  }, [userRole, task?.role, eligibleRoles.length]);
 
-  const handleSubmit = () => {
+
+  const handleSubmit = useCallback(() => {
+    if (!task) return;
+
     const errors: Record<string, string> = {};
     if (!notes.trim() || notes.length < 5) {
       errors.notes = 'Descriptive notes are required (min 5 chars)';
     }
-    if (showHandoff && !sendTo && !isManagerOrOwner) {
+    if (flags.showHandoff && !sendTo && !flags.isManagerOrOwner) {
       errors.sendTo = 'Please select a team member to hand off to';
     }
-    if (isAdsTask && !screenshot.trim()) {
+    if (flags.isAdsTask && !screenshot.trim()) {
       errors.screenshot = 'Campaign delivery screenshot is required';
     }
 
@@ -74,19 +81,28 @@ export default function TaskCompletionModal({
 
     const selectedMember = teamMembers.find(m => m.id === sendTo);
     onComplete(
-      task!.id, 
+      task.id, 
       notes, 
       selectedMember ? { name: selectedMember.name, role: selectedMember.role } : undefined,
-      needsScreenshot ? screenshot : undefined
+      flags.needsScreenshot ? screenshot : undefined
     );
     
-    // Reset state for next use
+    // State Reset
     setNotes('');
     setScreenshot('');
     setSendTo('');
     setFormErrors({});
     onClose();
-  };
+  }, [task, notes, sendTo, flags, teamMembers, onComplete, onClose, screenshot]);
+
+  const handleScreenshotUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setScreenshot(ev.target?.result as string);
+      reader.readAsDataURL(file);
+    }
+  }, []);
 
   return (
     <Modal
@@ -97,10 +113,8 @@ export default function TaskCompletionModal({
       size="md"
     >
       <div className="p-6 pt-2">
-        {/* Task Summary Banner */}
-     
-
         <div className="space-y-4">
+          {/* Notes Field */}
           <div>
             <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">
               Completion/Handoff Notes <span className="text-red-500">*</span>
@@ -121,24 +135,18 @@ export default function TaskCompletionModal({
             )}
           </div>
 
-          {needsScreenshot && (
+          {/* Screenshot Upload Field */}
+          {flags.needsScreenshot && (
             <div>
               <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">
-                {isAdsTask ? 'Delivery Screenshot' : 'Export/Preview Screenshot'} {!isAdsTask && <span className="text-slate-400 font-normal ml-1">(Optional)</span>} {isAdsTask && <span className="text-red-500">*</span>}
+                {flags.isAdsTask ? 'Delivery Screenshot' : 'Export/Preview Screenshot'} {!flags.isAdsTask && <span className="text-slate-400 font-normal ml-1">(Optional)</span>} {flags.isAdsTask && <span className="text-red-500">*</span>}
               </label>
               <input 
                 type="file" 
                 id="screenshot-upload" 
                 className="hidden" 
                 accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (ev) => setScreenshot(ev.target?.result as string);
-                    reader.readAsDataURL(file);
-                  }
-                }}
+                onChange={handleScreenshotUpload}
               />
               <div 
                 className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
@@ -167,7 +175,7 @@ export default function TaskCompletionModal({
                       <Image size={16} />
                     </div>
                     <p className="text-[12px] font-medium text-slate-500">
-                      {isAdsTask ? 'Click to upload campaign proof' : 'Click to upload edit preview/confirmation'}
+                      {flags.isAdsTask ? 'Click to upload campaign proof' : 'Click to upload edit preview/confirmation'}
                     </p>
                   </>
                 )}
@@ -180,10 +188,11 @@ export default function TaskCompletionModal({
             </div>
           )}
 
-          {showHandoff && (
+          {/* Handoff Field */}
+          {flags.showHandoff && (
             <div>
               <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">
-                Hand Off To {isManagerOrOwner && <span className="text-slate-400 font-normal ml-1">(Optional)</span>} {!isManagerOrOwner && <span className="text-red-500">*</span>}
+                Hand Off To {flags.isManagerOrOwner && <span className="text-slate-400 font-normal ml-1">(Optional)</span>} {!flags.isManagerOrOwner && <span className="text-red-500">*</span>}
               </label>
               <div className="relative">
                 <UserPlus size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -211,6 +220,7 @@ export default function TaskCompletionModal({
             </div>
           )}
 
+          {/* Action Buttons */}
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
             <button
               onClick={onClose}
@@ -222,7 +232,7 @@ export default function TaskCompletionModal({
               onClick={handleSubmit}
               className="flex items-center gap-2 px-6 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[13px] font-semibold shadow-md shadow-violet-100 transition-all active:scale-[0.98]"
             >
-              {task?.type === 'REEL' ? 'Confirm Upload' : (showHandoff ? 'Complete & Hand Off' : 'Complete Task')} <CheckCircle2 size={16} />
+              {task?.type === 'REEL' ? 'Confirm Upload' : (flags.showHandoff ? 'Complete & Hand Off' : 'Complete Task')} <CheckCircle2 size={16} />
             </button>
           </div>
         </div>

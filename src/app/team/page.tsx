@@ -1,14 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import Modal from '@/components/ui/Modal';
-import { Users, Plus, Pencil, Trash2, Search, X, Mail, Camera, Film, Megaphone, UserCheck, Crown, CheckCircle2, XCircle, TrendingUp,  } from 'lucide-react';
+import { Users, Plus, Pencil, Trash2, Search, X, Mail, Camera, Film, Megaphone, UserCheck, Crown, CheckCircle2, XCircle, TrendingUp } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import type { UserRole } from '@/types';
-import Icon from '@/components/ui/AppIcon';
-
 
 interface TeamMember {
   id: string;
@@ -22,6 +20,7 @@ interface TeamMember {
 }
 
 const roleConfig: Record<UserRole, { color: string; bg: string; icon: React.ElementType }> = {
+  'Super Admin': { color: 'text-violet-700', bg: 'bg-violet-100', icon: Crown },
   Owner:        { color: 'text-violet-700', bg: 'bg-violet-100', icon: Crown },
   Manager:      { color: 'text-teal-700',   bg: 'bg-teal-100',   icon: UserCheck },
   Shooter:      { color: 'text-blue-700',   bg: 'bg-blue-100',   icon: Camera },
@@ -32,6 +31,7 @@ const roleConfig: Record<UserRole, { color: string; bg: string; icon: React.Elem
 };
 
 const avatarColors: Record<UserRole, string> = {
+  'Super Admin': 'bg-violet-600',
   Owner:        'bg-violet-600',
   Manager:      'bg-teal-600',
   Shooter:      'bg-blue-600',
@@ -67,44 +67,46 @@ export default function TeamPage() {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState<Partial<typeof emptyForm>>({});
 
-  const filtered = members.filter((m) => {
-    const matchSearch =
-      m.name.toLowerCase().includes(search.toLowerCase()) ||
-      m.email.toLowerCase().includes(search.toLowerCase());
-    const matchRole = roleFilter === 'all' || m.role === roleFilter;
-    return matchSearch && matchRole;
-  });
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    return members.filter((m) => {
+      const matchSearch = !q ||
+        m.name.toLowerCase().includes(q) ||
+        m.email.toLowerCase().includes(q);
+      const matchRole = roleFilter === 'all' || m.role === roleFilter;
+      return matchSearch && matchRole;
+    });
+  }, [members, search, roleFilter]);
 
-  const stats = {
+  const stats = useMemo(() => ({
     total: members.length,
     active: members.filter((m) => m.status === 'active').length,
     byRole: ALL_ROLES.map((r) => ({ role: r, count: members.filter((m) => m.role === r).length })),
-  };
+  }), [members]);
 
-  function openAdd() {
+  const openAdd = useCallback(() => {
     setEditingMember(null);
     setForm(emptyForm);
     setErrors({});
     setModalOpen(true);
-  }
+  }, []);
 
-  function openEdit(member: TeamMember) {
+  const openEdit = useCallback((member: TeamMember) => {
     setEditingMember(member);
     setForm({ name: member.name, email: member.email, role: member.role });
     setErrors({});
     setModalOpen(true);
-  }
+  }, []);
 
-  function validate() {
+  const handleSave = () => {
     const e: Partial<typeof emptyForm> = {};
     if (!form.name.trim()) e.name = 'Name is required';
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Valid email is required';
-    return e;
-  }
 
-  function handleSave() {
-    const e = validate();
-    if (Object.keys(e).length > 0) { setErrors(e); return; }
+    if (Object.keys(e).length > 0) { 
+      setErrors(e); 
+      return; 
+    }
 
     if (editingMember) {
       setMembers((prev) =>
@@ -128,23 +130,23 @@ export default function TeamPage() {
       toast.success('Team member invited');
     }
     setModalOpen(false);
-  }
+  };
 
-  function handleDelete() {
+  const handleDelete = useCallback(() => {
     if (deleteModal.member) {
       setMembers((prev) => prev.filter((m) => m.id !== deleteModal.member!.id));
       toast.success('Member removed');
     }
     setDeleteModal({ open: false, member: null });
-  }
+  }, [deleteModal.member]);
 
-  function toggleStatus(id: string) {
+  const toggleStatus = useCallback((id: string) => {
     setMembers((prev) =>
       prev.map((m) =>
         m.id === id ? { ...m, status: m.status === 'active' ? 'inactive' : 'active' } : m
       )
     );
-  }
+  }, []);
 
   return (
     <AppLayout>

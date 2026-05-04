@@ -1,37 +1,39 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { BarChart3, TrendingUp, DollarSign, Users, Target, Download, ChevronDown } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
+  ResponsiveContainer, Legend, PieChart, Pie, Cell 
+} from 'recharts';
 import { CampaignReport } from '@/types';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAdsData } from '@/context/AdsDataContext';
 
-// ─── Mock report data ─────────────────────────────────────────────────────────
-const campaignReports: CampaignReport[] = [
-  { campaignId: 'c1', campaignName: 'NovaBrew Spring Launch',   client: 'Jordan Lee',    budget: 12000, spent: 9800,  leads: 312, roas: 4.1, tasksTotal: 5, tasksCompleted: 3, stage: 'Editing',  startDate: '2026-03-01', endDate: '2026-04-30' },
-  { campaignId: 'c2', campaignName: 'PulseWear Q2 Reel',        client: 'Samantha Cruz', budget: 8500,  spent: 8500,  leads: 218, roas: 3.8, tasksTotal: 4, tasksCompleted: 4, stage: 'Complete', startDate: '2026-02-15', endDate: '2026-04-15' },
-  { campaignId: 'c3', campaignName: 'GreenRoot Awareness',      client: 'Ethan Patel',   budget: 20000, spent: 11200, leads: 540, roas: 5.2, tasksTotal: 6, tasksCompleted: 4, stage: 'Ads',      startDate: '2026-03-10', endDate: '2026-05-10' },
-  { campaignId: 'c4', campaignName: 'LuxeHome Interior Series', client: 'Mia Tanaka',    budget: 5000,  spent: 1800,  leads: 74,  roas: 2.9, tasksTotal: 4, tasksCompleted: 1, stage: 'Shooting', startDate: '2026-04-01', endDate: '2026-05-31' },
+const CAMPAIGN_REPORTS: CampaignReport[] = [
+  { campaignId: 'c1', campaignName: 'NovaBrew Spring Launch', client: 'Jordan Lee', budget: 12000, spent: 9800, leads: 312, roas: 4.1, tasksTotal: 5, tasksCompleted: 3, stage: 'Editing', startDate: '2026-03-01', endDate: '2026-04-30' },
+  { campaignId: 'c2', campaignName: 'PulseWear Q2 Reel', client: 'Samantha Cruz', budget: 8500, spent: 8500, leads: 218, roas: 3.8, tasksTotal: 4, tasksCompleted: 4, stage: 'Complete', startDate: '2026-02-15', endDate: '2026-04-15' },
+  { campaignId: 'c3', campaignName: 'GreenRoot Awareness', client: 'Ethan Patel', budget: 20000, spent: 11200, leads: 540, roas: 5.2, tasksTotal: 6, tasksCompleted: 4, stage: 'Ads', startDate: '2026-03-10', endDate: '2026-05-10' },
+  { campaignId: 'c4', campaignName: 'LuxeHome Interior Series', client: 'Mia Tanaka', budget: 5000, spent: 1800, leads: 74, roas: 2.9, tasksTotal: 4, tasksCompleted: 1, stage: 'Shooting', startDate: '2026-04-01', endDate: '2026-05-31' },
 ];
 
-const monthlySpend = [
+const MONTHLY_SPEND = [
   { month: 'Jan', spend: 4200, leads: 180 },
   { month: 'Feb', spend: 7800, leads: 290 },
   { month: 'Mar', spend: 12400, leads: 420 },
   { month: 'Apr', spend: 31300, leads: 1144 },
 ];
 
-const stageDistribution = [
-  { name: 'Shooting',  value: 1, color: '#6366f1' },
-  { name: 'Editing',   value: 1, color: '#8b5cf6' },
-  { name: 'Ads',       value: 1, color: '#f59e0b' },
-  { name: 'Complete',  value: 1, color: '#10b981' },
+const STAGE_DISTRIBUTION = [
+  { name: 'Shooting', value: 1, color: '#6366f1' },
+  { name: 'Editing', value: 1, color: '#8b5cf6' },
+  { name: 'Ads', value: 1, color: '#f59e0b' },
+  { name: 'Complete', value: 1, color: '#10b981' },
 ];
 
-const stageBadge: Record<string, string> = {
+const STAGE_BADGE_STYLE: Record<string, string> = {
   Shooting: 'bg-blue-100 text-blue-700',
   'Raw Upload': 'bg-slate-100 text-slate-600',
   Editing: 'bg-purple-100 text-purple-700',
@@ -41,39 +43,40 @@ const stageBadge: Record<string, string> = {
 
 export default function ReportsPage() {
   useRoleGuard(['Owner', 'Manager']);
-  const [dateRange, setDateRange] = useState<string>('last_30');
   const { adsMetrics } = useAdsData();
+  
+  const [dateRange, setDateRange] = useState<string>('last_30');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+  const summaryStats = useMemo(() => {
+    const totalSpend = adsMetrics?.totalSpend ?? 0;
+    const totalLeads = adsMetrics?.totalLeads ?? 0;
+    const avgRoas = (adsMetrics?.avgRoas ?? 0).toFixed(1);
+    const totalBudget = CAMPAIGN_REPORTS.reduce((sum, campaign) => sum + campaign.budget, 0);
 
-  const totalSpend = adsMetrics?.totalSpend ?? 0;
-  const totalLeads = adsMetrics?.totalLeads ?? 0;
-  const avgRoas = (adsMetrics?.avgRoas ?? 0).toFixed(1);
-  const totalBudget = campaignReports.reduce((s, c) => s + c.budget, 0);
+    return [
+      { label: 'Total Budget', value: `$${totalBudget.toLocaleString()}`, icon: DollarSign, color: 'text-violet-600 bg-violet-50' },
+      { label: 'Total Spent', value: `$${totalSpend.toLocaleString()}`, icon: TrendingUp, color: 'text-blue-600 bg-blue-50' },
+      { label: 'Total Leads', value: totalLeads.toLocaleString(), icon: Users, color: 'text-emerald-600 bg-emerald-50' },
+      { label: 'Avg ROAS', value: `${avgRoas}×`, icon: Target, color: 'text-amber-600 bg-amber-50' },
+    ];
+  }, [adsMetrics]);
 
-  const summaryStats = [
-    { label: 'Total Budget',   value: `$${totalBudget.toLocaleString()}`,  icon: DollarSign, color: 'text-violet-600 bg-violet-50' },
-    { label: 'Total Spent',    value: `$${totalSpend.toLocaleString()}`,  icon: TrendingUp, color: 'text-blue-600 bg-blue-50' },
-    { label: 'Total Leads',    value: totalLeads.toLocaleString(),    icon: Users,      color: 'text-emerald-600 bg-emerald-50' },
-    { label: 'Avg ROAS',       value: `${avgRoas}×`,     icon: Target,     color: 'text-amber-600 bg-amber-50' },
-  ];
-
-  function handleExport() {
-    toast.info('Export coming soon — reporting API required');
-  }
+  const handleExport = () => {
+    toast.info('Export coming soon — reporting API integration required');
+  };
 
   if (!mounted) return <div className="min-h-screen bg-slate-50" />;
 
   return (
     <AppLayout>
       <Toaster position="bottom-right" richColors />
-      <div className="px-6 lg:px-8 xl:px-10 py-6 max-w-screen-2xl mx-auto">
-
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      
+      <main className="px-6 lg:px-8 xl:px-10 py-6 max-w-screen-2xl mx-auto">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
               <BarChart3 size={20} className="text-violet-600" />
@@ -83,12 +86,13 @@ export default function ReportsPage() {
               Campaign performance overview across all clients
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <nav className="flex items-center gap-2">
             <div className="relative">
               <select
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
-                className="appearance-none text-[13px] border border-slate-200 rounded-lg pl-3 pr-8 py-2 outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 bg-white text-slate-700"
+                className="appearance-none text-[13px] border border-slate-200 rounded-lg pl-3 pr-8 py-2 outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 bg-white text-slate-700 cursor-pointer"
+                aria-label="Select date range"
               >
                 <option value="last_7">Last 7 days</option>
                 <option value="last_30">Last 30 days</option>
@@ -99,140 +103,156 @@ export default function ReportsPage() {
             </div>
             <button
               onClick={handleExport}
-              className="inline-flex items-center gap-1.5 text-[13px] font-medium text-slate-700 border border-slate-200 hover:border-slate-300 px-3 py-2 rounded-lg transition-colors"
+              className="inline-flex items-center gap-1.5 text-[13px] font-medium text-slate-700 border border-slate-200 hover:border-slate-300 px-3 py-2 rounded-lg transition-colors bg-white shadow-sm"
             >
               <Download size={14} />
               Export
             </button>
-          </div>
-        </div>
+          </nav>
+        </header>
 
-        {/* Summary stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           {summaryStats.map((s) => {
             const Icon = s.icon;
             return (
-              <div key={s.label} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-3">
+              <article key={s.label} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-3 shadow-sm">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${s.color}`}>
                   <Icon size={18} />
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-slate-900 tabular-nums">{s.value}</p>
-                  <p className="text-[11.5px] text-slate-500">{s.label}</p>
+                  <p className="text-xl font-bold text-slate-900 tabular-nums leading-none">{s.value}</p>
+                  <p className="text-[11.5px] text-slate-500 mt-1">{s.label}</p>
                 </div>
-              </div>
+              </article>
             );
           })}
-        </div>
+        </section>
 
-        {/* Charts row */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 mb-6">
-          {/* Monthly spend + leads */}
-          <div className="xl:col-span-2 bg-white border border-slate-200 rounded-xl p-5">
-            <h2 className="text-[14px] font-semibold text-slate-800 mb-4">Monthly Spend & Leads</h2>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={monthlySpend} barGap={4}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                <YAxis yAxisId="left" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0' }} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar yAxisId="left" dataKey="spend" name="Spend ($)" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                <Bar yAxisId="right" dataKey="leads" name="Leads" fill="#10b981" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+        {/* Performance Visualization Row */}
+        <section className="grid grid-cols-1 xl:grid-cols-3 gap-5 mb-6">
+          {/* Main Chart: Growth and Spend */}
+          <article className="xl:col-span-2 bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+            <header className="mb-4">
+              <h2 className="text-[14px] font-semibold text-slate-800">Monthly Spend & Leads</h2>
+            </header>
+            <div className="w-full h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={MONTHLY_SPEND} barGap={4} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <YAxis yAxisId="left" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 10, border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                  <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
+                  <Bar yAxisId="left" dataKey="spend" name="Spend ($)" fill="#6366f1" radius={[3, 3, 0, 0]} />
+                  <Bar yAxisId="right" dataKey="leads" name="Leads" fill="#10b981" radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </article>
 
-          {/* Stage distribution */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5">
-            <h2 className="text-[14px] font-semibold text-slate-800 mb-4">Campaign Stages</h2>
-            <ResponsiveContainer width="100%" height={160}>
-              <PieChart>
-                <Pie
-                  data={stageDistribution}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={45}
-                  outerRadius={70}
-                  paddingAngle={3}
-                  dataKey="value"
-                >
-                  {stageDistribution.map((entry, i) => (
-                    <Cell key={`cell-${i}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="grid grid-cols-2 gap-1.5 mt-2">
-              {stageDistribution.map((s) => (
+          {/* Secondary Chart: Workflow Distribution */}
+          <article className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
+            <header className="mb-2">
+              <h2 className="text-[14px] font-semibold text-slate-800">Campaign Stages</h2>
+            </header>
+            <div className="w-full h-[140px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={STAGE_DISTRIBUTION}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={40}
+                    outerRadius={60}
+                    paddingAngle={4}
+                    dataKey="value"
+                  >
+                    {STAGE_DISTRIBUTION.map((entry, i) => (
+                      <Cell key={`cell-${i}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <footer className="grid grid-cols-2 gap-1.5 mt-4">
+              {STAGE_DISTRIBUTION.map((s) => (
                 <div key={s.name} className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
-                  <span className="text-[11.5px] text-slate-600">{s.name}</span>
+                  <span className="text-[11px] text-slate-500 font-medium">{s.name}</span>
                 </div>
               ))}
-            </div>
-          </div>
-        </div>
+            </footer>
+          </article>
+        </section>
 
-        {/* Campaign table */}
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100">
+
+        <section className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+          <header className="px-5 py-4 border-b border-slate-100">
             <h2 className="text-[14px] font-semibold text-slate-800">Campaign Performance</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-[13px]">
+          </header>
+          <div className="overflow-x-auto scrollbar-thin">
+            <table className="w-full text-[12.5px] border-collapse">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="text-left px-4 py-3 text-slate-500 font-semibold">Campaign</th>
-                  <th className="text-left px-4 py-3 text-slate-500 font-semibold hidden md:table-cell">Client</th>
-                  <th className="text-right px-4 py-3 text-slate-500 font-semibold">Budget</th>
-                  <th className="text-right px-4 py-3 text-slate-500 font-semibold hidden sm:table-cell">Spent</th>
-                  <th className="text-right px-4 py-3 text-slate-500 font-semibold hidden sm:table-cell">Leads</th>
-                  <th className="text-right px-4 py-3 text-slate-500 font-semibold">ROAS</th>
-                  <th className="text-left px-4 py-3 text-slate-500 font-semibold hidden lg:table-cell">Tasks</th>
-                  <th className="text-left px-4 py-3 text-slate-500 font-semibold">Stage</th>
+                <tr className="bg-slate-50 border-b border-slate-100">
+                  <th className="text-left px-5 py-3 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">Campaign</th>
+                  <th className="text-left px-4 py-3 text-slate-500 font-semibold uppercase tracking-wider text-[11px] hidden md:table-cell">Client</th>
+                  <th className="text-right px-4 py-3 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">Budget</th>
+                  <th className="text-right px-4 py-3 text-slate-500 font-semibold uppercase tracking-wider text-[11px] hidden sm:table-cell">Spent</th>
+                  <th className="text-right px-4 py-3 text-slate-500 font-semibold uppercase tracking-wider text-[11px] hidden sm:table-cell">Leads</th>
+                  <th className="text-right px-4 py-3 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">ROAS</th>
+                  <th className="text-left px-4 py-3 text-slate-500 font-semibold uppercase tracking-wider text-[11px] hidden lg:table-cell">Tasks</th>
+                  <th className="text-left px-5 py-3 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">Stage</th>
                 </tr>
               </thead>
-              <tbody>
-                {campaignReports.map((r, i) => {
-                  const pct = Math.round((r.tasksCompleted / r.tasksTotal) * 100);
+              <tbody className="divide-y divide-slate-50">
+                {CAMPAIGN_REPORTS.map((report) => {
+                  const taskProgress = Math.round((report.tasksCompleted / report.tasksTotal) * 100);
                   return (
-                    <tr key={r.campaignId} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/60 transition-colors">
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-slate-800 truncate max-w-[180px]">{r.campaignName}</p>
-                        <p className="text-[11px] text-slate-400 md:hidden">{r.client}</p>
-                      </td>
-                      <td className="px-4 py-3 text-slate-600 hidden md:table-cell">{r.client}</td>
-                      <td className="px-4 py-3 text-right text-slate-700 tabular-nums font-medium">
-                        ${r.budget.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-right text-slate-600 tabular-nums hidden sm:table-cell">
-                        ${r.spent.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-right text-slate-600 tabular-nums hidden sm:table-cell">
-                        {r.leads.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span className={`font-semibold tabular-nums ${r.roas >= 4 ? 'text-emerald-600' : r.roas >= 3 ? 'text-amber-600' : 'text-red-500'}`}>
-                          {r.roas}×
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 hidden lg:table-cell">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden w-20">
-                            <div
-                              className="h-full bg-violet-500 rounded-full"
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
-                          <span className="text-[11px] text-slate-500 tabular-nums">{r.tasksCompleted}/{r.tasksTotal}</span>
+                    <tr key={report.campaignId} className="group hover:bg-slate-50/50 transition-colors">
+                      <td className="px-5 py-3.5">
+                        <div className="flex flex-col gap-0.5">
+                          <p className="font-semibold text-slate-800 truncate max-w-[180px] group-hover:text-violet-700 transition-colors">
+                            {report.campaignName}
+                          </p>
+                          <p className="text-[11px] text-slate-400 md:hidden">{report.client}</p>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex px-2 py-0.5 rounded-md text-[11px] font-semibold ${stageBadge[r.stage] ?? 'bg-slate-100 text-slate-600'}`}>
-                          {r.stage}
+                      <td className="px-4 py-3.5 text-slate-500 font-medium hidden md:table-cell">{report.client}</td>
+                      <td className="px-4 py-3.5 text-right text-slate-700 tabular-nums font-mono font-medium">
+                        ${report.budget.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3.5 text-right text-slate-500 tabular-nums font-mono hidden sm:table-cell">
+                        ${report.spent.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3.5 text-right text-slate-500 tabular-nums font-mono hidden sm:table-cell">
+                        {report.leads.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3.5 text-right">
+                        <span className={`font-bold font-mono tabular-nums text-[13px] ${
+                          report.roas >= 4 ? 'text-emerald-600' : report.roas >= 3 ? 'text-slate-700' : 'text-red-500'
+                        }`}>
+                          {report.roas}×
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5 hidden lg:table-cell">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden w-20">
+                            <div
+                              className="h-full bg-violet-500 rounded-full transition-all duration-500"
+                              style={{ width: `${taskProgress}%` }}
+                            />
+                          </div>
+                          <span className="text-[11px] text-slate-400 font-mono tabular-nums w-8">
+                            {report.tasksCompleted}/{report.tasksTotal}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span className={`inline-flex px-2 py-0.5 rounded-md text-[10.5px] font-bold tracking-tight ${STAGE_BADGE_STYLE[report.stage] ?? 'bg-slate-100 text-slate-600'}`}>
+                          {report.stage}
                         </span>
                       </td>
                     </tr>
@@ -241,9 +261,8 @@ export default function ReportsPage() {
               </tbody>
             </table>
           </div>
-        </div>
-
-      </div>
+        </section>
+      </main>
     </AppLayout>
   );
 }

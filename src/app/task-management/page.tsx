@@ -1,17 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import Modal from '@/components/ui/Modal';
-import { Plus, Search, X, CheckSquare, AlertCircle, ChevronDown, User, Pencil, Trash2, CheckCircle2, Circle, Timer, Camera, Film, Megaphone, TrendingUp } from 'lucide-react';
+import { Plus, Search, CheckSquare, AlertCircle, ChevronDown, User, Pencil, Trash2, CheckCircle2, Circle, Timer, Camera, Film, Megaphone, TrendingUp } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useTasks } from '@/context/TaskContext';
 import { useAuth } from '@/context/AuthContext';
 import { Task, TaskStatus, TaskPriority, TaskRole } from '@/types';
 
-/**
- * UI Configuration
- */
 const ROLE_CONFIG: Record<string, { color: string; bg: string; icon: React.ElementType }> = {
   Shooter: { color: 'text-blue-700', bg: 'bg-blue-100', icon: Camera },
   Editor: { color: 'text-purple-700', bg: 'bg-purple-100', icon: Film },
@@ -27,18 +24,11 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
   completed: { label: 'Completed', color: 'text-emerald-700', bg: 'bg-emerald-100', icon: CheckCircle2 },
 };
 
-const PRIORITY_CONFIG: Record<TaskPriority, { label: string; color: string; dot: string }> = {
-  low: { label: 'Low', color: 'text-slate-500', dot: 'bg-slate-400' },
-  medium: { label: 'Medium', color: 'text-amber-600', dot: 'bg-amber-400' },
-  high: { label: 'High', color: 'text-red-600', dot: 'bg-red-500' },
-};
-
 const ROLE_FILTERS: { label: string; value: TaskRole | 'all' }[] = [
   { label: 'All Roles', value: 'all' },
   { label: 'Shooter', value: 'Shooter' },
   { label: 'Editor', value: 'Editor' },
   { label: 'Ads Manager', value: 'Ads Manager' },
-
 ];
 
 const EMPTY_FORM = {
@@ -66,18 +56,11 @@ const CLIENT_OPTIONS = [
   'Luxe Apparel', 'TechWorld', 'Velocity Motors', 'GreenRoot', 'Nexus Capital', 'Orion Fitness',
 ];
 
-/**
- * Helpers
- */
 const checkIsOverdue = (deadline: string, status: TaskStatus) => {
   if (!deadline || status === 'completed') return false;
   return new Date(deadline) < new Date();
 };
 
-/**
- * Task Management Module
- * Strictly refactored to maintain UI parity while improving type safety and stability.
- */
 export default function TaskManagementPage() {
   useRoleGuard(['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager', 'Social Media Manager']);
   
@@ -87,18 +70,16 @@ export default function TaskManagementPage() {
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
+  const [roleFilter, setRoleFilter] = useState<TaskRole | 'all'>('all');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; task: Task | null }>({ open: false, task: null });
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState<Partial<Record<keyof typeof EMPTY_FORM, string>>>({});
 
-  // 1. RBAC & Visibility Logic (Localized for stability)
   const isRestricted = useMemo(() => 
     user?.role && ['Shooter', 'Editor', 'Ads Manager'].includes(user.role)
   , [user?.role]);
-
-  const [roleFilter, setRoleFilter] = useState<TaskRole | 'all'>('all');
 
   useEffect(() => {
     setMounted(true);
@@ -113,20 +94,19 @@ export default function TaskManagementPage() {
     return rawTasks.filter(t => t.assignedTo === user.name || t.role === user.role);
   }, [rawTasks, user]);
 
-  // 2. Filtering
   const filteredTasks = useMemo(() => {
+    const q = search.trim().toLowerCase();
     return tasks.filter((t) => {
-      const matchSearch =
-        t.title.toLowerCase().includes(search.toLowerCase()) ||
-        t.assignedTo.toLowerCase().includes(search.toLowerCase()) ||
-        (t.client || '').toLowerCase().includes(search.toLowerCase());
+      const matchSearch = !q ||
+        t.title.toLowerCase().includes(q) ||
+        t.assignedTo.toLowerCase().includes(q) ||
+        (t.client || '').toLowerCase().includes(q);
       const matchRole = roleFilter === 'all' || t.role === roleFilter;
       const matchStatus = statusFilter === 'all' || t.status === statusFilter;
       return matchSearch && matchRole && matchStatus;
     });
   }, [tasks, search, roleFilter, statusFilter]);
 
-  // 3. Stats
   const stats = useMemo(() => ({
     total: tasks.length,
     pending: tasks.filter((t) => t.status === 'pending').length,
@@ -135,15 +115,14 @@ export default function TaskManagementPage() {
     overdue: tasks.filter((t) => checkIsOverdue(t.deadline, t.status as TaskStatus)).length,
   }), [tasks]);
 
-  // 4. Handlers
-  const handleOpenAdd = () => {
+  const handleOpenAdd = useCallback(() => {
     setEditingTask(null);
     setForm(EMPTY_FORM);
     setErrors({});
     setModalOpen(true);
-  };
+  }, []);
 
-  const handleOpenEdit = (task: Task) => {
+  const handleOpenEdit = useCallback((task: Task) => {
     setEditingTask(task);
     setForm({
       title: task.title,
@@ -158,7 +137,7 @@ export default function TaskManagementPage() {
     });
     setErrors({});
     setModalOpen(true);
-  };
+  }, []);
 
   const handleSave = () => {
     if (!form.title.trim()) { setErrors({ title: 'Required' }); return; }
@@ -196,7 +175,6 @@ export default function TaskManagementPage() {
   return (
     <AppLayout>
       <div className="p-6 max-w-7xl mx-auto">
-        {/* Header Section */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">Task Management</h1>
@@ -211,7 +189,6 @@ export default function TaskManagementPage() {
           </button>
         </div>
 
-        {/* Analytics Row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[
             { label: 'Total Tasks', value: stats.total, icon: CheckSquare, color: 'text-violet-600', bg: 'bg-violet-50' },
@@ -234,7 +211,6 @@ export default function TaskManagementPage() {
           })}
         </div>
 
-        {/* Search & Filter Bar */}
         <div className="flex items-center gap-2 mb-4 flex-wrap">
           {ROLE_FILTERS
             .filter(rf => !isRestricted || rf.value === 'all' || rf.value === user?.role)
@@ -284,7 +260,6 @@ export default function TaskManagementPage() {
           </div>
         </div>
 
-        {/* Task Data Table */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <table className="w-full text-left">
             <thead>
@@ -363,7 +338,6 @@ export default function TaskManagementPage() {
         </div>
       </div>
 
-      {/* Upsert Modal */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editingTask ? 'Edit Task' : 'Add New Task'} size="lg">
         <div className="px-6 py-5 space-y-4">
           <div>
@@ -413,13 +387,12 @@ export default function TaskManagementPage() {
         </div>
       </Modal>
 
-      {/* Delete Confirmation */}
-      <Modal open={deleteModal.open} onClose={() => setDeleteModal({ open: false, task: null })} title="Delete Task" size="sm">
+      <Modal open={deleteModal.open} onClose={() => setDeleteModal({ open: false, task: null })} title="Confirm Deletion" size="sm">
         <div className="px-6 py-5">
-          <p className="text-[13px] text-slate-600 mb-5">Are you sure you want to delete <span className="font-bold">"{deleteModal.task?.title}"</span>?</p>
+          <p className="text-[13.5px] text-slate-600 mb-6 leading-relaxed">Are you sure you want to permanently delete the task <span className="font-black text-slate-900">"{deleteModal.task?.title}"</span>? </p>
           <div className="flex justify-end gap-2.5">
-            <button onClick={() => setDeleteModal({ open: false, task: null })} className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
-            <button onClick={handleDelete} className="px-5 py-2 rounded-lg bg-red-600 text-white text-[13px] font-semibold">Delete</button>
+            <button onClick={() => setDeleteModal({ open: false, task: null })} className="px-4 py-2 rounded-xl border border-slate-200 text-[13px] font-bold text-slate-500 hover:bg-slate-50 transition-colors">Cancel</button>
+            <button onClick={handleDelete} className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-[13px] font-black shadow-md transition-all active:scale-[0.98]"> Delete</button>
           </div>
         </div>
       </Modal>

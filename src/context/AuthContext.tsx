@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       // Regular users handle other public pages
-      if (user.role !== ROLES.SUPER_ADMIN && !pathname.startsWith('/superadmin')) {
+      if (!pathname.startsWith('/superadmin')) {
         router.replace(ROLE_HOME[user.role] || '/dashboard');
         return;
       }

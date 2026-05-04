@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import {
   Settings, User, Bell, Shield, Palette, Save, Camera,
@@ -9,19 +9,24 @@ import {
 import { Toaster, toast } from 'sonner';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/context/AuthContext';
-import Icon from '@/components/ui/AppIcon';
 
-
+// --- Types ---
 type SettingsTab = 'profile' | 'notifications' | 'security' | 'appearance';
 
-const tabs: { id: SettingsTab; label: string; icon: React.ElementType }[] = [
+interface TabItem {
+  id: SettingsTab;
+  label: string;
+  icon: React.ElementType;
+}
+
+const TABS: TabItem[] = [
   { id: 'profile',       label: 'Profile',       icon: User },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'security',      label: 'Security',      icon: Lock },
   { id: 'appearance',    label: 'Appearance',    icon: Palette },
 ];
 
-const notifSettings = [
+const NOTIF_SETTINGS = [
   { id: 'task_assigned',    label: 'Task Assigned',      desc: 'When a new task is assigned to you' },
   { id: 'task_completed',   label: 'Task Completed',     desc: 'When a task you created is completed' },
   { id: 'deadline_warning', label: 'Deadline Reminders', desc: '24h before a task deadline' },
@@ -29,7 +34,7 @@ const notifSettings = [
   { id: 'handoff',          label: 'Workflow Handoffs',  desc: 'When content is passed to the next role' },
 ];
 
-const accentColors = [
+const ACCENT_COLORS = [
   { label: 'Violet', value: 'violet', cls: 'bg-violet-600' },
   { label: 'Blue',   value: 'blue',   cls: 'bg-blue-600' },
   { label: 'Teal',   value: 'teal',   cls: 'bg-teal-600' },
@@ -37,10 +42,12 @@ const accentColors = [
   { label: 'Amber',  value: 'amber',  cls: 'bg-amber-500' },
 ];
 
+
 export default function SettingsPage() {
   useRoleGuard(['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager', 'Social Media Manager']);
   const { user } = useAuth();
 
+  // -- State --
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [profileForm, setProfileForm] = useState({
     name: user?.name ?? '',
@@ -58,304 +65,319 @@ export default function SettingsPage() {
   const [passwordForm, setPasswordForm] = useState({ current: '', next: '', confirm: '' });
   const [selectedAccent, setSelectedAccent] = useState('violet');
 
-  function handleProfileSave() {
-    if (!profileForm.name.trim()) { toast.error('Name is required'); return; }
-    toast.success('Profile updated');
-  }
+  // -- Handlers --
+  const handleProfileSave = useCallback(() => {
+    if (!profileForm.name.trim()) {
+      toast.error('Name is required');
+      return;
+    }
+    toast.success('Profile updated successfully');
+  }, [profileForm.name]);
 
-  function handlePasswordSave() {
-    if (!passwordForm.current) { toast.error('Enter your current password'); return; }
-    if (passwordForm.next.length < 8) { toast.error('New password must be at least 8 characters'); return; }
-    if (passwordForm.next !== passwordForm.confirm) { toast.error('Passwords do not match'); return; }
-    toast.success('Password changed');
+  const handlePasswordSave = useCallback(() => {
+    if (!passwordForm.current) {
+      toast.error('Enter your current password');
+      return;
+    }
+    if (passwordForm.next.length < 8) {
+      toast.error('New password must be at least 8 characters');
+      return;
+    }
+    if (passwordForm.next !== passwordForm.confirm) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    toast.success('Password changed successfully');
     setPasswordForm({ current: '', next: '', confirm: '' });
-  }
+  }, [passwordForm]);
+
+  const toggleNotification = (id: string) => {
+    setNotifEnabled(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   return (
     <AppLayout>
       <Toaster position="bottom-right" richColors />
-      <div className="px-6 lg:px-8 xl:px-10 py-6 max-w-screen-lg mx-auto">
-
-        {/* Header */}
-        <div className="mb-6">
+      
+      <main className="px-6 lg:px-8 xl:px-10 py-6 max-w-screen-lg mx-auto">
+        {/* Page Header */}
+        <header className="mb-6">
           <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
             <Settings size={20} className="text-violet-600" />
             Settings
           </h1>
           <p className="text-[13px] text-slate-500 mt-0.5">Manage your account preferences and configuration</p>
-        </div>
+        </header>
 
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Sidebar Tabs */}
-          <div className="lg:w-52 flex-shrink-0">
-            <nav className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-              {tabs.map((tab) => {
+          {/* Sidebar Navigation */}
+          <aside className="lg:w-52 flex-shrink-0">
+            <nav className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm sticky top-6">
+              {TABS.map((tab) => {
                 const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-2.5 px-4 py-3 text-[13px] font-medium transition-colors border-b border-slate-100 last:border-0 ${
-                      activeTab === tab.id
-                        ? 'bg-violet-50 text-violet-700'
-                        : 'text-slate-600 hover:bg-slate-50'
+                    className={`w-full flex items-center gap-2.5 px-4 py-3 text-[13px] font-semibold transition-all border-b border-slate-100 last:border-0 ${
+                      isActive ? 'bg-violet-50 text-violet-700' : 'text-slate-600 hover:bg-slate-50'
                     }`}
                   >
-                    <Icon size={15} className={activeTab === tab.id ? 'text-violet-600' : 'text-slate-400'} />
+                    <Icon size={15} className={isActive ? 'text-violet-600' : 'text-slate-400'} />
                     {tab.label}
                   </button>
                 );
               })}
             </nav>
 
-            {/* Role Info Card */}
-            <div className="mt-4 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-              <div className="flex items-center gap-2.5 mb-3">
-                <div className="w-9 h-9 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0">
-                  <span className="text-[12px] font-bold text-white">{user?.avatarInitials}</span>
+            {/* Quick Profile Summary */}
+            <article className="mt-4 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+              <header className="flex items-center gap-2.5 mb-3">
+                <div className="w-9 h-9 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0 text-white text-[12px] font-bold shadow-sm">
+                  {user?.avatarInitials}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[13px] font-semibold text-slate-800 truncate">{user?.name}</p>
-                  <p className="text-[11px] text-slate-400">{user?.role}</p>
+                  <p className="text-[13px] font-bold text-slate-800 truncate">{user?.name}</p>
+                  <p className="text-[11px] text-slate-500 font-medium">{user?.role}</p>
                 </div>
-              </div>
-              <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 font-medium">
+              </header>
+              <footer className="flex items-center gap-1.5 text-[11px] text-emerald-600 font-bold uppercase tracking-wider">
                 <CheckCircle2 size={11} />
-                Account active
-              </div>
-            </div>
-          </div>
+                Active Account
+              </footer>
+            </article>
+          </aside>
 
-          {/* Content Panel */}
-          <div className="flex-1 min-w-0">
-
-            {/* Profile Tab */}
+          {/* Configuration Panels */}
+          <section className="flex-1 min-w-0">
+            
+            {/* 1. Profile Panel */}
             {activeTab === 'profile' && (
-              <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100">
-                  <h2 className="text-[14px] font-semibold text-slate-800">Profile Information</h2>
-                  <p className="text-[12px] text-slate-500 mt-0.5">Update your name, email, and bio</p>
-                </div>
-                <div className="px-6 py-5 space-y-4">
-                  {/* Avatar */}
+              <article className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                <header className="px-6 py-4 border-b border-slate-100">
+                  <h2 className="text-[14px] font-bold text-slate-800">Profile Information</h2>
+                  <p className="text-[12px] text-slate-500 mt-0.5 font-medium">Update your name, email, and bio</p>
+                </header>
+                <div className="px-6 py-5 space-y-5">
+                  {/* Photo Management */}
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0">
-                      <span className="text-xl font-bold text-white">{user?.avatarInitials}</span>
+                    <div className="w-16 h-16 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0 text-white text-xl font-bold shadow-lg">
+                      {user?.avatarInitials}
                     </div>
                     <div>
-                      <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-[12.5px] font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                      <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-[12.5px] font-bold text-slate-700 hover:bg-slate-50 transition-all active:scale-[0.98]">
                         <Camera size={13} />
                         Change Photo
                       </button>
-                      <p className="text-[11px] text-slate-400 mt-1">JPG, PNG up to 2MB</p>
+                      <p className="text-[11px] text-slate-400 mt-1 font-medium">JPG, PNG up to 2MB</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Full Name</label>
+                    <div className="space-y-1.5">
+                      <label className="block text-[12.5px] font-bold text-slate-700">Full Name</label>
                       <input
                         type="text"
                         value={profileForm.name}
-                        onChange={(e) => setProfileForm((f) => ({ ...f, name: e.target.value }))}
-                        className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition"
+                        onChange={(e) => setProfileForm(f => ({ ...f, name: e.target.value }))}
+                        className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-all font-medium"
                       />
                     </div>
-                    <div>
-                      <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Email Address</label>
+                    <div className="space-y-1.5">
+                      <label className="block text-[12.5px] font-bold text-slate-700">Email Address</label>
                       <div className="relative">
                         <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
                           type="email"
                           value={profileForm.email}
-                          onChange={(e) => setProfileForm((f) => ({ ...f, email: e.target.value }))}
-                          className="w-full pl-9 pr-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition"
+                          onChange={(e) => setProfileForm(f => ({ ...f, email: e.target.value }))}
+                          className="w-full pl-9 pr-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-all font-medium"
                         />
                       </div>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Bio</label>
+                  <div className="space-y-1.5">
+                    <label className="block text-[12.5px] font-bold text-slate-700">Bio</label>
                     <textarea
                       value={profileForm.bio}
-                      onChange={(e) => setProfileForm((f) => ({ ...f, bio: e.target.value }))}
+                      onChange={(e) => setProfileForm(f => ({ ...f, bio: e.target.value }))}
                       rows={3}
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition resize-none"
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-all resize-none font-medium"
                     />
                   </div>
 
-                  <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg">
-                    <Shield size={14} className="text-slate-400 flex-shrink-0" />
-                    <div>
-                      <p className="text-[12.5px] font-semibold text-slate-700">Role: {user?.role}</p>
-                      <p className="text-[11px] text-slate-400">Role changes must be made by the Owner</p>
+                  <footer className="flex items-center gap-2.5 p-3.5 bg-slate-50 border border-slate-100 rounded-xl">
+                    <Shield size={15} className="text-slate-400" />
+                    <div className="min-w-0">
+                      <p className="text-[12.5px] font-bold text-slate-800">Role: {user?.role}</p>
+                      <p className="text-[11px] text-slate-500 font-medium">Role modifications require administrative authorization</p>
                     </div>
-                  </div>
+                  </footer>
 
-                  <div className="flex justify-end pt-1">
+                  <div className="flex justify-end pt-2">
                     <button
                       onClick={handleProfileSave}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[13px] font-semibold transition-colors"
+                      className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-[13px] font-bold shadow-sm transition-all active:scale-[0.98]"
                     >
                       <Save size={14} />
                       Save Changes
                     </button>
                   </div>
                 </div>
-              </div>
+              </article>
             )}
 
-            {/* Notifications Tab */}
+            {/* 2. Notifications Panel */}
             {activeTab === 'notifications' && (
-              <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100">
-                  <h2 className="text-[14px] font-semibold text-slate-800">Notification Preferences</h2>
-                  <p className="text-[12px] text-slate-500 mt-0.5">Choose which events trigger in-app notifications</p>
-                </div>
-                <div className="divide-y divide-slate-100">
-                  {notifSettings.map((n) => (
-                    <div key={n.id} className="flex items-center justify-between px-6 py-4">
-                      <div>
-                        <p className="text-[13px] font-semibold text-slate-800">{n.label}</p>
-                        <p className="text-[12px] text-slate-500 mt-0.5">{n.desc}</p>
+              <article className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                <header className="px-6 py-4 border-b border-slate-100">
+                  <h2 className="text-[14px] font-bold text-slate-800">Notification Preferences</h2>
+                  <p className="text-[12px] text-slate-500 mt-0.5 font-medium">Manage events that trigger system notifications</p>
+                </header>
+                <div className="divide-y divide-slate-50">
+                  {NOTIF_SETTINGS.map((n) => (
+                    <div key={n.id} className="flex items-center justify-between px-6 py-4.5 hover:bg-slate-50/30 transition-colors">
+                      <div className="pr-4">
+                        <p className="text-[13px] font-bold text-slate-800">{n.label}</p>
+                        <p className="text-[12px] text-slate-500 mt-0.5 font-medium">{n.desc}</p>
                       </div>
                       <button
-                        onClick={() => setNotifEnabled((prev) => ({ ...prev, [n.id]: !prev[n.id] }))}
-                        className={`relative w-10 h-5.5 rounded-full transition-colors flex-shrink-0 ${notifEnabled[n.id] ? 'bg-violet-600' : 'bg-slate-200'}`}
-                        style={{ height: 22, width: 40 }}
+                        onClick={() => toggleNotification(n.id)}
+                        className={`relative w-10 h-5.5 rounded-full transition-all flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-violet-500/20 ${notifEnabled[n.id] ? 'bg-violet-600' : 'bg-slate-200'}`}
                       >
                         <span
-                          className={`absolute top-0.5 w-4.5 h-4.5 rounded-full bg-white shadow transition-transform ${notifEnabled[n.id] ? 'translate-x-5' : 'translate-x-0.5'}`}
-                          style={{ width: 18, height: 18, top: 2, left: notifEnabled[n.id] ? 20 : 2, position: 'absolute', transition: 'left 0.15s' }}
+                          className={`absolute top-[2px] w-[18px] h-[18px] rounded-full bg-white shadow-sm transition-all ${notifEnabled[n.id] ? 'left-[20px]' : 'left-[2px]'}`}
                         />
                       </button>
                     </div>
                   ))}
                 </div>
-                <div className="px-6 py-4 border-t border-slate-100 flex justify-end">
+                <footer className="px-6 py-4 border-t border-slate-100 flex justify-end">
                   <button
-                    onClick={() => toast.success('Notification preferences saved')}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[13px] font-semibold transition-colors"
+                    onClick={() => toast.success('Notification preferences updated')}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-[13px] font-bold shadow-sm transition-all active:scale-[0.98]"
                   >
                     <Save size={14} />
-                    Save Preferences
+                    Update Preferences
                   </button>
-                </div>
-              </div>
+                </footer>
+              </article>
             )}
 
-            {/* Security Tab */}
+            {/* 3. Security Panel */}
             {activeTab === 'security' && (
-              <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100">
-                  <h2 className="text-[14px] font-semibold text-slate-800">Security</h2>
-                  <p className="text-[12px] text-slate-500 mt-0.5">Manage your password and account security</p>
-                </div>
-                <div className="px-6 py-5 space-y-4">
-                  <div>
-                    <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Current Password</label>
+              <article className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                <header className="px-6 py-4 border-b border-slate-100">
+                  <h2 className="text-[14px] font-bold text-slate-800">Account Security</h2>
+                  <p className="text-[12px] text-slate-500 mt-0.5 font-medium">Manage authentication credentials</p>
+                </header>
+                <div className="px-6 py-5 space-y-5">
+                  <div className="space-y-1.5">
+                    <label className="block text-[12.5px] font-bold text-slate-700">Current Password</label>
                     <div className="relative">
                       <input
                         type={showPassword ? 'text' : 'password'}
                         value={passwordForm.current}
-                        onChange={(e) => setPasswordForm((f) => ({ ...f, current: e.target.value }))}
+                        onChange={(e) => setPasswordForm(f => ({ ...f, current: e.target.value }))}
                         placeholder="Enter current password"
-                        className="w-full px-3.5 pr-10 py-2.5 rounded-lg border border-slate-200 text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition"
+                        className="w-full px-3.5 pr-10 py-2.5 rounded-lg border border-slate-200 text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-all font-medium"
                       />
                       <button
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
                       >
                         {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                       </button>
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">New Password</label>
+                  <div className="space-y-1.5">
+                    <label className="block text-[12.5px] font-bold text-slate-700">New Password</label>
                     <input
                       type="password"
                       value={passwordForm.next}
-                      onChange={(e) => setPasswordForm((f) => ({ ...f, next: e.target.value }))}
-                      placeholder="At least 8 characters"
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition"
+                      onChange={(e) => setPasswordForm(f => ({ ...f, next: e.target.value }))}
+                      placeholder="Minimum 8 characters"
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-all font-medium"
                     />
                   </div>
-                  <div>
-                    <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Confirm New Password</label>
+                  <div className="space-y-1.5">
+                    <label className="block text-[12.5px] font-bold text-slate-700">Confirm Password</label>
                     <input
                       type="password"
                       value={passwordForm.confirm}
-                      onChange={(e) => setPasswordForm((f) => ({ ...f, confirm: e.target.value }))}
+                      onChange={(e) => setPasswordForm(f => ({ ...f, confirm: e.target.value }))}
                       placeholder="Repeat new password"
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition"
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-all font-medium"
                     />
                   </div>
-                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-[12px] text-amber-700">
-                    Password changes require backend auth integration to persist. This is a UI prototype.
-                  </div>
-                  <div className="flex justify-end">
+                  <footer className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-[12px] text-amber-800 font-medium">
+                    Note: Password management is currently in evaluation mode. Integration with secure auth providers is required for production persistence.
+                  </footer>
+                  <div className="flex justify-end pt-1">
                     <button
                       onClick={handlePasswordSave}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[13px] font-semibold transition-colors"
+                      className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-[13px] font-bold shadow-sm transition-all active:scale-[0.98]"
                     >
                       <Lock size={14} />
                       Update Password
                     </button>
                   </div>
                 </div>
-              </div>
+              </article>
             )}
 
-            {/* Appearance Tab */}
+            {/* 4. Appearance Panel */}
             {activeTab === 'appearance' && (
-              <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100">
-                  <h2 className="text-[14px] font-semibold text-slate-800">Appearance</h2>
-                  <p className="text-[12px] text-slate-500 mt-0.5">Customize the look and feel of your workspace</p>
-                </div>
-                <div className="px-6 py-5 space-y-6">
-                  <div>
-                    <p className="text-[13px] font-semibold text-slate-700 mb-3">Accent Color</p>
-                    <div className="flex gap-3">
-                      {accentColors.map((c) => (
+              <article className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                <header className="px-6 py-4 border-b border-slate-100">
+                  <h2 className="text-[14px] font-bold text-slate-800">Appearance</h2>
+                  <p className="text-[12px] text-slate-500 mt-0.5 font-medium">Personalize your workspace visual theme</p>
+                </header>
+                <div className="px-6 py-5 space-y-7">
+                  <section>
+                    <p className="text-[13px] font-bold text-slate-700 mb-4 uppercase tracking-wider">Accent Color</p>
+                    <div className="flex flex-wrap gap-4">
+                      {ACCENT_COLORS.map((c) => (
                         <button
                           key={c.value}
-                          onClick={() => { setSelectedAccent(c.value); toast.success(`Accent set to ${c.label}`); }}
-                          className={`w-9 h-9 rounded-full ${c.cls} flex items-center justify-center transition-transform hover:scale-110 ${selectedAccent === c.value ? 'ring-2 ring-offset-2 ring-slate-400 scale-110' : ''}`}
+                          onClick={() => { setSelectedAccent(c.value); toast.success(`${c.label} accent applied`); }}
+                          className={`w-10 h-10 rounded-full ${c.cls} flex items-center justify-center transition-all hover:scale-110 active:scale-95 shadow-sm ${selectedAccent === c.value ? 'ring-2 ring-offset-2 ring-slate-300 scale-110 shadow-md' : ''}`}
                           title={c.label}
                         >
-                          {selectedAccent === c.value && <CheckCircle2 size={16} className="text-white" />}
+                          {selectedAccent === c.value && <CheckCircle2 size={18} className="text-white" />}
                         </button>
                       ))}
                     </div>
-                  </div>
+                  </section>
 
-                  <div>
-                    <p className="text-[13px] font-semibold text-slate-700 mb-3">Sidebar Style</p>
-                    <div className="grid grid-cols-2 gap-3">
+                  <section>
+                    <p className="text-[13px] font-bold text-slate-700 mb-4 uppercase tracking-wider">Sidebar Style</p>
+                    <div className="grid grid-cols-2 gap-4">
                       {['Compact', 'Expanded'].map((style) => (
                         <button
                           key={style}
-                          onClick={() => toast.info(`${style} sidebar coming soon`)}
-                          className="flex items-center gap-2 px-4 py-3 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                          onClick={() => toast.info(`${style} mode coming in next update`)}
+                          className="flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-xl border border-slate-200 text-[13px] font-bold text-slate-700 hover:bg-slate-50 transition-all hover:border-slate-300 active:scale-[0.98]"
                         >
-                          <Palette size={14} className="text-slate-400" />
+                          <Palette size={15} className="text-slate-400" />
                           {style}
                         </button>
                       ))}
                     </div>
-                  </div>
+                  </section>
 
-                  <div className="p-3 bg-slate-50 rounded-lg text-[12px] text-slate-500">
-                    Full theme customization will be available after backend integration.
-                  </div>
+                  <footer className="p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-[12px] text-slate-500 font-medium">
+                   custom color profiles will be available in the Enterprise edition.
+                  </footer>
                 </div>
-              </div>
+              </article>
             )}
-          </div>
+          </section>
         </div>
-      </div>
+      </main>
     </AppLayout>
   );
 }

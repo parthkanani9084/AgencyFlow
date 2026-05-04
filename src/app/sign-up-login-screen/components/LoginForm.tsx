@@ -1,14 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, ArrowRight, Zap, BarChart3, Users, Shield } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
 import { toast } from 'sonner';
 import { useAuth, ROLE_HOME } from '@/context/AuthContext';
-
-
 
 interface FormValues {
   email: string;
@@ -47,7 +45,6 @@ export default function LoginForm() {
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const {
     register,
@@ -58,21 +55,14 @@ export default function LoginForm() {
     defaultValues: { email: '', password: '', remember: false },
   });
 
-  const handleCopy = async (text: string, fieldKey: string) => {
-    await navigator.clipboard.writeText(text);
-    setCopiedField(fieldKey);
-    setTimeout(() => setCopiedField(null), 2000);
-  };
-
-  const handleUseCredential = (cred: DemoCredential) => {
+  const handleUseCredential = useCallback((cred: DemoCredential) => {
     setValue('email', cred.email, { shouldValidate: true });
     setValue('password', cred.password, { shouldValidate: true });
     toast.success(`Autofilled ${cred.role} credentials`);
-  };
+  }, [setValue]);
 
   const onSubmit = async (data: FormValues) => {
     setIsLoading(true);
-    // BACKEND INTEGRATION: POST /api/auth/login with data.email + data.password
     await new Promise((r) => setTimeout(r, 1000));
 
     const result = await login(data.email, data.password);
@@ -83,7 +73,6 @@ export default function LoginForm() {
       return;
     }
 
-    // Determine role-based redirect
     const matched = demoCredentials.find((c) => c.email === data.email);
     const home = matched ? ROLE_HOME[matched.role] : '/dashboard';
     toast.success(`Welcome back! Signing in as ${matched?.role ?? 'user'}…`);
@@ -93,9 +82,7 @@ export default function LoginForm() {
 
   return (
     <div className="min-h-screen flex bg-white">
-      {/* Left brand panel */}
       <div className="hidden lg:flex lg:w-[52%] xl:w-[55%] flex-col bg-gradient-to-br from-[#0F0A1E] via-[#1A0F3C] to-[#2D1B69] relative overflow-hidden">
-        {/* Background decoration */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-[-80px] left-[-80px] w-96 h-96 rounded-full bg-violet-600/20 blur-3xl" />
           <div className="absolute bottom-[-60px] right-[-60px] w-80 h-80 rounded-full bg-violet-400/10 blur-3xl" />
@@ -103,13 +90,11 @@ export default function LoginForm() {
         </div>
 
         <div className="relative z-10 flex flex-col h-full p-10 xl:p-14">
-          {/* Logo */}
           <div className="flex items-center gap-3">
             <AppLogo size={36} />
             <span className="text-white font-semibold text-xl tracking-tight">AgencyFlow</span>
           </div>
 
-          {/* Hero text */}
           <div className="mt-16 xl:mt-20">
             <div className="inline-flex items-center gap-2 bg-violet-500/20 border border-violet-400/30 rounded-full px-3 py-1 mb-6">
               <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
@@ -125,7 +110,6 @@ export default function LoginForm() {
             </p>
           </div>
 
-          {/* Feature list */}
           <div className="mt-10 space-y-4">
             {features.map((f) => {
               const Icon = f.icon;
@@ -140,7 +124,6 @@ export default function LoginForm() {
             })}
           </div>
 
-          {/* Stats row */}
           <div className="mt-auto pt-10">
             <div className="grid grid-cols-3 gap-4 border-t border-white/10 pt-8">
               {[
@@ -158,10 +141,8 @@ export default function LoginForm() {
         </div>
       </div>
 
-      {/* Right form panel */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 sm:px-10 bg-slate-50">
         <div className="w-full max-w-[420px]">
-          {/* Mobile logo */}
           <div className="flex items-center gap-2 mb-8 lg:hidden">
             <AppLogo size={32} />
             <span className="font-semibold text-slate-900 text-lg">AgencyFlow</span>
@@ -175,7 +156,6 @@ export default function LoginForm() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5" noValidate>
-            {/* Email */}
             <div>
               <label htmlFor="email" className="block text-[13px] font-semibold text-slate-700 mb-1.5">
                 Work Email
@@ -200,7 +180,6 @@ export default function LoginForm() {
               )}
             </div>
 
-            {/* Password */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label htmlFor="password" className="block text-[13px] font-semibold text-slate-700">
@@ -238,7 +217,6 @@ export default function LoginForm() {
               )}
             </div>
 
-            {/* Remember me */}
             <div className="flex items-center gap-2">
               <input
                 id="remember"
@@ -251,7 +229,6 @@ export default function LoginForm() {
               </label>
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={isLoading}
@@ -274,7 +251,6 @@ export default function LoginForm() {
             </button>
           </form>
 
-          {/* Demo credentials */}
           <div className="mt-8">
             <div className="flex items-center gap-2 mb-3">
               <div className="flex-1 h-px bg-slate-200" />

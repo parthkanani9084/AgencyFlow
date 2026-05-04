@@ -2,19 +2,19 @@
 
 import React, { useMemo, useState } from 'react';
 import { useSuperAdminStore } from '@/store/superAdminStore';
-import { Building2, CreditCard, Users, TrendingUp, Activity, BarChart3, Database, MousePointer2, Trash2, RefreshCw, Plus, Clock } from 'lucide-react';
+import { Building2, Users, TrendingUp, Activity, BarChart3, MousePointer2, Trash2, RefreshCw, Plus } from 'lucide-react';
 import { ROLES } from '@/constants/roles';
+import { UserRole } from '@/types';
 
 export default function DashboardView() {
   const { 
     agencies, 
-    subscriptions, 
     moduleUsage, 
     roleWiseUsage,
     activityLogs, 
     isLoading
   } = useSuperAdminStore();
-  const [activeTab, setActiveTab] = useState(ROLES.OWNER);
+  const [activeTab, setActiveTab] = useState<UserRole>(ROLES.OWNER);
 
   const metrics = useMemo(() => {
     if (isLoading) return null;
@@ -51,6 +51,31 @@ export default function DashboardView() {
     });
   }, [moduleUsage]);
 
+  const extremeUsage = useMemo(() => {
+    if (usageAnalysis.length === 0) return null;
+    const sorted = [...usageAnalysis].sort((a, b) => b.views - a.views);
+    return {
+      highest: sorted[0],
+      lowest: sorted[sorted.length - 1]
+    };
+  }, [usageAnalysis]);
+
+  const topStats = useMemo(() => {
+    if (!metrics) return [];
+    return [
+      { label: 'Total Agency', value: metrics.totalAgencies, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50' },
+      { label: 'Active Agencies', value: metrics.activeAgencies, icon: Users, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+      { label: 'Total Module Views', value: metrics.totalViews.toLocaleString(), icon: BarChart3, color: 'text-violet-600', bg: 'bg-violet-50' },
+      { label: 'Total Data Actions', value: metrics.totalDataActions.toLocaleString(), icon: Activity, color: 'text-amber-600', bg: 'bg-amber-50' },
+    ];
+  }, [metrics]);
+
+  const roleTabs = useMemo(() => 
+    Object.entries(ROLES)
+      .filter(([key]) => key !== 'SUPER_ADMIN' && key !== 'CLIENT')
+      .map(([key, value]) => ({ key, value })),
+  []);
+
   if (isLoading || !metrics) {
     return (
       <div className="p-8 flex flex-col items-center justify-center min-h-[400px] text-slate-500">
@@ -59,13 +84,6 @@ export default function DashboardView() {
       </div>
     );
   }
-
-  const topStats = [
-    { label: 'Total Agency', value: metrics.totalAgencies, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Active Agencies', value: metrics.activeAgencies, icon: Users, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { label: 'Total Module Views', value: metrics.totalViews.toLocaleString(), icon: BarChart3, color: 'text-violet-600', bg: 'bg-violet-50' },
-    { label: 'Total Data Actions', value: metrics.totalDataActions.toLocaleString(), icon: Activity, color: 'text-amber-600', bg: 'bg-amber-50' },
-  ];
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -94,9 +112,9 @@ export default function DashboardView() {
         ))}
       </div>
 
-      {/* Row 2: Combined Section (2 Separate Cards in 1 Row) */}
+      {/* Row 2: Combined Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Feature Uses Highlights - Refined as per screenshot */}
+        {/* Feature Uses Highlights */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col h-[520px]">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-[15px] font-bold text-slate-900 flex items-center gap-2">
@@ -107,65 +125,59 @@ export default function DashboardView() {
           </div>
           
           <div className="space-y-6 flex-1 flex flex-col">
-            {(() => {
-              const sorted = [...usageAnalysis].sort((a, b) => b.views - a.views);
-              const highest = sorted[0];
-              const lowest = sorted[sorted.length - 1];
-              
-              return (
-                <>
-                  {/* Highest Usage Card */}
-                  <div className="p-6 rounded-2xl bg-[#f0fdf4]/60 border border-emerald-100 relative group transition-all">
-                    <div className="flex items-start justify-between mb-4">
-                      <span className="text-[9px] font-extrabold text-emerald-600 uppercase tracking-widest bg-white px-2.5 py-1 rounded-md border border-emerald-50 shadow-sm">
-                        HIGHEST USAGE
-                      </span>
-                      <div className="p-2 rounded-xl bg-emerald-100 text-emerald-600 shadow-sm">
-                        <TrendingUp size={18} />
-                      </div>
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-6">{highest.module}</h3>
-                    <div className="flex items-center gap-14">
-                      <div className="flex flex-col gap-1.5">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Avg Views</p>
-                        <p className="text-[20px] font-bold text-emerald-600 leading-none">{highest.views.toLocaleString()}</p>
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Efficiency</p>
-                        <p className="text-[20px] font-bold text-slate-800 leading-none">98.4%</p>
-                      </div>
+            {extremeUsage && (
+              <>
+                {/* Highest Usage Card */}
+                <div className="p-6 rounded-2xl bg-[#f0fdf4]/60 border border-emerald-100 relative group transition-all">
+                  <div className="flex items-start justify-between mb-4">
+                    <span className="text-[9px] font-extrabold text-emerald-600 uppercase tracking-widest bg-white px-2.5 py-1 rounded-md border border-emerald-50 shadow-sm">
+                      HIGHEST USAGE
+                    </span>
+                    <div className="p-2 rounded-xl bg-emerald-100 text-emerald-600 shadow-sm">
+                      <TrendingUp size={18} />
                     </div>
                   </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-6">{extremeUsage.highest.module}</h3>
+                  <div className="flex items-center gap-14">
+                    <div className="flex flex-col gap-1.5">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Avg Views</p>
+                      <p className="text-[20px] font-bold text-emerald-600 leading-none">{extremeUsage.highest.views.toLocaleString()}</p>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Efficiency</p>
+                      <p className="text-[20px] font-bold text-slate-800 leading-none">98.4%</p>
+                    </div>
+                  </div>
+                </div>
 
-                  {/* Lowest Usage Card */}
-                  <div className="p-6 rounded-2xl bg-slate-50/50 border border-slate-100 relative group transition-all">
-                    <div className="flex items-start justify-between mb-4">
-                      <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest bg-white px-2.5 py-1 rounded-md border border-slate-100 shadow-sm">
-                        LOWEST USAGE
-                      </span>
-                      <div className="p-2 rounded-xl bg-white text-slate-400 border border-slate-100 shadow-sm">
-                        <MousePointer2 size={18} />
-                      </div>
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-6">{lowest.module}</h3>
-                    <div className="flex items-center gap-14">
-                      <div className="flex flex-col gap-1.5">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Avg Views</p>
-                        <p className="text-[20px] font-bold text-slate-600 leading-none">{lowest.views.toLocaleString()}</p>
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Action Req.</p>
-                        <p className="text-[20px] font-bold text-amber-600 leading-none">Pending</p>
-                      </div>
+                {/* Lowest Usage Card */}
+                <div className="p-6 rounded-2xl bg-slate-50/50 border border-slate-100 relative group transition-all">
+                  <div className="flex items-start justify-between mb-4">
+                    <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest bg-white px-2.5 py-1 rounded-md border border-slate-100 shadow-sm">
+                      LOWEST USAGE
+                    </span>
+                    <div className="p-2 rounded-xl bg-white text-slate-400 border border-slate-100 shadow-sm">
+                      <MousePointer2 size={18} />
                     </div>
                   </div>
-                </>
-              );
-            })()}
+                  <h3 className="text-xl font-bold text-slate-900 mb-6">{extremeUsage.lowest.module}</h3>
+                  <div className="flex items-center gap-14">
+                    <div className="flex flex-col gap-1.5">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Avg Views</p>
+                      <p className="text-[20px] font-bold text-slate-600 leading-none">{extremeUsage.lowest.views.toLocaleString()}</p>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Action Req.</p>
+                      <p className="text-[20px] font-bold text-amber-600 leading-none">Pending</p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
-        {/* System Audit Logs - Redesigned Integrated Timeline */}
+        {/* System Audit Logs */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col h-[520px]">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
@@ -184,20 +196,16 @@ export default function DashboardView() {
           </div>
 
           <div 
-            className="flex-1 overflow-y-auto pr-2"
-            style={{
-              scrollbarWidth: 'thin',
-              scrollbarColor: '#e2e8f0 transparent',
-            }}
+            className="flex-1 overflow-y-auto pr-2 custom-scrollbar"
           >
             <style jsx>{`
-              div::-webkit-scrollbar {
+              .custom-scrollbar::-webkit-scrollbar {
                 width: 5px;
               }
-              div::-webkit-scrollbar-track {
+              .custom-scrollbar::-webkit-scrollbar-track {
                 background: transparent;
               }
-              div::-webkit-scrollbar-thumb {
+              .custom-scrollbar::-webkit-scrollbar-thumb {
                 background-color: #e2e8f0;
                 border-radius: 20px;
               }
@@ -207,7 +215,6 @@ export default function DashboardView() {
               {activityLogs.map((log, idx) => {
                 const isDelete = log.action.includes('DELETE');
                 const isUpdate = log.action.includes('UPDATE');
-                const isCreate = log.action.includes('CREATE');
                 
                 return (
                   <div key={log.id} className="group relative flex gap-4 p-3 rounded-xl transition-all hover:bg-slate-50 cursor-default">
@@ -271,91 +278,84 @@ export default function DashboardView() {
           </div>
           
           {/* Role Tabs */}
-          <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl">
-            {Object.entries(ROLES)
-              .filter(([key]) => key !== 'SUPER_ADMIN' && key !== 'CLIENT')
-              .map(([key, value]) => (
-                <button
-                  key={key}
-                  onClick={() => setActiveTab(value)}
-                  className={`px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-all ${
-                    activeTab === value 
-                      ? 'bg-white text-violet-600 shadow-sm border border-violet-100' 
-                      : 'text-slate-400 hover:text-slate-600'
-                  }`}
-                >
-                  {key.replace(/_/g, ' ')}
-                </button>
-              ))}
+          <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl overflow-x-auto">
+            {roleTabs.map(({ key, value }) => (
+              <button
+                key={key}
+                onClick={() => setActiveTab(value)}
+                className={`px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${
+                  activeTab === value 
+                    ? 'bg-white text-violet-600 shadow-sm border border-violet-100' 
+                    : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                {key.replace(/_/g, ' ')}
+              </button>
+            ))}
           </div>
         </div>
         
         <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          {(() => {
-            const modules = roleWiseUsage[activeTab] || [];
-            return (
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
-                  <div className="flex items-center gap-3">
-                    <div className="w-1 h-4 bg-violet-400 rounded-full" />
-                    <div>
-                      <h2 className="text-[13px] font-extrabold text-slate-900 uppercase tracking-wider">
-                        {activeTab} Panel Analytics
-                      </h2>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-                      {modules.length} Active Modules
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="bg-white border-b border-slate-100">
-                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">Module</th>
-                        <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Views/Clicks</th>
-                        <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Data Entered</th>
-                        <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Updated</th>
-                        <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Deleted</th>
-                        <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Current Records</th>
-                        <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Unique Base</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-50">
-                      {modules.length === 0 ? (
-                        <tr>
-                          <td colSpan={7} className="px-6 py-12 text-center text-slate-400 text-xs italic">
-                            No active modules found for this role.
-                          </td>
-                        </tr>
-                      ) : (
-                        modules.map((item) => (
-                          <tr key={item.module} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="px-6 py-4">
-                              <p className="text-[13px] font-bold text-slate-800 whitespace-nowrap">{item.module}</p>
-                            </td>
-                            <td className="px-4 py-4 text-center font-semibold text-slate-600 text-[13px]">{item.metrics.views}</td>
-                            <td className="px-4 py-4 text-center font-semibold text-emerald-600 text-[13px]">{item.metrics.dataEntered}</td>
-                            <td className="px-4 py-4 text-center font-semibold text-blue-600 text-[13px]">{item.metrics.updated}</td>
-                            <td className="px-4 py-4 text-center font-semibold text-red-600 text-[13px]">{item.metrics.deleted}</td>
-                            <td className="px-4 py-4 text-center">
-                              <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded-md text-[11px] font-bold">
-                                {item.metrics.currentRecords}
-                              </span>
-                            </td>
-                            <td className="px-4 py-4 text-center font-semibold text-slate-600 text-[13px]">{item.metrics.uniqueBase}</td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+              <div className="flex items-center gap-3">
+                <div className="w-1 h-4 bg-violet-400 rounded-full" />
+                <div>
+                  <h2 className="text-[13px] font-extrabold text-slate-900 uppercase tracking-wider">
+                    {activeTab} Panel Analytics
+                  </h2>
                 </div>
               </div>
-            );
-          })()}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
+                  {(roleWiseUsage[activeTab] || []).length} Active Modules
+                </span>
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-white border-b border-slate-100">
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">Module</th>
+                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Views/Clicks</th>
+                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Data Entered</th>
+                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Updated</th>
+                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Deleted</th>
+                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Current Records</th>
+                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Unique Base</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {(!roleWiseUsage[activeTab] || roleWiseUsage[activeTab].length === 0) ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-12 text-center text-slate-400 text-xs italic">
+                        No active modules found for this role.
+                      </td>
+                    </tr>
+                  ) : (
+                    roleWiseUsage[activeTab].map((item) => (
+                      <tr key={item.module} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <p className="text-[13px] font-bold text-slate-800 whitespace-nowrap">{item.module}</p>
+                        </td>
+                        <td className="px-4 py-4 text-center font-semibold text-slate-600 text-[13px]">{item.metrics.views}</td>
+                        <td className="px-4 py-4 text-center font-semibold text-emerald-600 text-[13px]">{item.metrics.dataEntered}</td>
+                        <td className="px-4 py-4 text-center font-semibold text-blue-600 text-[13px]">{item.metrics.updated}</td>
+                        <td className="px-4 py-4 text-center font-semibold text-red-600 text-[13px]">{item.metrics.deleted}</td>
+                        <td className="px-4 py-4 text-center">
+                          <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded-md text-[11px] font-bold">
+                            {item.metrics.currentRecords}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-center font-semibold text-slate-600 text-[13px]">{item.metrics.uniqueBase}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </div>

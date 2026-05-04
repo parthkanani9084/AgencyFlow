@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { CheckCircle2, Circle, Timer, ChevronRight, AlertCircle, Video } from 'lucide-react';
 import { Task, TaskStatus, TaskPriority } from '@/types';
 
@@ -21,13 +21,18 @@ const priorityDot: Record<TaskPriority, string> = {
   high: 'bg-red-500',
 };
 
-function isOverdue(deadline: string, status: TaskStatus) {
+const checkIsOverdue = (deadline: string, status: TaskStatus) => {
   return status !== 'completed' && new Date(deadline) < new Date();
-}
+};
 
 export default function ReelCard({ task, onStatusChange }: ReelCardProps) {
-  const overdue = isOverdue(task.deadline, task.status as TaskStatus);
-  const config = statusConfig[task.status] || statusConfig.pending;
+  const overdue = useMemo(() => 
+    checkIsOverdue(task.deadline, task.status as TaskStatus),
+  [task.deadline, task.status]);
+
+  const config = useMemo(() => 
+    statusConfig[task.status] || statusConfig.pending,
+  [task.status]);
 
   return (
     <div 

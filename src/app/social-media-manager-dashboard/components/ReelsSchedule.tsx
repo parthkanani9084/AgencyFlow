@@ -52,10 +52,8 @@ export default function ReelsSchedule({
 
   return (
     <div className="space-y-8">
-      {/* Grouped Content */}
       {groupedReels.map((group) => (
         <div key={group.date} className="relative">
-          {/* Date Header */}
           <div className="sticky top-0 z-10 py-3 bg-slate-50/95 backdrop-blur-sm mb-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 shadow-sm">
@@ -71,9 +69,7 @@ export default function ReelsSchedule({
             </div>
           </div>
 
-          {/* Reel List */}
           <div className="space-y-3 pl-4 sm:pl-10 relative">
-            {/* Timeline Line */}
             <div className="absolute left-4 sm:left-4 top-0 bottom-0 w-px bg-slate-200 hidden sm:block" />
             
             {group.reels.map((reel) => (

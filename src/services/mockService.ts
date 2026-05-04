@@ -85,12 +85,7 @@ const generateRoleMetrics = (): RoleMetrics => ({
 let moduleUsage: ModuleUsage[] = allModules.map(moduleName => ({
   module: moduleName,
   roleData: roles.reduce((acc, role) => {
-    // Only generate data if role has access to this module, otherwise return empty metrics
-    // Or as per request, just average across 6 roles regardless?
-    // "Compute averages (as previously defined) ... (sum across 6 roles) / 6"
-    // I will generate data for all roles to satisfy the "divide by 6" requirement, 
-    // but maybe modules not in roleModules should have lower/zero numbers?
-    // I'll stick to generating random data for all roles to maintain the averaged consistency.
+
     return { ...acc, [role]: generateRoleMetrics() };
   }, {}),
 }));

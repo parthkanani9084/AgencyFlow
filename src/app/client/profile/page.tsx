@@ -5,18 +5,15 @@ import AppLayout from '@/components/AppLayout';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import Badge from '@/components/ui/Badge';
 import { 
-  User, 
   Mail, 
   Briefcase, 
-  Clock, 
   Globe, 
   Video, 
   Target, 
   Zap,
   MapPin,
   ShieldCheck,
-  CreditCard,
-  Calendar
+  CreditCard
 } from 'lucide-react';
 
 interface ClientProfile {
@@ -33,7 +30,7 @@ interface ClientProfile {
   perDaySpend: number;
 }
 
-const demoProfile: ClientProfile = {
+const DEMO_PROFILE: ClientProfile = {
   name: 'Jordan Lee',
   email: 'jordan.lee@novabrew.com',
   packageAmount: 120000,
@@ -46,19 +43,21 @@ const demoProfile: ClientProfile = {
   perDaySpend: 1500,
 };
 
+
 export default function ClientProfilePage() {
   useRoleGuard(['Client']);
-  const [profile] = useState<ClientProfile>(demoProfile);
+  
+  const [profile] = useState<ClientProfile>(DEMO_PROFILE);
 
   return (
     <AppLayout>
       <div className="p-6 max-w-5xl mx-auto pb-12">
-        <div className="space-y-6">
+        <main className="space-y-6">
           
-          {/* Header Card */}
-          <div className="bg-white rounded-xl border border-slate-200 p-6 md:p-8 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
-            {/* Decorative subtle background element */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-violet-50 rounded-full blur-3xl -mr-20 -mt-20 opacity-50 pointer-events-none"></div>
+          {/* Identity & Status Header */}
+          <header className="bg-white rounded-xl border border-slate-200 p-6 md:p-8 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+            {/* Subtle Aesthetic Accent */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-violet-50 rounded-full blur-3xl -mr-20 -mt-20 opacity-50 pointer-events-none" aria-hidden="true" />
             
             <div className="flex items-center gap-5 relative z-10">
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-violet-100 to-indigo-50 flex items-center justify-center border-2 border-white shadow-sm flex-shrink-0">
@@ -88,20 +87,18 @@ export default function ClientProfilePage() {
               </div>
             </div>
             
-            <div className="flex flex-col items-start md:items-end gap-3 relative z-10 w-full md:w-auto pt-4 md:pt-0 border-t md:border-0 border-slate-100">
-              <div className="flex flex-col gap-1 items-start md:items-end">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Current Plan</span>
-                <Badge variant="review" label={`${profile.planType} Plan`} />
-              </div>
+            <div className="flex flex-col items-start md:items-end gap-1 relative z-10 w-full md:w-auto pt-4 md:pt-0 border-t md:border-0 border-slate-100">
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Current Plan</span>
+              <Badge variant="review" label={`${profile.planType} Plan`} />
             </div>
-          </div>
+          </header>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column (Main Details) */}
+            {/* Primary Details Grid */}
             <div className="lg:col-span-2 space-y-6">
               
-              {/* Financials */}
-              <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+              {/* Financial Profile */}
+              <section className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
                 <div className="flex items-center gap-2.5 mb-6 pb-4 border-b border-slate-100">
                   <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
                     <CreditCard size={16} />
@@ -126,10 +123,10 @@ export default function ClientProfilePage() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </section>
 
-              {/* Campaign Strategy */}
-              <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+              {/* Strategic Overview */}
+              <section className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
                 <div className="flex items-center gap-2.5 mb-6 pb-4 border-b border-slate-100">
                   <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
                     <Target size={16} />
@@ -157,14 +154,14 @@ export default function ClientProfilePage() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </section>
             </div>
 
-            {/* Right Column (Sidebar Details) */}
-            <div className="space-y-6">
+            {/* Sidebar Metadata */}
+            <aside className="space-y-6">
               
-              {/* Target Platform */}
-              <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+              {/* Technical Platform Details */}
+              <section className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
                 <div className="flex items-center gap-2.5 mb-5">
                   <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
                     <Globe size={16} />
@@ -192,10 +189,10 @@ export default function ClientProfilePage() {
                     </div>
                   )}
                 </div>
-              </div>
+              </section>
 
-              {/* Active Services */}
-              <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+              {/* Ecosystem Subscription */}
+              <section className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
                 <div className="flex items-center gap-2.5 mb-5">
                   <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
                     <Briefcase size={16} />
@@ -213,11 +210,11 @@ export default function ClientProfilePage() {
                     </span>
                   ))}
                 </div>
-              </div>
+              </section>
 
-            </div>
+            </aside>
           </div>
-        </div>
+        </main>
       </div>
     </AppLayout>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Video, Search, Filter, Plus, Calendar as CalendarIcon, LayoutGrid, List, Timer, CheckCircle2 } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
@@ -24,7 +24,6 @@ export default function SocialMediaManagerDashboardPage() {
   const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Add Reel Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newReelForm, setNewReelForm] = useState({ title: '', campaignId: '', scheduledDate: '' });
 
@@ -41,7 +40,6 @@ export default function SocialMediaManagerDashboardPage() {
     fetchReels();
   }, [user]);
 
-  // AI Agent Transformation & Grouping
   const transformedTasks = useMemo(() => {
     return reelAgent.transformToTasks(reels, user);
   }, [reels, user]);
@@ -49,12 +47,10 @@ export default function SocialMediaManagerDashboardPage() {
   const filteredAndGroupedReels = useMemo(() => {
     let filtered = transformedTasks;
 
-    // 1. Filter by Status Tab
     if (activeTab !== 'all') {
       filtered = filtered.filter(t => t.status === activeTab);
     }
 
-    // 2. Filter by Search Query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter(t => 
@@ -64,25 +60,27 @@ export default function SocialMediaManagerDashboardPage() {
       );
     }
 
-    // 3. Group by Date via AI Agent
     return reelAgent.groupReelsByDate(filtered);
   }, [transformedTasks, activeTab, searchQuery]);
 
-  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
-  const stats = {
+  const stats = useMemo(() => ({
     pending: transformedTasks.filter((t) => t.status === 'pending').length,
     inProgress: transformedTasks.filter((t) => t.status === 'in_progress').length,
     completed: transformedTasks.filter((t) => t.status === 'completed').length,
-  };
+  }), [transformedTasks]);
 
-  const handleStatusChange = (task: Task, newStatus: TaskStatus) => {
+  const onCompleteTask = useCallback((taskId: string) => {
+    setReels(prev => prev.map(r => r.id === taskId ? { ...r, status: 'Upload' } : r));
+    toast.success('Reel marked as uploaded!');
+  }, []);
+
+  const handleStatusChange = useCallback((task: Task, newStatus: TaskStatus) => {
     if (newStatus === 'completed') {
       if (task.status === 'completed') return;
       
-      // Directly mark as uploaded for Reels, skip modal
       if (task.type === 'REEL') {
         onCompleteTask(task.id);
       } else {
@@ -93,12 +91,7 @@ export default function SocialMediaManagerDashboardPage() {
       const reelStatus = newStatus === 'in_progress' ? 'Production' : 'Scheduled';
       setReels(prev => prev.map(r => r.id === task.id ? { ...r, status: reelStatus } : r));
     }
-  };
-
-  const onCompleteTask = (taskId: string) => {
-    setReels(prev => prev.map(r => r.id === taskId ? { ...r, status: 'Upload' } : r));
-    toast.success('Reel marked as uploaded!');
-  };
+  }, [onCompleteTask]);
 
   const handleAddReel = async () => {
     if (!user) return;
@@ -115,17 +108,10 @@ export default function SocialMediaManagerDashboardPage() {
 
   if (!mounted) return <div className="min-h-screen bg-slate-50" />;
 
-  const MOCK_CAMPAIGNS_FOR_SELECT = [
-    { id: 'c_spring', name: 'Spring Collection Launch' },
-    { id: 'c_cyber', name: 'Cyber-Week Sale' },
-    { id: 'c_gt', name: 'GT Showcase' },
-  ];
-
   return (
     <AppLayout>
       <Toaster position="bottom-right" richColors />
       <div className="p-6 max-w-5xl mx-auto">
-        {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center shadow-lg shadow-pink-200 text-white">
@@ -145,7 +131,6 @@ export default function SocialMediaManagerDashboardPage() {
           </button>
         </div>
 
-        {/* Stats Row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           {[
             { label: 'Upcoming', value: stats.pending, color: 'text-blue-600', bg: 'bg-blue-50', icon: CalendarIcon },
@@ -164,10 +149,8 @@ export default function SocialMediaManagerDashboardPage() {
           ))}
         </div>
 
-        {/* Toolbar Section */}
         <div className="bg-white rounded-2xl border border-slate-100 p-4 mb-8 shadow-sm">
           <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search */}
             <div className="relative flex-1">
               <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <input 
@@ -179,7 +162,6 @@ export default function SocialMediaManagerDashboardPage() {
               />
             </div>
 
-            {/* Filters */}
             <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
               <button 
                 onClick={() => setActiveTab('all')}
@@ -209,7 +191,6 @@ export default function SocialMediaManagerDashboardPage() {
           </div>
         </div>
 
-        {/* Schedule List */}
         <ReelsSchedule 
           groupedReels={filteredAndGroupedReels}
           onStatusChange={handleStatusChange}
@@ -218,17 +199,15 @@ export default function SocialMediaManagerDashboardPage() {
           onSearchChange={setSearchQuery}
         />
 
-        {/* Completion Modal */}
         <TaskCompletionModal 
           open={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           task={selectedTask}
           onComplete={(taskId) => onCompleteTask(taskId)}
           userRole="Social Media Manager"
-          teamMembers={[]} // Simplified for now
+          teamMembers={[]}
         />
 
-        {/* Add Reel Modal */}
         <Modal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Schedule New Reel" size="md">
           <div className="p-6 space-y-5">
             <div>
@@ -247,7 +226,7 @@ export default function SocialMediaManagerDashboardPage() {
                 <label className="block text-[13px] font-bold text-slate-700 mb-2">Client</label>
                 <select 
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[14px] focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 outline-none transition-all cursor-pointer"
-                  value={newReelForm.campaignId} // Reusing field for simplicity in mock, mapping to a default campaign for the client
+                  value={newReelForm.campaignId}
                   onChange={(e) => setNewReelForm(f => ({ ...f, campaignId: e.target.value }))}
                 >
                   <option value="">Select client...</option>
@@ -287,5 +266,3 @@ export default function SocialMediaManagerDashboardPage() {
     </AppLayout>
   );
 }
-
-

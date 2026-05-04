@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useSuperAdminStore } from '@/store/superAdminStore';
 import { useAuth } from '@/context/AuthContext';
-import { superAdminAgent } from '@/agents/superAdminAgent';
+import { mockService } from '@/services/mockService';
 import { Building2, Plus, Mail, User, Trash2, Edit2, Search, Phone, Clock, CreditCard, X, BarChart3, Activity, TrendingUp, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { Agency } from '@/modules/super-admin/types';
@@ -25,9 +25,10 @@ const scrollbarStyles = `
   }
 `;
 
+const ROLES_LIST = [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] as const;
+
 export default function BusinessAgencyView() {
   const { agencies, isLoading, refreshData, moduleUsage, roleWiseUsage } = useSuperAdminStore();
-  const { user: currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -62,8 +63,7 @@ export default function BusinessAgencyView() {
     });
 
     // Generate agency-specific role metrics
-    const roles = [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] as const;
-    const roleWiseData = roles.reduce((acc, role) => {
+    const roleWiseData = ROLES_LIST.reduce((acc, role) => {
       const roleModules = roleWiseUsage[role] || [];
       acc[role] = roleModules.map(mod => ({
         ...mod,
@@ -77,7 +77,7 @@ export default function BusinessAgencyView() {
         }
       }));
       return acc;
-    }, {} as any);
+    }, {} as Record<string, any>);
 
     return {
       views,
@@ -88,14 +88,18 @@ export default function BusinessAgencyView() {
     };
   }, [selectedAgencyForDetail, moduleUsage, roleWiseUsage]);
 
-  const filteredAgencies = agencies.filter(a => 
-    a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    a.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    a.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    a.mobileNumber.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredAgencies = useMemo(() => {
+    const q = searchTerm.toLowerCase().trim();
+    if (!q) return agencies;
+    return agencies.filter(a => 
+      a.name.toLowerCase().includes(q) ||
+      a.ownerName.toLowerCase().includes(q) ||
+      a.email.toLowerCase().includes(q) ||
+      a.mobileNumber.toLowerCase().includes(q)
+    );
+  }, [agencies, searchTerm]);
 
-  const openAddModal = () => {
+  const openAddModal = useCallback(() => {
     setIsEditing(false);
     setFormData({ 
       id: '', 
@@ -109,9 +113,9 @@ export default function BusinessAgencyView() {
       startDate: new Date().toISOString().split('T')[0]
     });
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const openEditModal = (agency: Agency) => {
+  const openEditModal = useCallback((agency: Agency) => {
     setIsEditing(true);
     setFormData({ 
       id: agency.id,
@@ -125,23 +129,17 @@ export default function BusinessAgencyView() {
       startDate: agency.startDate.split('T')[0]
     });
     setIsModalOpen(true);
-  };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const promise = superAdminAgent.processAction({
-      module: 'business-agency',
-      action: isEditing ? 'update' : 'add',
-      payload: isEditing 
-        ? { id: formData.id, data: { ...formData } }
-        : { ...formData, lastActive: new Date().toISOString() },
-      role: currentUser?.role || ''
-    });
+    const promise = isEditing 
+      ? mockService.agency.update(formData.id, formData)
+      : mockService.agency.add({ ...formData, lastActive: new Date().toISOString() });
 
     toast.promise(promise, {
       loading: isEditing ? 'Updating agency...' : 'Adding agency...',
-      success: (result: any) => {
-        if (!result.success) throw new Error(result.error || 'Failed to process agency');
+      success: () => {
         setIsModalOpen(false);
         refreshData();
         return `Agency ${isEditing ? 'updated' : 'added'} successfully`;
@@ -150,43 +148,32 @@ export default function BusinessAgencyView() {
     });
   };
 
-  const toggleStatus = async (id: string, currentStatus: string) => {
+  const toggleStatus = useCallback(async (id: string, currentStatus: 'active' | 'inactive') => {
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-    const result = await superAdminAgent.processAction({
-      module: 'business-agency',
-      action: 'update',
-      payload: { id, data: { status: newStatus } },
-      role: currentUser?.role || ''
-    });
-
-    if (result.success) {
+    
+    try {
+      await mockService.agency.update(id, { status: newStatus });
       toast.success(`Agency marked as ${newStatus}`);
       refreshData();
-    } else {
-      toast.error(result.error || 'Update failed');
+    } catch (error: any) {
+      toast.error(error.message || 'Update failed');
     }
-  };
+  }, [refreshData]);
 
-  const deleteAgency = async (id: string) => {
+  const deleteAgency = useCallback(async (id: string) => {
     if (!confirm('Are you sure you want to delete this agency?')) return;
     
-    const promise = superAdminAgent.processAction({
-      module: 'business-agency',
-      action: 'delete',
-      payload: { id },
-      role: currentUser?.role || ''
-    });
+    const promise = mockService.agency.delete(id);
 
     toast.promise(promise, {
       loading: 'Deleting agency...',
-      success: (result: any) => {
-        if (!result.success) throw new Error(result.error || 'Failed to delete agency');
+      success: () => {
         refreshData();
         return 'Agency deleted successfully';
       },
       error: (err) => err.message || 'Delete failed'
     });
-  };
+  }, [refreshData]);
 
   return (
     <div className="p-6">
@@ -477,8 +464,8 @@ export default function BusinessAgencyView() {
                   <h4 className="text-[15px] font-bold text-slate-900 uppercase tracking-wider">Role-Wise Activity</h4>
                 </div>
                 
-                <div className="flex bg-slate-50 border border-slate-100 p-1 rounded-xl mb-6">
-                  {[ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER].map((role) => (
+                <div className="flex bg-slate-50 border border-slate-100 p-1 rounded-xl mb-6 overflow-x-auto">
+                  {ROLES_LIST.map((role) => (
                     <button
                       key={role}
                       onClick={() => setActiveRoleTab(role)}
@@ -507,7 +494,7 @@ export default function BusinessAgencyView() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
-                      {agencyUsage.roleWiseData[activeRoleTab]?.map((item: any) => (
+                      {(agencyUsage.roleWiseData[activeRoleTab] || []).map((item: any) => (
                         <tr key={item.module} className="hover:bg-slate-50/30 transition-colors">
                           <td className="px-6 py-4">
                             <span className="text-[13px] font-bold text-slate-800">{item.module}</span>

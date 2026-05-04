@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { 
   Film, 
@@ -15,63 +15,69 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { reelService } from '@/lib/services/reelService';
 import { reelAgent } from '@/lib/agent/reelAgent';
-import { Task, Reel } from '@/types';
+import { Reel } from '@/types';
 import Badge from '@/components/ui/Badge';
 
 export default function ClientReelsPage() {
   const { user } = useAuth();
+  
   const [reels, setReels] = useState<Reel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'in_progress' | 'completed'>('all');
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        // In a real app, we'd fetch by clientId. 
-        // For demo, we fetch all and filter by user name which matches client name.
-        const allReels = await reelService.getReelsByUserId('any'); 
-        const clientReels = allReels.filter(r => r.clientName === user?.name);
-        setReels(clientReels);
-      } catch (error) {
-        console.error('Error fetching reels:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchData();
-  }, [user]);
+  const fetchReels = useCallback(async () => {
+    if (!user?.name) return;
+    
+    setIsLoading(true);
+    try {
+      const allReels = await reelService.getReelsByUserId('any'); 
+      const clientReels = allReels.filter(r => r.clientName === user.name);
+      setReels(clientReels);
+    } catch (error) {
+      console.error('[ClientReels] Failed to fetch reels:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user?.name]);
 
-  const transformedTasks = useMemo(() => {
-    return reelAgent.transformToTasks(reels, user);
-  }, [reels, user]);
+  useEffect(() => {
+    fetchReels();
+  }, [fetchReels]);
+
+  const transformedTasks = useMemo(() => 
+    reelAgent.transformToTasks(reels, user), 
+  [reels, user]);
 
   const filteredAndGroupedReels = useMemo(() => {
-    let filtered = transformedTasks;
+    let filtered = [...transformedTasks];
+    
     if (activeTab !== 'all') {
       filtered = filtered.filter(t => t.status === activeTab);
     }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+    
+    const query = searchQuery.trim().toLowerCase();
+    if (query) {
       filtered = filtered.filter(t => 
-        t.title.toLowerCase().includes(q) || 
-        t.campaign?.toLowerCase().includes(q)
+        t.title.toLowerCase().includes(query) || 
+        t.campaign?.toLowerCase().includes(query)
       );
     }
+    
     return reelAgent.groupReelsByDate(filtered);
   }, [transformedTasks, activeTab, searchQuery]);
 
   const stats = useMemo(() => {
-    const total = transformedTasks.length;
-    const pending = transformedTasks.filter(t => t.status === 'pending').length;
-    const inProgress = transformedTasks.filter(t => t.status === 'in_progress').length;
-    const completed = transformedTasks.filter(t => t.status === 'completed').length;
+    const counts = {
+      pending: transformedTasks.filter(t => t.status === 'pending').length,
+      inProgress: transformedTasks.filter(t => t.status === 'in_progress').length,
+      completed: transformedTasks.filter(t => t.status === 'completed').length,
+    };
     
     return [
-      { label: 'Scheduled', count: pending, icon: Calendar, color: 'text-slate-500', bg: 'bg-slate-50' },
-      { label: 'Production', count: inProgress, icon: Timer, color: 'text-amber-500', bg: 'bg-amber-50' },
-      { label: 'Uploaded', count: completed, icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+      { id: 'pending', label: 'Scheduled', count: counts.pending, icon: Calendar, color: 'text-slate-500', bg: 'bg-slate-50' },
+      { id: 'in_progress', label: 'Production', count: counts.inProgress, icon: Timer, color: 'text-amber-500', bg: 'bg-amber-50' },
+      { id: 'completed', label: 'Uploaded', count: counts.completed, icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50' },
     ];
   }, [transformedTasks]);
 
@@ -79,33 +85,20 @@ export default function ClientReelsPage() {
     <AppLayout>
       <div className="min-h-screen bg-white">
         <div className="p-8 max-w-5xl mx-auto">
-          {/* Simple Professional Header */}
-          <div className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          
+          {/* Dashboard Header */}
+          <header className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
               <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Reels Schedule</h1>
               <p className="text-slate-500 mt-1 font-medium">Production pipeline & upload calendar</p>
             </div>
             
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <input 
-                  type="text" 
-                  placeholder="Search reels..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-400 transition-all w-64 text-[14px]"
-                />
-              </div>
-            </div>
-          </div>
+            
+          </header>
 
-
-
-          {/* Layout Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-            {/* Filter Tabs */}
-            <div className="lg:col-span-3">
+          <main className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            {/* Sidebar Navigation Filters */}
+            <aside className="lg:col-span-3">
               <nav className="flex flex-col gap-1 sticky top-8">
                 <button 
                   onClick={() => setActiveTab('all')}
@@ -115,47 +108,36 @@ export default function ClientReelsPage() {
                     <LayoutGrid size={16} />
                     <span>All Reels</span>
                   </div>
-                  <span className={`text-[11px] ${activeTab === 'all' ? 'text-white/60' : 'text-slate-400'}`}>{transformedTasks.length}</span>
+                  <span className={`text-[11px] ${activeTab === 'all' ? 'text-white/60' : 'text-slate-400'}`}>
+                    {transformedTasks.length}
+                  </span>
                 </button>
-                <button 
-                  onClick={() => setActiveTab('pending')}
-                  className={`flex items-center justify-between px-4 py-2.5 rounded-lg text-[14px] font-semibold transition-colors ${activeTab === 'pending' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <CalendarIcon size={16} />
-                    <span>Scheduled</span>
-                  </div>
-                  <span className={`text-[11px] ${activeTab === 'pending' ? 'text-white/60' : 'text-slate-400'}`}>{stats[0].count}</span>
-                </button>
-                <button 
-                  onClick={() => setActiveTab('in_progress')}
-                  className={`flex items-center justify-between px-4 py-2.5 rounded-lg text-[14px] font-semibold transition-colors ${activeTab === 'in_progress' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Timer size={16} />
-                    <span>Production</span>
-                  </div>
-                  <span className={`text-[11px] ${activeTab === 'in_progress' ? 'text-white/60' : 'text-slate-400'}`}>{stats[1].count}</span>
-                </button>
-                <button 
-                  onClick={() => setActiveTab('completed')}
-                  className={`flex items-center justify-between px-4 py-2.5 rounded-lg text-[14px] font-semibold transition-colors ${activeTab === 'completed' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2 size={16} />
-                    <span>Uploaded</span>
-                  </div>
-                  <span className={`text-[11px] ${activeTab === 'completed' ? 'text-white/60' : 'text-slate-400'}`}>{stats[2].count}</span>
-                </button>
-
-
+                
+                {stats.map((stat) => {
+                  const Icon = stat.icon;
+                  return (
+                    <button 
+                      key={stat.id}
+                      onClick={() => setActiveTab(stat.id as any)}
+                      className={`flex items-center justify-between px-4 py-2.5 rounded-lg text-[14px] font-semibold transition-colors ${activeTab === stat.id ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon size={16} />
+                        <span>{stat.label}</span>
+                      </div>
+                      <span className={`text-[11px] ${activeTab === stat.id ? 'text-white/60' : 'text-slate-400'}`}>
+                        {stat.count}
+                      </span>
+                    </button>
+                  );
+                })}
               </nav>
-            </div>
+            </aside>
 
-            {/* Timeline Content */}
-            <div className="lg:col-span-9">
+            {/* Timeline View Content */}
+            <section className="lg:col-span-9">
               {isLoading ? (
-                <div className="space-y-8">
+                <div className="space-y-8" aria-hidden="true">
                   {[1, 2].map((i) => (
                     <div key={i} className="animate-pulse">
                       <div className="w-32 h-4 bg-slate-100 rounded mb-6" />
@@ -182,7 +164,7 @@ export default function ClientReelsPage() {
 
                       <div className="grid gap-3">
                         {group.reels.map((reel) => (
-                          <div 
+                          <article 
                             key={reel.id} 
                             className="group flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl hover:border-slate-200 hover:shadow-sm transition-all"
                           >
@@ -212,23 +194,21 @@ export default function ClientReelsPage() {
                                 {reel.status === 'completed' ? 'Uploaded' : reel.status === 'in_progress' ? 'Production' : 'Scheduled'}
                               </Badge>
                               
-                              <button className="text-slate-300 hover:text-slate-900 transition-colors">
+                              <button className="text-slate-300 hover:text-slate-900 transition-colors" aria-label="View Reel Details">
                                 <ChevronRight size={18} />
                               </button>
                             </div>
-                          </div>
+                          </article>
                         ))}
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
-          </div>
+            </section>
+          </main>
         </div>
       </div>
     </AppLayout>
-
   );
 }
-

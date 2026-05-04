@@ -18,6 +18,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 
+// --- Types ---
 export interface MetricCardData {
   id: string;
   label: string;
@@ -30,7 +31,14 @@ export interface MetricCardData {
   mono?: boolean;
 }
 
-const variantConfig = {
+interface MetricSectionProps {
+  title: string;
+  metrics: MetricCardData[];
+  cols?: 1 | 2 | 3 | 4;
+  action?: React.ReactNode;
+}
+
+const VARIANT_CONFIG = {
   default: {
     card: 'bg-white border-slate-200',
     icon: 'bg-violet-50 text-violet-600',
@@ -56,7 +64,6 @@ const variantConfig = {
     value: 'text-slate-900',
   },
 };
-
 function ChangeIndicator({ change, label }: { change: number; label: string }) {
   if (change === 0) {
     return (
@@ -66,22 +73,18 @@ function ChangeIndicator({ change, label }: { change: number; label: string }) {
       </span>
     );
   }
-  const positive = change > 0;
-  const Arrow = positive ? ArrowUpRight : ArrowDownRight;
+  
+  const isPositive = change > 0;
+  const TrendIcon = isPositive ? ArrowUpRight : ArrowDownRight;
+  
   return (
-    <span className={`flex items-center gap-0.5 text-[11.5px] font-medium ${positive ? 'text-emerald-600' : 'text-red-500'}`}>
-      <Arrow size={12} />
+    <span className={`flex items-center gap-0.5 text-[11.5px] font-medium ${isPositive ? 'text-emerald-600' : 'text-red-50'}`}>
+      <TrendIcon size={12} />
       {Math.abs(change)}% {label}
     </span>
   );
 }
 
-interface MetricSectionProps {
-  title: string;
-  metrics: MetricCardData[];
-  cols?: 1 | 2 | 3 | 4;
-  action?: React.ReactNode;
-}
 
 export default function MetricSection({ title, metrics, cols = 4, action }: MetricSectionProps) {
   const gridCols = {
@@ -92,65 +95,65 @@ export default function MetricSection({ title, metrics, cols = 4, action }: Metr
   };
 
   return (
-    <div className="mb-6">
-      <div className="flex items-center justify-between mb-4 px-1">
+    <section className="mb-6 last:mb-0">
+      <header className="flex items-center justify-between mb-4 px-1">
         <h3 className="text-[14px] font-semibold text-slate-800">{title}</h3>
         {action && <div>{action}</div>}
-      </div>
+      </header>
+      
       <div className={`grid grid-cols-1 ${gridCols[cols]} gap-4`}>
         {metrics.map((metric) => {
-          const Icon = metric.icon;
-          const cfg = variantConfig[metric.variant];
+          const MetricIcon = metric.icon;
+          const styles = VARIANT_CONFIG[metric.variant];
 
           return (
-            <div
+            <article
               key={metric.id}
-              className={`relative rounded-xl border p-5 flex flex-col justify-between transition-shadow hover:shadow-md ${cfg.card}`}
+              className={`relative rounded-xl border p-5 flex flex-col justify-between transition-shadow hover:shadow-md ${styles.card}`}
             >
               <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className={`text-[11.5px] font-semibold uppercase tracking-widest ${cfg.label}`}>
+                <div className="flex flex-col gap-1">
+                  <p className={`text-[11.5px] font-semibold uppercase tracking-widest ${styles.label}`}>
                     {metric.label}
                   </p>
                   {metric.variant === 'warning' && (
-                    <span className="inline-flex items-center gap-1 mt-1 text-[10.5px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md font-semibold">
+                    <span className="inline-flex items-center gap-1 text-[10.5px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md font-semibold w-fit">
                       <AlertTriangle size={9} /> Needs attention
                     </span>
                   )}
                   {metric.variant === 'danger' && (
-                    <span className="inline-flex items-center gap-1 mt-1 text-[10.5px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-md font-semibold">
+                    <span className="inline-flex items-center gap-1 text-[10.5px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-md font-semibold w-fit">
                       ⚠ Escalation risk
                     </span>
                   )}
                 </div>
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${cfg.icon}`}>
-                  <Icon size={17} />
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${styles.icon}`}>
+                  <MetricIcon size={17} />
                 </div>
               </div>
 
-              <div>
-                <p className={`font-bold tabular-nums leading-none ${cfg.value} text-3xl ${metric.mono ? 'font-mono' : ''}`}>
+              <div className="flex flex-col gap-1">
+                <p className={`font-bold tabular-nums leading-none ${styles.value} text-3xl ${metric.mono ? 'font-mono' : ''}`}>
                   {metric.value}
                 </p>
                 {metric.subValue && (
-                  <p className="text-[12px] text-slate-400 mt-1">{metric.subValue}</p>
+                  <p className="text-[12px] text-slate-400">{metric.subValue}</p>
                 )}
               </div>
 
               {metric.change !== undefined && metric.changeLabel && (
-                <div className="mt-3 pt-3 border-t border-slate-100">
+                <footer className="mt-3 pt-3 border-t border-slate-100">
                   <ChangeIndicator change={metric.change} label={metric.changeLabel} />
-                </div>
+                </footer>
               )}
-            </div>
+            </article>
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
 
-// Data groupings for the Owner Dashboard
 export const clientMetrics: MetricCardData[] = [
   { id: 'm-total-clients', label: 'Total Clients', value: '0', subValue: 'Active in workspace', icon: Briefcase, variant: 'default' },
 ];
@@ -162,7 +165,7 @@ export const revenueMetrics: MetricCardData[] = [
 ];
 
 export const reelsMetrics: MetricCardData[] = [
-  { id: 'm-today-reels', label: 'Today\'s Reels', value: '12', subValue: 'Scheduled for today', icon: Film, variant: 'default' },
+  { id: 'm-today-reels', label: "Today's Reels", value: '12', subValue: 'Scheduled for today', icon: Film, variant: 'default' },
   { id: 'm-reels-pending', label: 'Pending', value: '8', subValue: 'Awaiting raw files', icon: Timer, variant: 'warning' },
   { id: 'm-reels-processing', label: 'Processing', value: '4', subValue: 'In editing queue', icon: RefreshCw, variant: 'default' },
 ];

@@ -10,7 +10,6 @@ import {
   Shield, 
   Mail, 
   Key, 
-  Fingerprint, 
   Globe, 
   Lock, 
   Activity, 
@@ -18,9 +17,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
-import { authAgent } from '@/agents/authAgent';
+import { authService } from '@/services/authService';
 import AppLogo from '@/components/ui/AppLogo';
-import { AUTH_ACTIONS, STATIC_STRINGS } from '@/utils/constants';
+import { STATIC_STRINGS } from '@/utils/constants';
 
 interface LoginFormValues {
   email: string;
@@ -48,10 +47,9 @@ export default function SuperAdminLoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Timer state
   const [secondsRemaining, setSecondsRemaining] = useState(0);
 
-  // Timer logic
+
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (secondsRemaining > 0) {
@@ -62,14 +60,11 @@ export default function SuperAdminLoginForm() {
     return () => clearInterval(timer);
   }, [secondsRemaining]);
 
-  // Focus management
   useEffect(() => {
-    // Small timeout to ensure DOM elements are fully rendered before focusing
     const timer = setTimeout(() => {
       if (otpStep === 'verify') {
         inputRefs.current[0]?.focus();
       } else if (otpStep === 'email') {
-        // Find and focus email input if it exists
         const emailInput = document.querySelector('input[type="email"]') as HTMLInputElement;
         emailInput?.focus();
       }
@@ -97,10 +92,7 @@ export default function SuperAdminLoginForm() {
     if (isLoading) return;
     setIsLoading(true);
     try {
-      const result = await authAgent.processAction(AUTH_ACTIONS.LOGIN, { 
-        email: data.email, 
-        password: data.password 
-      });
+      const result = await authService.loginWithPassword(data.email, data.password || '');
 
       if (result.success && result.user) {
         setAuthenticatedUser(result.user);
@@ -120,7 +112,7 @@ export default function SuperAdminLoginForm() {
     if (isLoading) return;
     setIsLoading(true);
     try {
-      const result = await authAgent.processAction(AUTH_ACTIONS.REQUEST_OTP, { email: data.email });
+      const result = await authService.requestOTP(data.email);
       
       if (result.success) {
         setEmail(data.email);
@@ -145,10 +137,7 @@ export default function SuperAdminLoginForm() {
     console.log('[SuperAdminLogin] Starting verification...', { email, otp: finalOtp });
 
     try {
-      const result = await authAgent.processAction(AUTH_ACTIONS.VERIFY_OTP, { 
-        email, 
-        otp: finalOtp 
-      });
+      const result = await authService.verifyOTP(email, finalOtp);
 
       console.log('[SuperAdminLogin] Verification response:', result);
 
@@ -156,7 +145,7 @@ export default function SuperAdminLoginForm() {
         setAuthenticatedUser(result.user);
         toast.success(STATIC_STRINGS.LOGIN_OTP_VERIFIED);
         
-        // Redirect handled by AuthContext
+
       } else {
         toast.error(result.error ?? STATIC_STRINGS.LOGIN_INVALID_OTP);
         setIsLoading(false);
@@ -363,7 +352,7 @@ export default function SuperAdminLoginForm() {
                         {otpValues.map((value, index) => (
                           <input
                             key={index}
-                            ref={(el) => (inputRefs.current[index] = el)}
+                            ref={(el) => { inputRefs.current[index] = el; }}
                             type="text"
                             inputMode="numeric"
                             autoComplete="one-time-code"

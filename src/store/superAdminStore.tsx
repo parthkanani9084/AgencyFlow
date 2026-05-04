@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { Agency, SubscriptionPlan, ModuleUsage, ActivityLog } from '@/modules/super-admin/types';
+import { Agency, SubscriptionPlan, ModuleUsage, ActivityLog, RoleMetrics } from '@/modules/super-admin/types';
 import { mockService } from '@/services/mockService';
 
 interface SuperAdminState {

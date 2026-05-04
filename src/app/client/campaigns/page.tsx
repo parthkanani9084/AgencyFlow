@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import Badge from '@/components/ui/Badge';
@@ -8,10 +8,8 @@ import {
   Megaphone, 
   Target, 
   TrendingUp,
-  Clock,
   Calendar,
   Check,
-  AlertCircle,
   Activity,
   DollarSign,
   Users
@@ -36,7 +34,7 @@ interface Campaign {
   metrics?: CampaignMetrics;
 }
 
-const demoCampaigns: Campaign[] = [
+const DEMO_CAMPAIGNS: Campaign[] = [
   {
     id: 'cmp1',
     name: 'NovaBrew Spring Launch',
@@ -72,21 +70,24 @@ const demoCampaigns: Campaign[] = [
   }
 ];
 
-const workflowStages = ['Shooting', 'Raw Upload', 'Editing', 'Ads', 'Complete'];
+const WORKFLOW_STAGES = ['Shooting', 'Raw Upload', 'Editing', 'Ads', 'Complete'];
 
 export default function ClientCampaignsPage() {
   useRoleGuard(['Client']);
-  const [campaigns] = useState<Campaign[]>(demoCampaigns);
+  
+  const [campaigns] = useState<Campaign[]>(DEMO_CAMPAIGNS);
 
-  const activeCount = campaigns.filter(c => c.status === 'Active' || c.status === 'In Progress').length;
+  const activeCount = useMemo(() => 
+    campaigns.filter(c => ['Active', 'In Progress'].includes(c.status)).length,
+  [campaigns]);
 
   return (
     <AppLayout>
       <div className="p-6 max-w-5xl mx-auto pb-12">
-        <div className="space-y-6">
+        <main className="space-y-6">
           
-          {/* Page Header */}
-          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {/* Dashboard Header */}
+          <header className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center flex-shrink-0">
                 <Megaphone size={24} />
@@ -96,146 +97,153 @@ export default function ClientCampaignsPage() {
                 <p className="text-[13.5px] text-slate-500 mt-0.5">Track your workflow progress and ad performance</p>
               </div>
             </div>
+            
             <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-4 py-2.5 rounded-lg self-start sm:self-auto">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[13px] font-bold text-emerald-700">{activeCount} Active Campaigns</span>
+              <span className="text-[13px] font-bold text-emerald-700">
+                {activeCount} {activeCount === 1 ? 'Active Campaign' : 'Active Campaigns'}
+              </span>
             </div>
-          </div>
+          </header>
 
-          {/* Campaign List */}
-          <div className="space-y-6">
+          {/* Campaign Visualization Feed */}
+          <section className="space-y-6">
             {campaigns.length === 0 ? (
               <div className="bg-white rounded-xl border border-dashed border-slate-200 py-16 text-center">
                 <Megaphone size={32} className="mx-auto text-slate-200 mb-3" />
                 <p className="text-sm text-slate-400 font-medium tracking-tight">No active campaigns found</p>
               </div>
             ) : (
-              campaigns.map((campaign) => (
-                <div key={campaign.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300">
-                  <div className="p-6 md:p-8">
-                    
-                    {/* Header: Name, Status, Date */}
-                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
-                      <div>
-                        <div className="flex items-center gap-3 mb-2 flex-wrap">
-                          <h3 className="text-[18px] font-bold text-slate-900 tracking-tight">{campaign.name}</h3>
-                          <Badge 
-                            variant={campaign.status === 'Active' ? 'active' : campaign.status === 'In Progress' ? 'pending' : 'completed'} 
-                            label={campaign.status} 
-                          />
-                        </div>
-                        <div className="flex items-center gap-4 text-[13px] text-slate-500 font-medium">
-                          <span className="flex items-center gap-1.5">
-                            <Target size={14} className="text-violet-500" />
-                            {campaign.platform} — {campaign.objective}
-                          </span>
-                          <span className="flex items-center gap-1.5 border-l border-slate-200 pl-4">
-                            <Calendar size={14} className="text-slate-400" />
-                            {campaign.startDate} {campaign.endDate ? `- ${campaign.endDate}` : '(Ongoing)'}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="bg-slate-50 rounded-lg px-4 py-3 border border-slate-100 flex flex-col items-start md:items-end min-w-[140px]">
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Daily Budget</p>
-                        <p className="text-lg font-bold text-slate-900 tabular-nums">₹{campaign.dailyBudget.toLocaleString()}</p>
-                      </div>
-                    </div>
+              campaigns.map((campaign) => {
+                const stageIndex = WORKFLOW_STAGES.indexOf(campaign.stage);
+                const progressPercentage = (stageIndex / (WORKFLOW_STAGES.length - 1)) * 100;
 
-                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                      {/* Left: Workflow Progress */}
-                      <div className={`${campaign.metrics ? 'lg:col-span-3' : 'lg:col-span-5'} space-y-4`}>
-                        <div className="flex items-center gap-2 mb-2">
-                          <Activity size={16} className="text-slate-400" />
-                          <h4 className="text-[13px] font-bold text-slate-800">Production Workflow</h4>
+                return (
+                  <article 
+                    key={campaign.id} 
+                    className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300"
+                  >
+                    <div className="p-6 md:p-8">
+                      
+                      {/* Campaign Primary Info */}
+                      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
+                        <div>
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
+                            <h3 className="text-[18px] font-bold text-slate-900 tracking-tight">{campaign.name}</h3>
+                            <Badge 
+                              variant={campaign.status === 'Active' ? 'active' : campaign.status === 'In Progress' ? 'pending' : 'completed'} 
+                              label={campaign.status} 
+                            />
+                          </div>
+                          <div className="flex items-center gap-4 text-[13px] text-slate-500 font-medium">
+                            <span className="flex items-center gap-1.5">
+                              <Target size={14} className="text-violet-500" />
+                              {campaign.platform} — {campaign.objective}
+                            </span>
+                            <span className="flex items-center gap-1.5 border-l border-slate-200 pl-4">
+                              <Calendar size={14} className="text-slate-400" />
+                              {campaign.startDate} {campaign.endDate ? `- ${campaign.endDate}` : '(Ongoing)'}
+                            </span>
+                          </div>
                         </div>
                         
-                        <div className="relative w-full pb-8 mt-2">
-                          {/* Background Track Line */}
-                          <div className="absolute top-[14px] left-4 right-4 h-1 bg-slate-100 rounded-full" />
-                          
-                          {/* Active Track Line */}
-                          <div 
-                            className="absolute top-[14px] left-4 h-1 bg-indigo-500 rounded-full transition-all duration-500"
-                            style={{ 
-                              width: `calc(${workflowStages.indexOf(campaign.stage) / (workflowStages.length - 1)} * calc(100% - 32px))` 
-                            }} 
-                          />
-
-                          {/* Nodes */}
-                          <div className="relative z-10 flex justify-between w-full">
-                            {workflowStages.map((stage, idx) => {
-                              const currentStageIdx = workflowStages.indexOf(campaign.stage);
-                              const isDone = idx < currentStageIdx;
-                              const isActive = idx === currentStageIdx;
-
-                              return (
-                                <div key={stage} className="flex flex-col items-center">
-                                  {/* Circle */}
-                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold border-2 transition-all duration-300 ${
-                                    isDone ? 'bg-indigo-50 border-indigo-500 text-indigo-600' : 
-                                    isActive ? 'bg-indigo-600 border-indigo-600 text-white shadow-[0_0_0_5px_rgba(79,70,229,0.15)]' : 
-                                    'bg-white border-slate-200 text-slate-300'
-                                  }`}>
-                                    {isDone ? <Check size={16} strokeWidth={3} /> : idx + 1}
-                                  </div>
-                                  
-                                  {/* Label */}
-                                  <div className="absolute top-10 w-20 text-center -ml-6">
-                                    <p className={`text-[10.5px] font-bold leading-tight tracking-tight ${
-                                      isActive ? 'text-indigo-700' : isDone ? 'text-slate-600' : 'text-slate-400'
-                                    }`}>
-                                      {stage}
-                                    </p>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
+                        <div className="bg-slate-50 rounded-lg px-4 py-3 border border-slate-100 flex flex-col items-start md:items-end min-w-[140px]">
+                          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Daily Budget</p>
+                          <p className="text-lg font-bold text-slate-900 tabular-nums">₹{campaign.dailyBudget.toLocaleString()}</p>
                         </div>
                       </div>
 
-                      {/* Right: Performance Metrics (If Active/Completed) */}
-                      {campaign.metrics && (
-                        <div className="lg:col-span-2 grid grid-cols-2 gap-3 lg:border-l lg:border-slate-100 lg:pl-8">
-                          <div className="col-span-2 flex items-center gap-2 mb-1">
-                            <TrendingUp size={16} className="text-slate-400" />
-                            <h4 className="text-[13px] font-bold text-slate-800">Live Performance</h4>
+                      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                        {/* Production Pipeline Tracker */}
+                        <div className={`${campaign.metrics ? 'lg:col-span-3' : 'lg:col-span-5'} space-y-4`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Activity size={16} className="text-slate-400" />
+                            <h4 className="text-[13px] font-bold text-slate-800">Production Workflow</h4>
                           </div>
                           
-                          <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-3">
-                            <div className="flex items-center gap-1.5 text-emerald-600 mb-1">
-                              <DollarSign size={14} />
-                              <span className="text-[11px] font-bold uppercase tracking-wider">Spent</span>
+                          <div className="relative w-full pb-8 mt-2 px-4">
+                            {/* Linear Progress Bar Background */}
+                            <div className="absolute top-[14px] left-4 right-4 h-1 bg-slate-100 rounded-full" />
+                            
+                            {/* Filled Progress Indicator */}
+                            <div 
+                              className="absolute top-[14px] left-4 h-1 bg-indigo-500 rounded-full transition-all duration-500"
+                              style={{ width: `calc(${progressPercentage}% - 0px)` }} 
+                            />
+
+                            {/* Workflow Step Nodes */}
+                            <div className="relative z-10 flex justify-between w-full">
+                              {WORKFLOW_STAGES.map((stage, idx) => {
+                                const isDone = idx < stageIndex;
+                                const isActive = idx === stageIndex;
+
+                                return (
+                                  <div key={stage} className="flex flex-col items-center relative">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold border-2 transition-all duration-300 ${
+                                      isDone ? 'bg-indigo-50 border-indigo-500 text-indigo-600' : 
+                                      isActive ? 'bg-indigo-600 border-indigo-600 text-white shadow-[0_0_0_5px_rgba(79,70,229,0.15)]' : 
+                                      'bg-white border-slate-200 text-slate-300'
+                                    }`}>
+                                      {isDone ? <Check size={16} strokeWidth={3} /> : idx + 1}
+                                    </div>
+                                    
+                                    {/* Step Label */}
+                                    <div className="absolute top-10 w-20 text-center">
+                                      <p className={`text-[10.5px] font-bold leading-tight tracking-tight ${
+                                        isActive ? 'text-indigo-700' : isDone ? 'text-slate-600' : 'text-slate-400'
+                                      }`}>
+                                        {stage}
+                                      </p>
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
-                            <p className="text-[16px] font-bold text-slate-900 tabular-nums">₹{campaign.metrics.spend.toLocaleString()}</p>
-                          </div>
-                          
-                          <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-3">
-                            <div className="flex items-center gap-1.5 text-blue-600 mb-1">
-                              <Users size={14} />
-                              <span className="text-[11px] font-bold uppercase tracking-wider">Leads</span>
-                            </div>
-                            <p className="text-[16px] font-bold text-slate-900 tabular-nums">{campaign.metrics.leads.toLocaleString()}</p>
-                          </div>
-                          
-                          <div className="col-span-2 bg-amber-50/50 border border-amber-100 rounded-xl p-3 flex items-center justify-between">
-                            <div className="flex items-center gap-1.5 text-amber-600">
-                              <Target size={14} />
-                              <span className="text-[11px] font-bold uppercase tracking-wider">Avg ROAS</span>
-                            </div>
-                            <p className="text-[16px] font-bold text-slate-900 tabular-nums">{campaign.metrics.roas.toFixed(1)}×</p>
                           </div>
                         </div>
-                      )}
-                    </div>
 
-                  </div>
-                </div>
-              ))
+                        {/* Performance Scorecard (Contextual) */}
+                        {campaign.metrics && (
+                          <div className="lg:col-span-2 grid grid-cols-2 gap-3 lg:border-l lg:border-slate-100 lg:pl-8">
+                            <div className="col-span-2 flex items-center gap-2 mb-1">
+                              <TrendingUp size={16} className="text-slate-400" />
+                              <h4 className="text-[13px] font-bold text-slate-800">Live Performance</h4>
+                            </div>
+                            
+                            <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-3">
+                              <div className="flex items-center gap-1.5 text-emerald-600 mb-1">
+                                <DollarSign size={14} />
+                                <span className="text-[11px] font-bold uppercase tracking-wider">Spent</span>
+                              </div>
+                              <p className="text-[16px] font-bold text-slate-900 tabular-nums">₹{campaign.metrics.spend.toLocaleString()}</p>
+                            </div>
+                            
+                            <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-3">
+                              <div className="flex items-center gap-1.5 text-blue-600 mb-1">
+                                <Users size={14} />
+                                <span className="text-[11px] font-bold uppercase tracking-wider">Leads</span>
+                              </div>
+                              <p className="text-[16px] font-bold text-slate-900 tabular-nums">{campaign.metrics.leads.toLocaleString()}</p>
+                            </div>
+                            
+                            <div className="col-span-2 bg-amber-50/50 border border-amber-100 rounded-xl p-3 flex items-center justify-between">
+                              <div className="flex items-center gap-1.5 text-amber-600">
+                                <Target size={14} />
+                                <span className="text-[11px] font-bold uppercase tracking-wider">Avg ROAS</span>
+                              </div>
+                              <p className="text-[16px] font-bold text-slate-900 tabular-nums">{campaign.metrics.roas.toFixed(1)}×</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                    </div>
+                  </article>
+                );
+              })
             )}
-          </div>
-        </div>
+          </section>
+        </main>
       </div>
     </AppLayout>
   );

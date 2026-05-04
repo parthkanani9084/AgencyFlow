@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Megaphone, CheckCircle2, Timer, Circle, Calendar, ChevronRight, AlertCircle } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
@@ -10,13 +10,14 @@ import { Task, TaskStatus, TaskPriority, Campaign } from '@/types';
 import TodayReportingCard from './components/TodayReportingCard';
 import TaskCompletionModal from '@/components/TaskCompletionModal';
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
+
+const STATUS_STYLES: Record<TaskStatus, { label: string; color: string; bg: string; icon: React.ElementType }> = {
   pending: { label: 'Pending', color: 'text-slate-600', bg: 'bg-slate-100', icon: Circle },
   in_progress: { label: 'In Progress', color: 'text-amber-700', bg: 'bg-amber-100', icon: Timer },
   completed: { label: 'Completed', color: 'text-emerald-700', bg: 'bg-emerald-100', icon: CheckCircle2 },
 };
 
-const PRIORITY_DOT: Record<TaskPriority, string> = {
+const PRIORITY_STYLES: Record<TaskPriority, string> = {
   low: 'bg-slate-400',
   medium: 'bg-amber-400',
   high: 'bg-red-500',
@@ -28,6 +29,7 @@ const TEAM_MEMBERS = [
 
 export default function AdsManagerDashboardPage() {
   useRoleGuard(['Owner', 'Ads Manager', 'Social Media Manager', 'Manager']);
+  
   const { user } = useAuth();
   const { tasks: allTasks, updateTask } = useTasks();
   
@@ -35,41 +37,49 @@ export default function AdsManagerDashboardPage() {
   const [mounted, setMounted] = useState(false);
   const [allCampaigns, setAllCampaigns] = useState<Campaign[]>([]);
 
-  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
-  // 1. Mount & Data Load
   useEffect(() => {
     setMounted(true);
     const saved = localStorage.getItem('agencyflow_campaigns');
     if (saved) {
       try {
         setAllCampaigns(JSON.parse(saved));
-      } catch (e) {
-        console.error('Failed to load campaigns', e);
+      } catch (err) {
+        console.error('Failed to parse campaigns from storage', err);
       }
     }
   }, []);
 
-  // 2. Derived State (Simplified)
-  const tasks = allTasks.filter(t => t.role === 'Ads Manager' || t.roleNotes?.some(n => n.role === 'Ads Manager'));
-  
-  const getEffectiveStatus = (t: Task): TaskStatus => {
-    const isHandedOff = t.role !== 'Ads Manager' && t.roleNotes?.some(n => n.role === 'Ads Manager');
-    if (isHandedOff) return 'completed';
-    return t.status as TaskStatus;
+
+  const getEffectiveStatus = (task: Task): TaskStatus => {
+    const isHandedOffToOthers = task.role !== 'Ads Manager' && task.roleNotes?.some(n => n.role === 'Ads Manager');
+    return isHandedOffToOthers ? 'completed' : (task.status as TaskStatus);
   };
 
-  const filteredTasks = tasks.filter(t => getEffectiveStatus(t) === activeTab);
-  
-  const stats = {
-    pending: tasks.filter(t => getEffectiveStatus(t) === 'pending').length,
-    inProgress: tasks.filter(t => getEffectiveStatus(t) === 'in_progress').length,
-    completed: tasks.filter(t => getEffectiveStatus(t) === 'completed').length,
-  };
+  const { filteredTasks, dashboardStats, relevantTasks } = useMemo(() => {
+    const relevant = allTasks.filter(t => 
+      t.role === 'Ads Manager' || t.roleNotes?.some(n => n.role === 'Ads Manager')
+    );
 
-  // 3. Handlers
+    const stats = { pending: 0, in_progress: 0, completed: 0 };
+    const filtered: Task[] = [];
+
+    relevant.forEach(task => {
+      const status = getEffectiveStatus(task);
+      stats[status]++;
+      if (status === activeTab) filtered.push(task);
+    });
+
+    return { 
+      relevantTasks: relevant,
+      filteredTasks: filtered, 
+      dashboardStats: stats 
+    };
+  }, [allTasks, activeTab]);
+
+  // Handlers
   const handleStatusChange = (task: Task, newStatus: TaskStatus) => {
     if (newStatus === 'completed') {
       if (task.status === 'completed') return;
@@ -84,29 +94,32 @@ export default function AdsManagerDashboardPage() {
     updateTask(taskId, { status: 'completed' }, notes, nextMember, screenshot);
   };
 
-  // 4. Helper Logic (Flat)
-  const isOverdue = (deadline: string, status: TaskStatus) => {
-    if (!deadline) return false;
-    return status !== 'completed' && new Date(deadline) < new Date();
+  // View Helpers
+  const isOverdue = (deadline?: string, status?: TaskStatus) => {
+    if (!deadline || status === 'completed') return false;
+    return new Date(deadline) < new Date();
   };
 
   const formatDeadline = (deadline: string) => {
-    if (!deadline) return 'No deadline';
-    return new Date(deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return new Date(deadline).toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
   };
 
   const getDaysLeft = (deadline: string) => {
-    if (!deadline) return 0;
     return Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000);
   };
 
+  // Prevent Hydration Flash
   if (!mounted) return <div className="min-h-screen bg-slate-50" />;
 
   return (
     <AppLayout>
       <div className="p-6 max-w-5xl mx-auto">
         {/* Header Section */}
-        <div className="flex items-center gap-3 mb-6">
+        <header className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
             <Megaphone size={20} className="text-orange-700" />
           </div>
@@ -114,35 +127,37 @@ export default function AdsManagerDashboardPage() {
             <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">Ads Manager Dashboard</h1>
             <p className="text-[13px] text-slate-500">{user?.name || 'Sofia Nguyen'} · Ads Team</p>
           </div>
-        </div>
+        </header>
 
-        {/* Global Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        {/* Global Statistics Cards */}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {[
-            { label: 'Pending Handoff', value: stats.pending, color: 'text-blue-600', icon: Circle },
-            { label: 'Active Campaigns', value: stats.inProgress, color: 'text-amber-600', icon: Timer },
-            { label: 'Completed Ads', value: stats.completed, color: 'text-emerald-600', icon: CheckCircle2 },
-          ].map((s, i) => (
+            { label: 'Pending Handoff', value: dashboardStats.pending, color: 'text-blue-600', icon: Circle },
+            { label: 'Active Campaigns', value: dashboardStats.in_progress, color: 'text-amber-600', icon: Timer },
+            { label: 'Completed Ads', value: dashboardStats.completed, color: 'text-emerald-600', icon: CheckCircle2 },
+          ].map((stat, i) => (
             <div key={i} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:border-slate-300">
               <div className="flex items-center gap-3 mb-2">
-                <div className={`p-2 rounded-lg bg-slate-50 ${s.color}`}>
-                  <s.icon size={18} />
+                <div className={`p-2 rounded-lg bg-slate-50 ${stat.color}`}>
+                  <stat.icon size={18} />
                 </div>
-                <p className="text-[13px] font-medium text-slate-500">{s.label}</p>
+                <p className="text-[13px] font-medium text-slate-500">{stat.label}</p>
               </div>
-              <p className="text-2xl font-bold text-slate-900">{s.value}</p>
+              <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
             </div>
           ))}
-        </div>
+        </section>
 
-        {/* Reporting Summary Section */}
+        {/* Performance Overview Component */}
         <TodayReportingCard user={user} campaigns={allCampaigns} />
 
-        {/* Task List */}
-        <div className="space-y-4 pt-6 border-t border-slate-100">
+        {/* Main Task List Section */}
+        <section className="space-y-4 pt-6 border-t border-slate-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-[14px] font-semibold text-slate-800">Assigned Tasks</h2>
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+            
+            {/* Tab Navigation */}
+            <nav className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
               {(['in_progress', 'pending', 'completed'] as const).map((tab) => (
                 <button
                   key={tab}
@@ -156,10 +171,9 @@ export default function AdsManagerDashboardPage() {
                   {tab === 'in_progress' ? 'In Progress' : tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </button>
               ))}
-            </div>
+            </nav>
           </div>
 
-          {/* Dynamic Task Listing */}
           <div className="space-y-3">
             {filteredTasks.length === 0 ? (
               <div className="bg-white rounded-xl border border-dashed border-slate-200 py-12 text-center">
@@ -167,29 +181,37 @@ export default function AdsManagerDashboardPage() {
               </div>
             ) : (
               filteredTasks.map((task) => {
-                const overdue = task.deadline ? isOverdue(task.deadline, task.status) : false;
+                const taskStatus = getEffectiveStatus(task);
+                const overdue = isOverdue(task.deadline, taskStatus);
                 const daysLeft = task.deadline ? getDaysLeft(task.deadline) : 0;
-                const config = STATUS_CONFIG[task.status] || STATUS_CONFIG.pending;
 
                 return (
-                  <div 
+                  <article 
                     key={task.id} 
-                    className={`rounded-xl border shadow-sm p-4 transition-all hover:shadow-md ${getEffectiveStatus(task) === 'completed' ? 'bg-emerald-50/30 border-emerald-100' : overdue ? 'bg-white border-red-200 shadow-sm shadow-red-50' : 'bg-white border-slate-100'}`}
+                    className={`rounded-xl border shadow-sm p-4 transition-all hover:shadow-md ${
+                      taskStatus === 'completed' 
+                        ? 'bg-emerald-50/30 border-emerald-100' 
+                        : overdue ? 'bg-white border-red-200 shadow-sm shadow-red-50' 
+                        : 'bg-white border-slate-100'
+                    }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <span className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${PRIORITY_DOT[task.priority]}`} />
+                        <span className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${PRIORITY_STYLES[task.priority]}`} />
                         <div className="flex-1 min-w-0">
                           <p className="text-[14px] font-bold text-slate-900 truncate">{task.title}</p>
-                          <p className="text-[12px] text-slate-500 mt-0.5">{task.client} {task.brand ? `(${task.brand})` : ''} · {task.campaign}</p>
+                          <p className="text-[12px] text-slate-500 mt-0.5">
+                            {task.client} {task.brand ? `(${task.brand})` : ''} · {task.campaign}
+                          </p>
                         </div>
                       </div>
+                      
                       <div className="relative">
                         {overdue && <AlertCircle size={14} className="text-red-500 absolute -left-5 top-1/2 -translate-y-1/2" />}
                         <select
-                          value={getEffectiveStatus(task)}
+                          value={taskStatus}
                           onChange={(e) => handleStatusChange(task, e.target.value as TaskStatus)}
-                          className={`appearance-none pl-2.5 pr-8 py-1 rounded-lg text-[12px] font-bold transition-all cursor-pointer outline-none border-none ${STATUS_CONFIG[getEffectiveStatus(task)]?.bg || STATUS_CONFIG.pending.bg} ${STATUS_CONFIG[getEffectiveStatus(task)]?.color || STATUS_CONFIG.pending.color} hover:opacity-80`}
+                          className={`appearance-none pl-2.5 pr-8 py-1 rounded-lg text-[12px] font-bold transition-all cursor-pointer outline-none border-none ${STATUS_STYLES[taskStatus]?.bg || STATUS_STYLES.pending.bg} ${STATUS_STYLES[taskStatus]?.color || STATUS_STYLES.pending.color} hover:opacity-80`}
                         >
                           <option value="pending">Pending</option>
                           <option value="in_progress">In Progress</option>
@@ -199,7 +221,7 @@ export default function AdsManagerDashboardPage() {
                       </div>
                     </div>
 
-                    {/* Audit / Relay History */}
+                    {/* Task History / Audit Log */}
                     {task.roleNotes && task.roleNotes.length > 0 && (
                       <div className="mt-4 mb-4 space-y-2 border-t border-slate-100 pt-4">
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">History Log:</p>
@@ -215,33 +237,34 @@ export default function AdsManagerDashboardPage() {
                       </div>
                     )}
 
-                    {/* Footer Information */}
+                    {/* Task Footer Meta */}
                     <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
                       <div className={`flex items-center gap-1.5 text-[12px] ${overdue ? 'text-red-600 font-bold' : 'text-slate-500 font-medium'}`}>
                         <Calendar size={14} />
                         {overdue ? 'Overdue · ' : ''}
                         {task.deadline ? formatDeadline(task.deadline) : 'No deadline'}
-                        {!overdue && task.status !== 'completed' && task.deadline && (
+                        {!overdue && taskStatus !== 'completed' && task.deadline && (
                           <span className={`ml-1 ${daysLeft <= 3 ? 'text-red-500 font-bold' : 'text-slate-400'}`}>
                             ({daysLeft > 0 ? `${daysLeft}d left` : 'Today'})
                           </span>
                         )}
                       </div>
-                      {task.status === 'completed' && (
+                      
+                      {taskStatus === 'completed' && (
                         <div className="flex items-center gap-1 text-[12px] text-emerald-600 font-bold">
                           <CheckCircle2 size={12} />
                           {task.forwardedBy ? `Finalized by ${task.forwardedBy}` : 'Task Finalized'}
                         </div>
                       )}
                     </div>
-                  </div>
+                  </article>
                 );
               })
             )}
           </div>
-        </div>
+        </section>
 
-        {/* Completion Modal */}
+        {/* Task Completion Modal Interaction */}
         <TaskCompletionModal
           open={isModalOpen}
           onClose={() => setIsModalOpen(false)}
