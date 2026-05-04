@@ -7,6 +7,7 @@ import { Users, Plus, Pencil, Trash2, Search, X, Mail, Camera, Film, Megaphone, 
 import { Toaster, toast } from 'sonner';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import type { UserRole } from '@/types';
+import { STATIC_STRINGS, ROLES, PAGE_ROLES } from '@/utils/constants';
 
 interface TeamMember {
   id: string;
@@ -20,43 +21,43 @@ interface TeamMember {
 }
 
 const roleConfig: Record<UserRole, { color: string; bg: string; icon: React.ElementType }> = {
-  'Super Admin': { color: 'text-violet-700', bg: 'bg-violet-100', icon: Crown },
-  Owner:        { color: 'text-violet-700', bg: 'bg-violet-100', icon: Crown },
-  Manager:      { color: 'text-teal-700',   bg: 'bg-teal-100',   icon: UserCheck },
-  Shooter:      { color: 'text-blue-700',   bg: 'bg-blue-100',   icon: Camera },
-  Editor:       { color: 'text-purple-700', bg: 'bg-purple-100', icon: Film },
-  'Ads Manager':{ color: 'text-orange-700', bg: 'bg-orange-100', icon: Megaphone },
-  'Social Media Manager': { color: 'text-pink-700', bg: 'bg-pink-100', icon: TrendingUp },
-  Client:       { color: 'text-indigo-700', bg: 'bg-indigo-100', icon: UserCheck },
+  [ROLES.SUPER_ADMIN]: { color: 'text-violet-700', bg: 'bg-violet-100', icon: Crown },
+  [ROLES.OWNER]:        { color: 'text-violet-700', bg: 'bg-violet-100', icon: Crown },
+  [ROLES.MANAGER]:      { color: 'text-teal-700',   bg: 'bg-teal-100',   icon: UserCheck },
+  [ROLES.SHOOTER]:      { color: 'text-blue-700',   bg: 'bg-blue-100',   icon: Camera },
+  [ROLES.EDITOR]:       { color: 'text-purple-700', bg: 'bg-purple-100', icon: Film },
+  [ROLES.ADS_MANAGER]:{ color: 'text-orange-700', bg: 'bg-orange-100', icon: Megaphone },
+  [ROLES.SOCIAL_MEDIA_MANAGER]: { color: 'text-pink-700', bg: 'bg-pink-100', icon: TrendingUp },
+  [ROLES.CLIENT]:       { color: 'text-indigo-700', bg: 'bg-indigo-100', icon: UserCheck },
 };
 
 const avatarColors: Record<UserRole, string> = {
-  'Super Admin': 'bg-violet-600',
-  Owner:        'bg-violet-600',
-  Manager:      'bg-teal-600',
-  Shooter:      'bg-blue-600',
-  Editor:       'bg-purple-600',
-  'Ads Manager':'bg-orange-600',
-  'Social Media Manager': 'bg-pink-600',
-  Client:      'bg-indigo-600',
+  [ROLES.SUPER_ADMIN]: 'bg-violet-600',
+  [ROLES.OWNER]:        'bg-violet-600',
+  [ROLES.MANAGER]:      'bg-teal-600',
+  [ROLES.SHOOTER]:      'bg-blue-600',
+  [ROLES.EDITOR]:       'bg-purple-600',
+  [ROLES.ADS_MANAGER]:'bg-orange-600',
+  [ROLES.SOCIAL_MEDIA_MANAGER]: 'bg-pink-600',
+  [ROLES.CLIENT]:      'bg-indigo-600',
 };
 
-const ALL_ROLES: UserRole[] = ['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager', 'Social Media Manager'];
+const ALL_ROLES: UserRole[] = [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] as UserRole[];
 
 const initialMembers: TeamMember[] = [
-  { id: 'm1', name: 'Alex Owens',    email: 'alex@agencyflow.io',   role: 'Owner',        status: 'active',   joinedAt: '2025-11-01', tasksCompleted: 42, tasksActive: 3 },
-  { id: 'm2', name: 'Priya Sharma',  email: 'priya@agencyflow.io',  role: 'Manager',      status: 'active',   joinedAt: '2025-11-15', tasksCompleted: 28, tasksActive: 5 },
-  { id: 'm3', name: 'Marco Reyes',   email: 'marco@agencyflow.io',  role: 'Shooter',      status: 'active',   joinedAt: '2025-12-01', tasksCompleted: 19, tasksActive: 2 },
-  { id: 'm4', name: 'Jin Park',      email: 'jin@agencyflow.io',    role: 'Editor',       status: 'active',   joinedAt: '2025-12-10', tasksCompleted: 15, tasksActive: 3 },
-  { id: 'm5', name: 'Sofia Nguyen',  email: 'sofia@agencyflow.io',  role: 'Ads Manager',  status: 'active',   joinedAt: '2026-01-05', tasksCompleted: 11, tasksActive: 2 },
-  { id: 'm7', name: 'Sam Rivera',    email: 'sam@agencyflow.io',    role: 'Social Media Manager', status: 'active', joinedAt: '2026-03-10', tasksCompleted: 8, tasksActive: 4 },
-  { id: 'm6', name: 'Daniel Kim',    email: 'daniel@agencyflow.io', role: 'Shooter',      status: 'inactive', joinedAt: '2026-02-01', tasksCompleted: 4,  tasksActive: 0 },
+  { id: 'm1', name: 'Alex Owens',    email: 'alex@agencyflow.io',   role: ROLES.OWNER as UserRole,        status: 'active',   joinedAt: '2025-11-01', tasksCompleted: 42, tasksActive: 3 },
+  { id: 'm2', name: 'Priya Sharma',  email: 'priya@agencyflow.io',  role: ROLES.MANAGER as UserRole,      status: 'active',   joinedAt: '2025-11-15', tasksCompleted: 28, tasksActive: 5 },
+  { id: 'm3', name: 'Marco Reyes',   email: 'marco@agencyflow.io',  role: ROLES.SHOOTER as UserRole,      status: 'active',   joinedAt: '2025-12-01', tasksCompleted: 19, tasksActive: 2 },
+  { id: 'm4', name: 'Jin Park',      email: 'jin@agencyflow.io',    role: ROLES.EDITOR as UserRole,       status: 'active',   joinedAt: '2025-12-10', tasksCompleted: 15, tasksActive: 3 },
+  { id: 'm5', name: 'Sofia Nguyen',  email: 'sofia@agencyflow.io',  role: ROLES.ADS_MANAGER as UserRole,  status: 'active',   joinedAt: '2026-01-05', tasksCompleted: 11, tasksActive: 2 },
+  { id: 'm7', name: 'Sam Rivera',    email: 'sam@agencyflow.io',    role: ROLES.SOCIAL_MEDIA_MANAGER as UserRole, status: 'active', joinedAt: '2026-03-10', tasksCompleted: 8, tasksActive: 4 },
+  { id: 'm6', name: 'Daniel Kim',    email: 'daniel@agencyflow.io', role: ROLES.SHOOTER as UserRole,      status: 'inactive', joinedAt: '2026-02-01', tasksCompleted: 4,  tasksActive: 0 },
 ];
 
-const emptyForm = { name: '', email: '', role: 'Shooter' as UserRole };
+const emptyForm = { name: '', email: '', role: ROLES.SHOOTER as UserRole };
 
 export default function TeamPage() {
-  useRoleGuard(['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager', 'Social Media Manager']);
+  useRoleGuard(PAGE_ROLES.TEAM as unknown as UserRole[]);
 
   const [members, setMembers] = useState<TeamMember[]>(initialMembers);
   const [search, setSearch] = useState('');
@@ -100,8 +101,8 @@ export default function TeamPage() {
 
   const handleSave = () => {
     const e: Partial<typeof emptyForm> = {};
-    if (!form.name.trim()) e.name = 'Name is required';
-    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Valid email is required';
+    if (!form.name.trim()) e.name = STATIC_STRINGS.FORM_NAME_REQUIRED;
+    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = STATIC_STRINGS.FORM_EMAIL_REQUIRED;
 
     if (Object.keys(e).length > 0) { 
       setErrors(e); 
@@ -114,7 +115,7 @@ export default function TeamPage() {
           m.id === editingMember.id ? { ...m, name: form.name.trim(), email: form.email.trim(), role: form.role } : m
         )
       );
-      toast.success('Member updated');
+      toast.success(STATIC_STRINGS.FORM_ACCOUNT_UPDATED);
     } else {
       const newMember: TeamMember = {
         id: `m${Date.now()}`,
@@ -127,7 +128,7 @@ export default function TeamPage() {
         tasksActive: 0,
       };
       setMembers((prev) => [newMember, ...prev]);
-      toast.success('Team member invited');
+      toast.success(STATIC_STRINGS.FORM_ACCOUNT_CREATED);
     }
     setModalOpen(false);
   };
@@ -135,7 +136,7 @@ export default function TeamPage() {
   const handleDelete = useCallback(() => {
     if (deleteModal.member) {
       setMembers((prev) => prev.filter((m) => m.id !== deleteModal.member!.id));
-      toast.success('Member removed');
+      toast.success(STATIC_STRINGS.DASHBOARD_OWNER_REMOVED);
     }
     setDeleteModal({ open: false, member: null });
   }, [deleteModal.member]);
@@ -158,10 +159,10 @@ export default function TeamPage() {
           <div>
             <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
               <Users size={20} className="text-violet-600" />
-              Team
+              {STATIC_STRINGS.TEAM_PAGE_TITLE}
             </h1>
             <p className="text-[13px] text-slate-500 mt-0.5">
-              {stats.active} active · {stats.total} total members
+              {stats.active} {STATIC_STRINGS.TEAM_PAGE_SUBTITLE_PART1} · {stats.total} {STATIC_STRINGS.TEAM_PAGE_SUBTITLE_PART2}
             </p>
           </div>
           <button
@@ -169,7 +170,7 @@ export default function TeamPage() {
             className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-[13.5px] font-semibold px-4 py-2.5 rounded-lg transition-colors shadow-sm"
           >
             <Plus size={15} />
-            Invite Member
+            {STATIC_STRINGS.TEAM_PAGE_INVITE_MEMBER}
           </button>
         </div>
 
@@ -198,7 +199,7 @@ export default function TeamPage() {
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search by name or email…"
+              placeholder={STATIC_STRINGS.TEAM_PAGE_SEARCH_PLACEHOLDER}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-8 pr-3 py-2 text-[13px] border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400"
@@ -214,7 +215,7 @@ export default function TeamPage() {
               onClick={() => setRoleFilter('all')}
               className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all ${roleFilter === 'all' ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
             >
-              All
+              {STATIC_STRINGS.NOTIFICATIONS_ALL}
             </button>
             {ALL_ROLES.map((r) => (
               <button
@@ -233,19 +234,19 @@ export default function TeamPage() {
           {filtered.length === 0 ? (
             <div className="py-16 text-center text-slate-400">
               <Users size={32} className="mx-auto mb-3 opacity-30" />
-              <p className="text-[14px] font-medium">No members found</p>
+              <p className="text-[14px] font-medium">{STATIC_STRINGS.CLIENT_MGMT_NO_CLIENTS}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-[13px]">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Member</th>
-                    <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider hidden md:table-cell">Role</th>
-                    <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider hidden lg:table-cell">Tasks</th>
-                    <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider hidden sm:table-cell">Joined</th>
-                    <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Status</th>
-                    <th className="px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider text-right">Actions</th>
+                    <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider">{STATIC_STRINGS.TEAM_PAGE_COL_MEMBER}</th>
+                    <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider hidden md:table-cell">{STATIC_STRINGS.TASK_MGMT_COL_ROLE}</th>
+                    <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider hidden lg:table-cell">{STATIC_STRINGS.DASHBOARD_ALL_TASKS}</th>
+                    <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider hidden sm:table-cell">{STATIC_STRINGS.TEAM_PAGE_COL_JOINED}</th>
+                    <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider">{STATIC_STRINGS.TASK_MGMT_COL_STATUS}</th>
+                    <th className="px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider text-right">{STATIC_STRINGS.TASK_MGMT_COL_ACTIONS}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -282,11 +283,11 @@ export default function TeamPage() {
                           <div className="flex items-center gap-3">
                             <div>
                               <p className="font-semibold text-slate-800 tabular-nums">{member.tasksCompleted}</p>
-                              <p className="text-[11px] text-slate-400">completed</p>
+                              <p className="text-[11px] text-slate-400">{STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_COMPLETED}</p>
                             </div>
                             <div>
                               <p className="font-semibold text-amber-600 tabular-nums">{member.tasksActive}</p>
-                              <p className="text-[11px] text-slate-400">active</p>
+                              <p className="text-[11px] text-slate-400">{STATIC_STRINGS.ADS_STATUS_ACTIVE}</p>
                             </div>
                           </div>
                         </td>
@@ -299,7 +300,7 @@ export default function TeamPage() {
                             }`}
                           >
                             {member.status === 'active' ? <CheckCircle2 size={11} /> : <XCircle size={11} />}
-                            {member.status === 'active' ? 'Active' : 'Inactive'}
+                            {member.status === 'active' ? STATIC_STRINGS.TEAM_PAGE_STATUS_ACTIVE : STATIC_STRINGS.TEAM_PAGE_STATUS_INACTIVE}
                           </button>
                         </td>
                         <td className="px-5 py-3.5 text-right">
@@ -307,14 +308,14 @@ export default function TeamPage() {
                             <button
                               onClick={() => openEdit(member)}
                               className="p-1.5 rounded-lg hover:bg-violet-50 text-slate-400 hover:text-violet-600 transition-colors"
-                              title="Edit member"
+                              title={STATIC_STRINGS.TEAM_PAGE_EDIT_MEMBER_TOOLTIP}
                             >
                               <Pencil size={14} />
                             </button>
                             <button
                               onClick={() => setDeleteModal({ open: true, member })}
                               className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
-                              title="Remove member"
+                              title={STATIC_STRINGS.TEAM_PAGE_REMOVE_MEMBER_TOOLTIP}
                             >
                               <Trash2 size={14} />
                             </button>
@@ -334,14 +335,14 @@ export default function TeamPage() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editingMember ? 'Edit Member' : 'Invite Team Member'}
-        subtitle={editingMember ? 'Update member details' : 'Add a new member to your agency team'}
+        title={editingMember ? STATIC_STRINGS.TEAM_PAGE_MODAL_EDIT_TITLE : STATIC_STRINGS.TEAM_PAGE_MODAL_INVITE_TITLE}
+        subtitle={editingMember ? STATIC_STRINGS.TEAM_PAGE_MODAL_EDIT_SUBTITLE : STATIC_STRINGS.TEAM_PAGE_MODAL_INVITE_SUBTITLE}
         size="md"
       >
         <div className="px-6 py-5 space-y-4">
           <div>
             <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-              Full Name <span className="text-red-500">*</span>
+            {STATIC_STRINGS.TEAM_PAGE_LABEL_FULL_NAME} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -355,7 +356,7 @@ export default function TeamPage() {
 
           <div>
             <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-              Email Address <span className="text-red-500">*</span>
+            {STATIC_STRINGS.TEAM_PAGE_LABEL_EMAIL} <span className="text-red-500">*</span>
             </label>
             <input
               type="email"
@@ -368,7 +369,7 @@ export default function TeamPage() {
           </div>
 
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Role</label>
+            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_ROLE}</label>
             <div className="grid grid-cols-2 gap-2">
               {ALL_ROLES.map((r) => {
                 const cfg = roleConfig[r];
@@ -397,13 +398,13 @@ export default function TeamPage() {
               onClick={() => setModalOpen(false)}
               className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-700 hover:bg-slate-50 transition-colors"
             >
-              Cancel
+              {STATIC_STRINGS.FORM_CANCEL}
             </button>
             <button
               onClick={handleSave}
               className="flex-1 px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[13px] font-semibold transition-colors"
             >
-              {editingMember ? 'Save Changes' : 'Send Invite'}
+              {editingMember ? STATIC_STRINGS.FORM_SAVE_CHANGES : STATIC_STRINGS.TEAM_PAGE_BTN_SEND_INVITE}
             </button>
           </div>
         </div>
@@ -413,8 +414,8 @@ export default function TeamPage() {
       <Modal
         open={deleteModal.open}
         onClose={() => setDeleteModal({ open: false, member: null })}
-        title="Remove Member?"
-        subtitle="This will remove the member from your team."
+        title={STATIC_STRINGS.TEAM_PAGE_CONFIRM_REMOVE_TITLE}
+        subtitle={STATIC_STRINGS.TEAM_PAGE_CONFIRM_REMOVE_SUBTITLE}
         size="sm"
       >
         <div className="px-6 py-5">
@@ -436,13 +437,13 @@ export default function TeamPage() {
               onClick={() => setDeleteModal({ open: false, member: null })}
               className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-700 hover:bg-slate-50 transition-colors"
             >
-              Cancel
+              {STATIC_STRINGS.FORM_CANCEL}
             </button>
             <button
               onClick={handleDelete}
               className="flex-1 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[13px] font-semibold transition-colors"
             >
-              Remove
+              {STATIC_STRINGS.TEAM_PAGE_BTN_REMOVE}
             </button>
           </div>
         </div>

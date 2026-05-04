@@ -3,15 +3,16 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import Modal from '@/components/ui/Modal';
 import { CheckCircle2, UserPlus, Info, ChevronRight, Image } from 'lucide-react';
-import { Task } from '@/types';
+import { Task, Reel, UserRole } from '@/types';
+import { STATIC_STRINGS, ROLES } from '@/utils/constants';
 
 interface TaskCompletionModalProps {
   open: boolean;
   onClose: () => void;
-  task: Task | null;
+  task: Task | Reel | any | null; // Allow Reel and any for flexibility in dashboards
   onComplete: (taskId: string, notes: string, nextMember?: { name: string; role: string }, screenshot?: string) => void;
-  userRole: string;
-  teamMembers: { id: string; name: string; role: string }[];
+  userRole: UserRole | string;
+  teamMembers: readonly { id: string; name: string; role: string }[];
 }
 
 export default function TaskCompletionModal({
@@ -30,27 +31,29 @@ export default function TaskCompletionModal({
   const eligibleRoles = useMemo(() => {
     if (!task) return [];
     
-    const roleToCheck = userRole === 'Manager' || userRole === 'Owner' ? task.role : userRole;
+    const taskRole = (task as Task)?.role || ROLES.SOCIAL_MEDIA_MANAGER;
+    const roleToCheck = userRole === ROLES.MANAGER || userRole === ROLES.OWNER ? taskRole : userRole;
     
     const roles = (() => {
       switch (roleToCheck) {
-        case 'Shooter': return ['Editor'];
-        case 'Editor': return ['Ads Manager'];
-        case 'Ads Manager': return ['Manager', 'Owner'];
-        case 'Social Media Manager': return ['Manager', 'Owner'];
+        case ROLES.SHOOTER: return [ROLES.EDITOR];
+        case ROLES.EDITOR: return [ROLES.ADS_MANAGER];
+        case ROLES.ADS_MANAGER: return [ROLES.MANAGER, ROLES.OWNER];
+        case ROLES.SOCIAL_MEDIA_MANAGER: return [ROLES.MANAGER, ROLES.OWNER];
         default: return [];
       }
     })();
 
-    if (roleToCheck === 'Editor') return roles;
+    if (roleToCheck === ROLES.EDITOR) return roles;
     
     // Default fallback for admin roles or non-editor handoffs
-    return Array.from(new Set([...roles, 'Manager', 'Owner']));
+    return Array.from(new Set([...roles, ROLES.MANAGER, ROLES.OWNER]));
   }, [userRole, task]);
 
   const flags = useMemo(() => {
-    const isManagerOrOwner = userRole === 'Manager' || userRole === 'Owner';
-    const isAdsTask = task?.role === 'Ads Manager' || task?.role === 'Social Media Manager';
+    const isManagerOrOwner = userRole === ROLES.MANAGER || userRole === ROLES.OWNER;
+    const taskRole = (task as Task)?.role;
+    const isAdsTask = taskRole === ROLES.ADS_MANAGER || taskRole === ROLES.SOCIAL_MEDIA_MANAGER;
     return {
       showHandoff: eligibleRoles.length > 0,
       isManagerOrOwner,
@@ -65,13 +68,13 @@ export default function TaskCompletionModal({
 
     const errors: Record<string, string> = {};
     if (!notes.trim() || notes.length < 5) {
-      errors.notes = 'Descriptive notes are required (min 5 chars)';
+      errors.notes = STATIC_STRINGS.TASK_MODAL_ERR_NOTES;
     }
     if (flags.showHandoff && !sendTo && !flags.isManagerOrOwner) {
-      errors.sendTo = 'Please select a team member to hand off to';
+      errors.sendTo = STATIC_STRINGS.TASK_MODAL_ERR_HANDOFF;
     }
     if (flags.isAdsTask && !screenshot.trim()) {
-      errors.screenshot = 'Campaign delivery screenshot is required';
+      errors.screenshot = STATIC_STRINGS.TASK_MODAL_ERR_SCREENSHOT;
     }
 
     if (Object.keys(errors).length > 0) {
@@ -108,7 +111,7 @@ export default function TaskCompletionModal({
     <Modal
       open={open}
       onClose={onClose}
-      title={task?.type === 'REEL' ? 'Confirm Reel Upload' : 'Complete Task'}
+      title={(task as any)?.type === 'REEL' || (task as any)?.scheduledDate ? STATIC_STRINGS.TASK_MODAL_CONFIRM_REEL : STATIC_STRINGS.TASK_MODAL_COMPLETE_TASK}
       subtitle={task?.title}
       size="md"
     >
@@ -117,11 +120,11 @@ export default function TaskCompletionModal({
           {/* Notes Field */}
           <div>
             <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">
-              Completion/Handoff Notes <span className="text-red-500">*</span>
+              {STATIC_STRINGS.TASK_MODAL_LABEL_NOTES} <span className="text-red-500">*</span>
             </label>
             <textarea
               rows={4}
-              placeholder="Provide details for the next person or audit records..."
+              placeholder={STATIC_STRINGS.TASK_MODAL_PLACEHOLDER_NOTES}
               className={`w-full px-4 py-3 rounded-xl border text-[13.5px] outline-none transition-all resize-none ${
                 formErrors.notes ? 'border-red-300 bg-red-50 focus:ring-red-100' : 'border-slate-200 focus:ring-4 focus:ring-violet-50 focus:border-violet-300'
               }`}
@@ -139,7 +142,7 @@ export default function TaskCompletionModal({
           {flags.needsScreenshot && (
             <div>
               <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">
-                {flags.isAdsTask ? 'Delivery Screenshot' : 'Export/Preview Screenshot'} {!flags.isAdsTask && <span className="text-slate-400 font-normal ml-1">(Optional)</span>} {flags.isAdsTask && <span className="text-red-500">*</span>}
+                {flags.isAdsTask ? STATIC_STRINGS.TASK_MODAL_LABEL_DELIVERY_SS : STATIC_STRINGS.TASK_MODAL_LABEL_EXPORT_SS} {!flags.isAdsTask && <span className="text-slate-400 font-normal ml-1">({STATIC_STRINGS.COMMON_OPTIONAL})</span>} {flags.isAdsTask && <span className="text-red-500">*</span>}
               </label>
               <input 
                 type="file" 
@@ -160,13 +163,13 @@ export default function TaskCompletionModal({
                       <img src={screenshot} alt="Preview" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-emerald-500/10" />
                     </div>
-                    <p className="text-[12px] font-bold text-emerald-700">Screenshot Attached</p>
+                    <p className="text-[12px] font-bold text-emerald-700">{STATIC_STRINGS.TASK_MODAL_SS_ATTACHED}</p>
                     <button 
                       type="button" 
                       onClick={(e) => { e.stopPropagation(); setScreenshot(''); }}
                       className="text-[11px] text-red-500 font-medium hover:underline"
                     >
-                      Remove
+                      {STATIC_STRINGS.COMMON_REMOVE}
                     </button>
                   </div>
                 ) : (
@@ -175,7 +178,7 @@ export default function TaskCompletionModal({
                       <Image size={16} />
                     </div>
                     <p className="text-[12px] font-medium text-slate-500">
-                      {flags.isAdsTask ? 'Click to upload campaign proof' : 'Click to upload edit preview/confirmation'}
+                      {flags.isAdsTask ? STATIC_STRINGS.TASK_MODAL_UPLOAD_PROOF : STATIC_STRINGS.TASK_MODAL_UPLOAD_PREVIEW}
                     </p>
                   </>
                 )}
@@ -192,7 +195,7 @@ export default function TaskCompletionModal({
           {flags.showHandoff && (
             <div>
               <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">
-                Hand Off To {flags.isManagerOrOwner && <span className="text-slate-400 font-normal ml-1">(Optional)</span>} {!flags.isManagerOrOwner && <span className="text-red-500">*</span>}
+                {STATIC_STRINGS.TASK_MODAL_LABEL_HANDOFF} {flags.isManagerOrOwner && <span className="text-slate-400 font-normal ml-1">({STATIC_STRINGS.COMMON_OPTIONAL})</span>} {!flags.isManagerOrOwner && <span className="text-red-500">*</span>}
               </label>
               <div className="relative">
                 <UserPlus size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -203,8 +206,8 @@ export default function TaskCompletionModal({
                   value={sendTo}
                   onChange={(e) => setSendTo(e.target.value)}
                 >
-                  <option value="">Select recipient…</option>
-                  {teamMembers.filter(m => eligibleRoles.includes(m.role)).map((m) => (
+                  <option value="">{STATIC_STRINGS.TASK_MODAL_SELECT_RECIPIENT}</option>
+                  {teamMembers.filter(m => (eligibleRoles as string[]).includes(m.role as string)).map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.name} ({m.role})
                     </option>
@@ -226,13 +229,13 @@ export default function TaskCompletionModal({
               onClick={onClose}
               className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors"
             >
-              Cancel
+              {STATIC_STRINGS.FORM_CANCEL}
             </button>
             <button
               onClick={handleSubmit}
               className="flex items-center gap-2 px-6 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[13px] font-semibold shadow-md shadow-violet-100 transition-all active:scale-[0.98]"
             >
-              {task?.type === 'REEL' ? 'Confirm Upload' : (flags.showHandoff ? 'Complete & Hand Off' : 'Complete Task')} <CheckCircle2 size={16} />
+              {task?.type === 'REEL' ? STATIC_STRINGS.TASK_MODAL_BTN_CONFIRM_UPLOAD : (flags.showHandoff ? STATIC_STRINGS.TASK_MODAL_BTN_COMPLETE_HANDOFF : STATIC_STRINGS.TASK_MODAL_COMPLETE_TASK)} <CheckCircle2 size={16} />
             </button>
           </div>
         </div>

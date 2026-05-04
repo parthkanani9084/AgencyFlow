@@ -5,9 +5,11 @@ import AppLayout from '@/components/AppLayout';
 import CampaignTable from './components/CampaignTable';
 import { Toaster } from 'sonner';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
+import { PAGE_ROLES } from '@/utils/constants';
+import { UserRole } from '@/types';
 
 export default function CampaignManagementPage() {
-  useRoleGuard(['Owner', 'Manager', 'Ads Manager', 'Social Media Manager']);
+  useRoleGuard(PAGE_ROLES.CAMPAIGN_MANAGEMENT as unknown as UserRole[]);
 
   return (
     <AppLayout>

@@ -11,6 +11,8 @@ import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/context/AuthContext';
 import { useAdsData } from '@/context/AdsDataContext';
 import { toast, Toaster } from 'sonner';
+import { STATIC_STRINGS, STORAGE_KEYS, PAGE_ROLES, ROLES } from '@/utils/constants';
+import { UserRole } from '@/types';
 
 interface Payment {
   amount: number;
@@ -72,11 +74,11 @@ const EMPTY_FORM: FormState = {
 const SERVICE_OPTIONS = ['Reels', 'Campaign', 'Meta', 'Social Media'];
 
 export default function ClientManagementPage() {
-  useRoleGuard(['Owner', 'Manager', 'Ads Manager', 'Social Media Manager']);
+  useRoleGuard(PAGE_ROLES.CAMPAIGN_MANAGEMENT as unknown as UserRole[]);
   
   const { user } = useAuth();
   const { adsMetrics, updateAdsMetrics } = useAdsData();
-  const isOwner = user?.role === 'Owner';
+  const isOwner = user?.role === ROLES.OWNER;
 
   const [clients, setClients] = useState<Client[]>(() => {
     if (typeof window !== 'undefined') {
@@ -238,7 +240,7 @@ export default function ClientManagementPage() {
 
     if (currentTotalPaid + newAmount > activeClient.packageAmount) {
       const remaining = activeClient.packageAmount - currentTotalPaid;
-      toast.error(`Payment exceeds package limit (₹${activeClient.packageAmount.toLocaleString()}). Remaining: ₹${remaining.toLocaleString()}`);
+      toast.error(`${STATIC_STRINGS.CLIENT_MGMT_ERR_PAYMENT_EXCEEDS} (${STATIC_STRINGS.CURRENCY_SYMBOL}${activeClient.packageAmount.toLocaleString()}). Remaining: ${STATIC_STRINGS.CURRENCY_SYMBOL}${remaining.toLocaleString()}`);
       return;
     }
 
@@ -258,7 +260,7 @@ export default function ClientManagementPage() {
     setClients(updatedClients);
     updateGlobalRevenue(updatedClients);
     setPaymentModalOpen(false);
-    toast.success(`Payment of ₹${newAmount.toLocaleString()} recorded for ${activeClient.name}`);
+    toast.success(`Payment of ${STATIC_STRINGS.CURRENCY_SYMBOL}${newAmount.toLocaleString()} recorded for ${activeClient.name}`);
   };
 
   const handleDeletePayment = (paymentIndex: number) => {
@@ -289,8 +291,8 @@ export default function ClientManagementPage() {
         {/* Page Header */}
         <header className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">Client Management</h1>
-            <p className="text-[13px] text-slate-500 mt-0.5">{clients.length} clients total</p>
+            <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">{STATIC_STRINGS.CLIENT_MGMT_TITLE || 'Client Management'}</h1>
+            <p className="text-[13px] text-slate-500 mt-0.5">{clients.length} {STATIC_STRINGS.CAMPAIGN_MGMT_TOTAL} clients</p>
           </div>
           {isOwner && (
             <button
@@ -298,7 +300,7 @@ export default function ClientManagementPage() {
               className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-700 active:scale-[0.98] text-white text-[13.5px] font-semibold transition-all duration-150 shadow-sm"
             >
               <Plus size={16} />
-              Add Client
+              {STATIC_STRINGS.CLIENT_MGMT_ADD_CLIENT}
             </button>
           )}
         </header>
@@ -308,7 +310,7 @@ export default function ClientManagementPage() {
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search by name or brand…"
+            placeholder={STATIC_STRINGS.CLIENT_MGMT_SEARCH_PLACEHOLDER}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition"
@@ -326,14 +328,14 @@ export default function ClientManagementPage() {
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50">
-                  <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Client</th>
-                  <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Brand</th>
+                  <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{STATIC_STRINGS.CLIENT_MGMT_LABEL_CLIENT_NAME.split(' ')[0]}</th>
+                  <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{STATIC_STRINGS.CLIENT_MGMT_LABEL_BRAND_NAME.split(' ')[0]}</th>
                   {isOwner && (
                     <>
-                      <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 text-right">Package</th>
-                      <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 text-right">Total Paid</th>
-                      <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Plan</th>
-                      <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 text-right">Actions</th>
+                      <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 text-right">{STATIC_STRINGS.CLIENT_MGMT_LABEL_PACKAGE.split(' ')[0]}</th>
+                      <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 text-right">{STATIC_STRINGS.CLIENT_MGMT_TOTAL_PAID}</th>
+                      <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{STATIC_STRINGS.CLIENT_MGMT_LABEL_PLAN_TYPE.split(' ')[0]}</th>
+                      <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 text-right">{STATIC_STRINGS.ADS_TABLE_COL_ACTIONS}</th>
                     </>
                   )}
                 </tr>
@@ -344,7 +346,7 @@ export default function ClientManagementPage() {
                     <td colSpan={isOwner ? 6 : 2} className="px-5 py-14 text-center">
                       <div className="flex flex-col items-center gap-2 text-slate-400">
                         <Briefcase size={32} className="opacity-30" />
-                        <p className="text-[13px]">No clients found</p>
+                        <p className="text-[13px]">{STATIC_STRINGS.CLIENT_MGMT_NO_CLIENTS}</p>
                       </div>
                     </td>
                   </tr>
@@ -370,10 +372,10 @@ export default function ClientManagementPage() {
                         {isOwner && (
                           <>
                             <td className="px-5 py-3.5 text-[13px] font-medium text-slate-600 text-right">
-                              ₹{client.packageAmount.toLocaleString()}
+                              {STATIC_STRINGS.CURRENCY_SYMBOL}{client.packageAmount.toLocaleString()}
                             </td>
                             <td className="px-5 py-3.5 text-[13px] font-bold text-emerald-600 text-right">
-                              ₹{totalPaid.toLocaleString()}
+                              {STATIC_STRINGS.CURRENCY_SYMBOL}{totalPaid.toLocaleString()}
                             </td>
                             <td className="px-5 py-3.5">
                               <span
@@ -437,13 +439,13 @@ export default function ClientManagementPage() {
       <Modal
         open={paymentModalOpen}
         onClose={() => setPaymentModalOpen(false)}
-        title="Record Client Payment"
-        subtitle="Log a new payment received from this client"
+        title={STATIC_STRINGS.CLIENT_MGMT_RECORD_PAYMENT}
+        subtitle={STATIC_STRINGS.CLIENT_MGMT_RECORD_PAYMENT_SUBTITLE}
         size="sm"
       >
         <div className="px-6 py-5 space-y-4">
           <div>
-            <label className="block text-[12px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Client</label>
+            <label className="block text-[12px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_CLIENT_NAME}</label>
             <input
               type="text"
               readOnly
@@ -453,7 +455,7 @@ export default function ClientManagementPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Amount (₹)</label>
+              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.ADS_TABLE_COL_SPEND} ({STATIC_STRINGS.CURRENCY_SYMBOL})</label>
               <input
                 type="number"
                 value={paymentForm.amount}
@@ -473,7 +475,7 @@ export default function ClientManagementPage() {
             </div>
           </div>
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Notes (Optional)</label>
+            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CAMPAIGN_MGMT_NOTES}</label>
             <textarea
               value={paymentForm.notes}
               onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })}
@@ -487,13 +489,13 @@ export default function ClientManagementPage() {
               onClick={() => setPaymentModalOpen(false)}
               className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors"
             >
-              Cancel
+              {STATIC_STRINGS.CAMPAIGN_MGMT_CANCEL}
             </button>
             <button
               onClick={handleRecordPayment}
               className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white text-[13px] font-semibold transition-all duration-150 shadow-sm"
             >
-              Record Payment
+              {STATIC_STRINGS.CLIENT_MGMT_RECORD_PAYMENT_BTN}
             </button>
           </div>
         </div>
@@ -503,27 +505,27 @@ export default function ClientManagementPage() {
       <Modal
         open={viewPaymentsOpen}
         onClose={() => setViewPaymentsOpen(false)}
-        title="Payment History"
-        subtitle={`Payments received from ${activeClient?.name}`}
+        title={STATIC_STRINGS.CLIENT_MGMT_PAYMENT_HISTORY}
+        subtitle={`${STATIC_STRINGS.CLIENT_MGMT_PAYMENT_HISTORY_SUBTITLE} ${activeClient?.name}`}
         size="md"
       >
         <div className="px-6 py-5">
           {!activeClient?.payments || activeClient.payments.length === 0 ? (
             <div className="py-10 text-center">
               <History size={32} className="mx-auto text-slate-200 mb-2" />
-              <p className="text-[13px] text-slate-500">No payment records found for this client.</p>
+              <p className="text-[13px] text-slate-500">{STATIC_STRINGS.CLIENT_MGMT_NO_PAYMENTS}</p>
             </div>
           ) : (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100">
-                  <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider mb-1">Total Paid</p>
-                  <p className="text-xl font-bold text-emerald-700">₹{getClientTotalPaid(activeClient).toLocaleString()}</p>
+                  <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider mb-1">{STATIC_STRINGS.CLIENT_MGMT_TOTAL_PAID}</p>
+                  <p className="text-xl font-bold text-emerald-700">{STATIC_STRINGS.CURRENCY_SYMBOL}{getClientTotalPaid(activeClient).toLocaleString()}</p>
                 </div>
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Pending Balance</p>
+                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">{STATIC_STRINGS.CLIENT_MGMT_PENDING_BALANCE}</p>
                   <p className="text-xl font-bold text-slate-700">
-                    ₹{Math.max(0, activeClient.packageAmount - getClientTotalPaid(activeClient)).toLocaleString()}
+                    {STATIC_STRINGS.CURRENCY_SYMBOL}{Math.max(0, activeClient.packageAmount - getClientTotalPaid(activeClient)).toLocaleString()}
                   </p>
                 </div>
               </div>
@@ -550,7 +552,7 @@ export default function ClientManagementPage() {
                         <td className="px-4 py-3 text-[12.5px] text-slate-400 italic">
                           <span className="line-clamp-1" title={p.notes}>{p.notes || '-'}</span>
                         </td>
-                        <td className="px-4 py-3 text-[13px] font-bold text-slate-800 text-right">₹{p.amount.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-[13px] font-bold text-slate-800 text-right">{STATIC_STRINGS.CURRENCY_SYMBOL}{p.amount.toLocaleString()}</td>
                         <td className="px-4 py-3 text-right">
                           <button 
                             onClick={() => handleDeletePayment(i)}
@@ -582,14 +584,14 @@ export default function ClientManagementPage() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editingClient ? 'Edit Client' : 'Add New Client'}
+        title={editingClient ? STATIC_STRINGS.CLIENT_MGMT_EDIT_CLIENT : STATIC_STRINGS.CLIENT_MGMT_ADD_CLIENT}
         subtitle={editingClient ? 'Update client details below' : 'Fill in the details to add a new client'}
         size="lg"
       >
         <div className="px-6 py-5 space-y-4 max-h-[75vh] overflow-y-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Client Name <span className="text-red-500">*</span></label>
+              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_CLIENT_NAME} <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 value={form.name}
@@ -600,7 +602,7 @@ export default function ClientManagementPage() {
               {errors.name && <p className="mt-1 text-[11.5px] text-red-500">{errors.name}</p>}
             </div>
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Brand Name <span className="text-red-500">*</span></label>
+              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_BRAND_NAME} <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 value={form.brand}
@@ -613,7 +615,7 @@ export default function ClientManagementPage() {
           </div>
 
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-2.5">Services Required</label>
+            <label className="block text-[12.5px] font-semibold text-slate-700 mb-2.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_SERVICES}</label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {SERVICE_OPTIONS.map((service) => (
                 <label key={service} className="flex items-center gap-2.5 cursor-pointer group">
@@ -637,9 +639,9 @@ export default function ClientManagementPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Package (INR) <span className="text-red-500">*</span></label>
+              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_PACKAGE} <span className="text-red-500">*</span></label>
               <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[13px]">₹</span>
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[13px]">{STATIC_STRINGS.CURRENCY_SYMBOL}</span>
                 <input
                   type="number"
                   value={form.packageAmount}
@@ -650,9 +652,9 @@ export default function ClientManagementPage() {
               {errors.packageAmount && <p className="mt-1 text-[11.5px] text-red-500">{errors.packageAmount}</p>}
             </div>
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Per Day Spend Amount</label>
+              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_PER_DAY_SPEND}</label>
               <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[13px]">₹</span>
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[13px]">{STATIC_STRINGS.CURRENCY_SYMBOL}</span>
                 <input
                   type="number"
                   value={form.perDaySpend}
@@ -664,7 +666,7 @@ export default function ClientManagementPage() {
           </div>
 
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Plan Type <span className="text-red-500">*</span></label>
+            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_PLAN_TYPE} <span className="text-red-500">*</span></label>
             <div className="flex gap-2">
               {(['weekly', 'monthly', 'yearly'] as const).map((plan) => (
                 <button
@@ -683,7 +685,7 @@ export default function ClientManagementPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Which AD Run</label>
+              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_AD_RUN}</label>
               <input
                 type="text"
                 value={form.adType}
@@ -692,7 +694,7 @@ export default function ClientManagementPage() {
               />
             </div>
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Reels Per Month</label>
+              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_REELS_PER_MONTH}</label>
               <input
                 type="number"
                 value={form.reelsPerMonth}
@@ -704,7 +706,7 @@ export default function ClientManagementPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Platform Type</label>
+              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_PLATFORM_TYPE}</label>
               <select
                 value={form.platformType}
                 onChange={(e) => setForm(f => ({ ...f, platformType: e.target.value as any }))}
@@ -742,16 +744,16 @@ export default function ClientManagementPage() {
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
-            <button onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
+            <button onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">{STATIC_STRINGS.CAMPAIGN_MGMT_CANCEL}</button>
             <button onClick={handleSave} className="px-5 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[13px] font-semibold transition-all shadow-sm">
-              {editingClient ? 'Save Changes' : 'Add Client'}
+              {editingClient ? STATIC_STRINGS.CAMPAIGN_MGMT_SAVE_CHANGES : STATIC_STRINGS.CLIENT_MGMT_ADD_CLIENT}
             </button>
           </div>
         </div>
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal open={deleteModal.open} onClose={() => setDeleteModal({ open: false, client: null })} title="Delete Client" size="sm">
+      <Modal open={deleteModal.open} onClose={() => setDeleteModal({ open: false, client: null })} title={STATIC_STRINGS.CLIENT_MGMT_DELETE_CLIENT} size="sm">
         <div className="px-6 py-5">
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
@@ -759,14 +761,14 @@ export default function ClientManagementPage() {
             </div>
             <div>
               <p className="text-[13.5px] text-slate-700 leading-relaxed">
-                Are you sure you want to delete <span className="font-semibold text-slate-900">&quot;{deleteModal.client?.name}&quot;</span>? All associated data will be permanently removed.
+                {STATIC_STRINGS.CLIENT_MGMT_DELETE_CONFIRM} <span className="font-semibold text-slate-900">&quot;{deleteModal.client?.name}&quot;</span>? {STATIC_STRINGS.CLIENT_MGMT_DELETE_DESC}
               </p>
-              <p className="mt-2 text-[12px] text-red-600 font-medium">This action cannot be undone.</p>
+              <p className="mt-2 text-[12px] text-red-600 font-medium">{STATIC_STRINGS.CLIENT_MGMT_DELETE_UNDONE}</p>
             </div>
           </div>
           <div className="flex items-center justify-end gap-2 mt-6">
-            <button onClick={() => setDeleteModal({ open: false, client: null })} className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
-            <button onClick={handleDelete} className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[13px] font-semibold transition-all">Delete Client</button>
+            <button onClick={() => setDeleteModal({ open: false, client: null })} className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">{STATIC_STRINGS.CAMPAIGN_MGMT_CANCEL}</button>
+            <button onClick={handleDelete} className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[13px] font-semibold transition-all">{STATIC_STRINGS.CLIENT_MGMT_DELETE_CLIENT}</button>
           </div>
         </div>
       </Modal>

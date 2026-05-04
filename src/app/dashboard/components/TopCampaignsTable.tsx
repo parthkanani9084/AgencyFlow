@@ -3,6 +3,7 @@
 import React from 'react';
 import { ArrowUpRight, ArrowDownRight, ExternalLink } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { STATIC_STRINGS, PLATFORM_STYLES } from '@/utils/constants';
 
 interface CampaignRow {
   id: string;
@@ -26,19 +27,19 @@ const PLATFORM_COLORS: Record<string, string> = {
 };
 
 const STAGE_COLORS: Record<string, string> = {
-  'Shooting': 'bg-amber-50 text-amber-700',
-  'Editing': 'bg-violet-50 text-violet-700',
-  'Ads Live': 'bg-emerald-50 text-emerald-700',
-  'Review': 'bg-blue-50 text-blue-700',
+  [STATIC_STRINGS.DASHBOARD_STAGE_ADS_LIVE]: 'bg-emerald-50 text-emerald-700',
+  [STATIC_STRINGS.DASHBOARD_STAGE_REVIEW]: 'bg-blue-50 text-blue-700',
+  [STATIC_STRINGS.DASHBOARD_STAGE_EDITING]: 'bg-amber-50 text-amber-700',
+  [STATIC_STRINGS.DASHBOARD_STAGE_SHOOTING]: 'bg-violet-50 text-violet-700',
 };
 
 const TOP_CAMPAIGNS: CampaignRow[] = [
-  { id: 'camp-001', name: 'Spring Collection Launch', client: 'Luma Apparel', platform: 'Meta', stage: 'Ads Live', spend: '$8,420', leads: 624, roas: 5.8, roasTrend: 'up', progress: 82 },
-  { id: 'camp-002', name: 'Q2 Lead Gen Drive', client: 'Nexus Capital', platform: 'Google', stage: 'Ads Live', spend: '$12,100', leads: 891, roas: 4.9, roasTrend: 'up', progress: 91 },
-  { id: 'camp-003', name: 'Product Reveal Reel', client: 'Orion Fitness', platform: 'TikTok', stage: 'Editing', spend: '$3,200', leads: 210, roas: 3.1, roasTrend: 'flat', progress: 45 },
-  { id: 'camp-004', name: 'B2B Awareness Push', client: 'Synapse Tech', platform: 'LinkedIn', stage: 'Ads Live', spend: '$6,750', leads: 178, roas: 4.2, roasTrend: 'up', progress: 74 },
-  { id: 'camp-005', name: 'Summer Sale Blitz', client: 'Coral Beauty', platform: 'Meta', stage: 'Shooting', spend: '$1,800', leads: 94, roas: 2.4, roasTrend: 'down', progress: 18 },
-  { id: 'camp-006', name: 'Reactivation Campaign', client: 'Pulse Nutrition', platform: 'Google', stage: 'Review', spend: '$4,500', leads: 312, roas: 3.9, roasTrend: 'up', progress: 96 },
+  { id: 'camp-001', name: 'Spring Collection Launch', client: 'Luma Apparel', platform: 'Meta', stage: STATIC_STRINGS.DASHBOARD_STAGE_ADS_LIVE, spend: '$8,420', leads: 624, roas: 5.8, roasTrend: 'up', progress: 82 },
+  { id: 'camp-002', name: 'Q2 Lead Gen Drive', client: 'Nexus Capital', platform: 'Google', stage: STATIC_STRINGS.DASHBOARD_STAGE_ADS_LIVE, spend: '$12,100', leads: 891, roas: 4.9, roasTrend: 'up', progress: 91 },
+  { id: 'camp-003', name: 'Product Reveal Reel', client: 'Orion Fitness', platform: 'TikTok', stage: STATIC_STRINGS.DASHBOARD_STAGE_EDITING, spend: '$3,200', leads: 210, roas: 3.1, roasTrend: 'flat', progress: 45 },
+  { id: 'camp-004', name: 'B2B Awareness Push', client: 'Synapse Tech', platform: 'LinkedIn', stage: STATIC_STRINGS.DASHBOARD_STAGE_ADS_LIVE, spend: '$6,750', leads: 178, roas: 4.2, roasTrend: 'up', progress: 74 },
+  { id: 'camp-005', name: 'Summer Sale Blitz', client: 'Coral Beauty', platform: 'Meta', stage: STATIC_STRINGS.DASHBOARD_STAGE_SHOOTING, spend: '$1,800', leads: 94, roas: 2.4, roasTrend: 'down', progress: 18 },
+  { id: 'camp-006', name: 'Reactivation Campaign', client: 'Pulse Nutrition', platform: 'Google', stage: STATIC_STRINGS.DASHBOARD_STAGE_REVIEW, spend: '$4,500', leads: 312, roas: 3.9, roasTrend: 'up', progress: 96 },
 ];
 
 
@@ -46,7 +47,7 @@ export default function TopCampaignsTable() {
   const router = useRouter();
 
   const handleRowClick = () => {
-    router.push('/campaign-management');
+    router.push(STATIC_STRINGS.DASHBOARD_ROUTE_CAMPAIGN_MGMT);
   };
 
   return (
@@ -54,14 +55,14 @@ export default function TopCampaignsTable() {
       {/* Table Header */}
       <header className="flex items-center justify-between px-5 py-4 border-b border-slate-100 flex-shrink-0">
         <div>
-          <h3 className="text-[14px] font-semibold text-slate-800">Top Campaigns</h3>
-          <p className="text-[12px] text-slate-400 mt-0.5">Ranked by ROAS · April 2026</p>
+          <h3 className="text-[14px] font-semibold text-slate-800">{STATIC_STRINGS.DASHBOARD_TOP_CAMPAIGNS_TITLE}</h3>
+          <p className="text-[12px] text-slate-400 mt-0.5">{STATIC_STRINGS.DASHBOARD_TOP_CAMPAIGNS_SUBTITLE} · {STATIC_STRINGS.DASHBOARD_MONTH_YEAR}</p>
         </div>
         <button
           onClick={handleRowClick}
           className="flex items-center gap-1 text-[12px] text-violet-600 hover:text-violet-700 font-semibold transition-colors"
         >
-          View all <ExternalLink size={12} />
+          {STATIC_STRINGS.CAMPAIGN_MGMT_VIEW_ALL} <ExternalLink size={12} />
         </button>
       </header>
 
@@ -70,12 +71,12 @@ export default function TopCampaignsTable() {
         <table className="w-full text-[12.5px] border-collapse">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-100">
-              <th className="text-left px-5 py-2.5 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">Campaign</th>
-              <th className="text-left px-3 py-2.5 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">Platform</th>
-              <th className="text-left px-3 py-2.5 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">Stage</th>
-              <th className="text-right px-3 py-2.5 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">Spend</th>
-              <th className="text-right px-3 py-2.5 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">Leads</th>
-              <th className="text-right px-5 py-2.5 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">ROAS</th>
+              <th className="text-left px-5 py-2.5 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">{STATIC_STRINGS.CAMPAIGN_MGMT_TABLE_COL_NAME}</th>
+              <th className="text-left px-3 py-2.5 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">{STATIC_STRINGS.ADS_TABLE_COL_PLATFORM}</th>
+              <th className="text-left px-3 py-2.5 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">{STATIC_STRINGS.CAMPAIGN_FIELD_STAGE}</th>
+              <th className="text-right px-3 py-2.5 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">{STATIC_STRINGS.ADS_TABLE_COL_SPEND}</th>
+              <th className="text-right px-3 py-2.5 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">{STATIC_STRINGS.ADS_TABLE_COL_LEADS}</th>
+              <th className="text-right px-5 py-2.5 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">{STATIC_STRINGS.ADS_TABLE_COL_ROAS}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
@@ -96,7 +97,7 @@ export default function TopCampaignsTable() {
                   </div>
                 </td>
                 <td className="px-3 py-3">
-                  <span className={`inline-flex px-2 py-0.5 rounded-md text-[10.5px] font-bold tracking-tight ${PLATFORM_COLORS[row.platform]}`}>
+                  <span className={`inline-flex px-2 py-0.5 rounded-md text-[10.5px] font-bold tracking-tight ${PLATFORM_STYLES[row.platform]}`}>
                     {row.platform}
                   </span>
                 </td>

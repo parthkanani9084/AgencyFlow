@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Trash2, TrendingUp, Users, DollarSign } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
+import { STATIC_STRINGS } from '@/utils/constants';
 
 interface PerformanceFormValues {
   spend: number;
@@ -54,15 +55,11 @@ export default function LogPerformanceModal({ open, onClose, campaign, onSuccess
     const totalSpend = prevSpend + addedSpend;
     const totalLeads = prevLeads + addedLeads;
 
-    // ROAS Logic: 
-    // Since ROAS is a ratio, users typically want to input the NEW overall ROAS from their ad platform.
-    // If they input > 0, we update the campaign's overall ROAS to match exactly.
-    // If they leave it at 0 (default), we keep the previous ROAS.
     const totalRoas = addedRoas > 0 ? addedRoas : prevRoas;
 
     const updatedCampaign = {
       ...campaign,
-      spend: `$${totalSpend.toLocaleString()}`,
+      spend: `${STATIC_STRINGS.CURRENCY_SYMBOL}${totalSpend.toLocaleString()}`,
       leads: totalLeads,
       roas: totalRoas,
       performanceHistory: [
@@ -97,7 +94,7 @@ export default function LogPerformanceModal({ open, onClose, campaign, onSuccess
 
     const updatedCampaign = {
       ...campaign,
-      spend: `₹${newSpend.toLocaleString()}`,
+      spend: `${STATIC_STRINGS.CURRENCY_SYMBOL}${newSpend.toLocaleString()}`,
       leads: newLeads,
       performanceHistory: updatedHistory
     };
@@ -109,13 +106,13 @@ export default function LogPerformanceModal({ open, onClose, campaign, onSuccess
     <Modal 
       open={open} 
       onClose={onClose} 
-      title="Log Daily Performance" 
-      subtitle={`Add new metrics for ${campaign?.name}`}
+      title={STATIC_STRINGS.LOG_PERFORMANCE_TITLE} 
+      subtitle={`${STATIC_STRINGS.LOG_PERFORMANCE_SUBTITLE} ${campaign?.name}`}
       size="md"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
         <div>
-          <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Add to Spend</label>
+          <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.LOG_PERFORMANCE_LABEL_ADD_SPEND}</label>
           <input
             type="number"
             placeholder="e.g. 500"
@@ -124,7 +121,7 @@ export default function LogPerformanceModal({ open, onClose, campaign, onSuccess
           />
         </div>
         <div>
-          <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Add to Leads</label>
+          <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.LOG_PERFORMANCE_LABEL_ADD_LEADS}</label>
           <input
             type="number"
             placeholder="e.g. 50"
@@ -133,7 +130,7 @@ export default function LogPerformanceModal({ open, onClose, campaign, onSuccess
           />
         </div>
         <div>
-          <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">New Overall ROAS (Optional)</label>
+          <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.LOG_PERFORMANCE_LABEL_ROAS_OPTIONAL}</label>
           <input
             type="number"
             step="0.1"
@@ -145,15 +142,15 @@ export default function LogPerformanceModal({ open, onClose, campaign, onSuccess
 
         {campaign?.performanceHistory && campaign.performanceHistory.length > 0 && (
           <div className="mt-6 border-t border-slate-100 pt-5">
-            <h3 className="text-[12px] font-bold text-slate-800 uppercase tracking-wider mb-3">Update History</h3>
+            <h3 className="text-[12px] font-bold text-slate-800 uppercase tracking-wider mb-3">{STATIC_STRINGS.LOG_PERFORMANCE_HISTORY_TITLE}</h3>
             <div className="max-h-[220px] overflow-y-auto scrollbar-thin border border-slate-100 rounded-xl overflow-hidden">
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-100">
-                    <th className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Date</th>
-                    <th className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Spend</th>
-                    <th className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Leads</th>
-                    <th className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">ROAS</th>
+                    <th className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">{STATIC_STRINGS.TABLE_DATE}</th>
+                    <th className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">{STATIC_STRINGS.ADS_TABLE_COL_SPEND}</th>
+                    <th className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">{STATIC_STRINGS.ADS_TABLE_COL_LEADS}</th>
+                    <th className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">{STATIC_STRINGS.ADS_TABLE_COL_ROAS}</th>
                     <th className="px-3 py-2 w-8"></th>
                   </tr>
                 </thead>
@@ -167,7 +164,7 @@ export default function LogPerformanceModal({ open, onClose, campaign, onSuccess
                           return date.toLocaleDateString('en-GB'); // DD/MM/YYYY
                         })()}
                       </td>
-                      <td className="px-3 py-2.5 text-[12px] font-bold text-emerald-600 text-right">+₹{log.addedSpend.toLocaleString()}</td>
+                      <td className="px-3 py-2.5 text-[12px] font-bold text-emerald-600 text-right">+{STATIC_STRINGS.CURRENCY_SYMBOL}{log.addedSpend.toLocaleString()}</td>
                       <td className="px-3 py-2.5 text-[12px] font-bold text-blue-600 text-right">+{log.addedLeads}</td>
                       <td className="px-3 py-2.5 text-[12px] font-bold text-slate-800 text-right">{log.newRoas > 0 ? `${log.newRoas}×` : '—'}</td>
                       <td className="px-3 py-2.5 text-right">
@@ -175,7 +172,7 @@ export default function LogPerformanceModal({ open, onClose, campaign, onSuccess
                           type="button"
                           onClick={() => handleDeleteLog(log.id)}
                           className="p-1.5 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
-                          title="Delete log"
+                          title={STATIC_STRINGS.LOG_PERFORMANCE_DELETE_LOG}
                         >
                           <Trash2 size={13} />
                         </button>
@@ -194,14 +191,14 @@ export default function LogPerformanceModal({ open, onClose, campaign, onSuccess
             onClick={onClose}
             className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-100 transition-colors"
           >
-            Cancel
+            {STATIC_STRINGS.FORM_CANCEL}
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
             className="flex items-center gap-2 px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-[13px] font-semibold shadow-sm transition-all active:scale-[0.98] disabled:opacity-50"
           >
-            {isSubmitting ? 'Saving...' : 'Add Metrics'}
+            {isSubmitting ? STATIC_STRINGS.LOG_PERFORMANCE_SAVING : STATIC_STRINGS.LOG_PERFORMANCE_ADD_BTN}
           </button>
         </div>
       </form>

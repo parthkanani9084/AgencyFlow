@@ -75,7 +75,7 @@ export const taskService = {
         return {
           ...t,
           ...roleUpdates,
-          status: roleUpdates.status || nextStatus,
+          status: (roleUpdates.status || nextStatus) as TaskStatus,
           activityLogs: [...(t.activityLogs || []), log]
         };
       }
@@ -84,7 +84,7 @@ export const taskService = {
 
     return {
       updatedTasks,
-      finalStatus: roleUpdates.status || nextStatus
+      finalStatus: (roleUpdates.status || nextStatus) as TaskStatus
     };
   },
 

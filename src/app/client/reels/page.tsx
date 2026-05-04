@@ -4,10 +4,8 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { 
   Film, 
-  Calendar as CalendarIcon, 
   Timer, 
   CheckCircle2, 
-  Search, 
   ChevronRight, 
   LayoutGrid, 
   Calendar 
@@ -17,6 +15,7 @@ import { reelService } from '@/lib/services/reelService';
 import { reelAgent } from '@/lib/agent/reelAgent';
 import { Reel } from '@/types';
 import Badge from '@/components/ui/Badge';
+import { STATIC_STRINGS } from '@/utils/constants';
 
 export default function ClientReelsPage() {
   const { user } = useAuth();
@@ -75,9 +74,9 @@ export default function ClientReelsPage() {
     };
     
     return [
-      { id: 'pending', label: 'Scheduled', count: counts.pending, icon: Calendar, color: 'text-slate-500', bg: 'bg-slate-50' },
-      { id: 'in_progress', label: 'Production', count: counts.inProgress, icon: Timer, color: 'text-amber-500', bg: 'bg-amber-50' },
-      { id: 'completed', label: 'Uploaded', count: counts.completed, icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+      { id: 'pending', label: STATIC_STRINGS.CLIENT_REELS_SCHEDULED, count: counts.pending, icon: Calendar, color: 'text-slate-500', bg: 'bg-slate-50' },
+      { id: 'in_progress', label: STATIC_STRINGS.CLIENT_REELS_PRODUCTION, count: counts.inProgress, icon: Timer, color: 'text-amber-500', bg: 'bg-amber-50' },
+      { id: 'completed', label: STATIC_STRINGS.CLIENT_REELS_UPLOADED, count: counts.completed, icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50' },
     ];
   }, [transformedTasks]);
 
@@ -89,8 +88,8 @@ export default function ClientReelsPage() {
           {/* Dashboard Header */}
           <header className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Reels Schedule</h1>
-              <p className="text-slate-500 mt-1 font-medium">Production pipeline & upload calendar</p>
+              <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{STATIC_STRINGS.CLIENT_REELS_TITLE}</h1>
+              <p className="text-slate-500 mt-1 font-medium">{STATIC_STRINGS.CLIENT_REELS_SUBTITLE}</p>
             </div>
             
             
@@ -106,7 +105,7 @@ export default function ClientReelsPage() {
                 >
                   <div className="flex items-center gap-3">
                     <LayoutGrid size={16} />
-                    <span>All Reels</span>
+                    <span>{STATIC_STRINGS.CLIENT_REELS_ALL}</span>
                   </div>
                   <span className={`text-[11px] ${activeTab === 'all' ? 'text-white/60' : 'text-slate-400'}`}>
                     {transformedTasks.length}
@@ -151,7 +150,7 @@ export default function ClientReelsPage() {
               ) : filteredAndGroupedReels.length === 0 ? (
                 <div className="py-20 text-center border-2 border-dashed border-slate-100 rounded-[32px]">
                   <Film className="mx-auto text-slate-200 mb-4" size={40} />
-                  <p className="text-slate-400 font-medium text-[15px]">No reels found matching your selection.</p>
+                  <p className="text-slate-400 font-medium text-[15px]">{STATIC_STRINGS.CLIENT_REELS_NO_REELS}</p>
                 </div>
               ) : (
                 <div className="space-y-12">
@@ -176,7 +175,7 @@ export default function ClientReelsPage() {
                               <div>
                                 <h4 className="text-[15px] font-bold text-slate-900">{reel.title}</h4>
                                 <div className="flex items-center gap-3 mt-0.5">
-                                  <span className="text-[12px] text-slate-400 font-medium">{reel.campaign || 'General Content'}</span>
+                                  <span className="text-[12px] text-slate-400 font-medium">{reel.campaign || STATIC_STRINGS.CLIENT_REELS_GENERAL_CONTENT}</span>
                                   <span className="text-slate-200">/</span>
                                   <span className="text-[12px] text-slate-400 font-medium">
                                     {new Date(reel.deadline).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
@@ -187,12 +186,12 @@ export default function ClientReelsPage() {
 
                             <div className="flex items-center gap-6">
                               <Badge 
-                                variant={reel.status === 'completed' ? 'success' : reel.status === 'in_progress' ? 'warning' : 'neutral'}
-                                size="sm"
-                                className="font-bold uppercase tracking-widest opacity-80"
-                              >
-                                {reel.status === 'completed' ? 'Uploaded' : reel.status === 'in_progress' ? 'Production' : 'Scheduled'}
-                              </Badge>
+                                 variant={reel.status === 'completed' ? 'success' : reel.status === 'in_progress' ? 'warning' : 'neutral'}
+                                 size="sm"
+                                 className="font-bold uppercase tracking-widest opacity-80"
+                               >
+                                 {reel.status === 'completed' ? STATIC_STRINGS.CLIENT_REELS_UPLOADED : reel.status === 'in_progress' ? STATIC_STRINGS.CLIENT_REELS_PRODUCTION : STATIC_STRINGS.CLIENT_REELS_SCHEDULED}
+                               </Badge>
                               
                               <button className="text-slate-300 hover:text-slate-900 transition-colors" aria-label="View Reel Details">
                                 <ChevronRight size={18} />

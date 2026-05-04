@@ -14,6 +14,8 @@ import {
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/context/AuthContext';
 import { useAdsData } from '@/context/AdsDataContext';
+import { PAGE_ROLES } from '@/utils/constants';
+import { UserRole } from '@/types';
 
 interface AdCampaign {
   id: string;
@@ -72,7 +74,7 @@ const DATE_RANGES = [
 ];
 
 export default function AdsTrackingPage() {
-  useRoleGuard(['Owner', 'Ads Manager', 'Social Media Manager', 'Manager']);
+  useRoleGuard(PAGE_ROLES.ADS_TRACKING as unknown as UserRole[]);
   
   const { user } = useAuth();
   const { adsMetrics, updateAdsMetrics } = useAdsData();

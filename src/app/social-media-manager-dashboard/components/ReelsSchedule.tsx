@@ -3,6 +3,7 @@
 import React from 'react';
 import { Calendar, Search, Filter } from 'lucide-react';
 import { Task, TaskStatus } from '@/types';
+import { STATIC_STRINGS } from '@/utils/constants';
 import ReelCard from './ReelCard';
 
 interface ReelsScheduleProps {
@@ -17,8 +18,7 @@ export default function ReelsSchedule({
   groupedReels, 
   onStatusChange, 
   isLoading, 
-  searchQuery, 
-  onSearchChange 
+
 }: ReelsScheduleProps) {
   
   if (isLoading) {
@@ -44,8 +44,8 @@ export default function ReelsSchedule({
         <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center mx-auto mb-4 text-slate-300">
           <Calendar size={32} />
         </div>
-        <h3 className="text-slate-900 font-bold">No reels found</h3>
-        <p className="text-slate-500 text-[13px] mt-1">Try adjusting your filters or search query.</p>
+        <h3 className="text-slate-900 font-bold">{STATIC_STRINGS.SMM_NO_REELS}</h3>
+        <p className="text-slate-500 text-[13px] mt-1">{STATIC_STRINGS.SMM_NO_REELS_DESC}</p>
       </div>
     );
   }
@@ -64,7 +64,7 @@ export default function ReelsSchedule({
               </h3>
               <div className="flex-1 h-px bg-slate-200 ml-2" />
               <span className="text-[11px] font-bold text-slate-400 bg-white px-2 py-0.5 rounded-full border border-slate-100">
-                {group.reels.length} {group.reels.length === 1 ? 'Reel' : 'Reels'}
+                {group.reels.length} {group.reels.length === 1 ? STATIC_STRINGS.SMM_LABEL_REEL : STATIC_STRINGS.SMM_LABEL_REELS}
               </span>
             </div>
           </div>

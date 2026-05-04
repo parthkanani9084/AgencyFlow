@@ -7,6 +7,8 @@ import { Toaster, toast } from 'sonner';
 import { Notification, NotificationType } from '@/types';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useTasks } from '@/context/TaskContext';
+import { STATIC_STRINGS, PAGE_ROLES, ROLES } from '@/utils/constants';
+import { UserRole } from '@/types';
 
 // --- Types ---
 type FilterTab = 'all' | 'unread';
@@ -26,16 +28,16 @@ const TYPE_CONFIG: Record<NotificationType | string, { icon: React.ElementType; 
 const formatTimeAgo = (ts: string): string => {
   const diff = Date.now() - new Date(ts).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 60) return `${mins}${STATIC_STRINGS.NOTIFICATIONS_AGO_MINS}`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
+  if (hrs < 24) return `${hrs}${STATIC_STRINGS.NOTIFICATIONS_AGO_HRS}`;
   const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
+  return `${days}${STATIC_STRINGS.NOTIFICATIONS_AGO_DAYS}`;
 };
 
 
 export default function NotificationsPage() {
-  useRoleGuard(['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager', 'Social Media Manager']);
+  useRoleGuard(Object.values(ROLES) as unknown as UserRole[]);
   const { notifications, markNotifRead, clearNotifications } = useTasks();
   
   // -- State --
@@ -59,17 +61,15 @@ export default function NotificationsPage() {
     if (unreadIds.length === 0) return;
   
     unreadIds.forEach(id => markNotifRead(id));
-    toast.success('All notifications marked as read');
   }, [notifications, markNotifRead]);
 
   const handleClearAll = useCallback(() => {
     if (notifications.length === 0) return;
     clearNotifications();
-    toast.success('All notifications cleared');
+
   }, [notifications.length, clearNotifications]);
 
   const handleDeleteNotification = (id: string) => {
-    toast.info('Individual deletion coming soon');
   };
 
   if (!mounted) return <div className="min-h-screen bg-slate-50" />;
@@ -84,7 +84,7 @@ export default function NotificationsPage() {
           <div>
             <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
               <Bell size={20} className="text-violet-600" />
-              Notifications
+              {STATIC_STRINGS.NOTIFICATIONS_TITLE}
               {unreadCount > 0 && (
                 <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-violet-600 text-white text-[10px] font-bold">
                   {unreadCount}
@@ -92,7 +92,7 @@ export default function NotificationsPage() {
               )}
             </h1>
             <p className="text-[13px] text-slate-500 mt-0.5 font-medium">
-              {unreadCount} unread · {notifications.length} total
+              {unreadCount} {STATIC_STRINGS.NOTIFICATIONS_UNREAD.toLowerCase()} · {notifications.length} {STATIC_STRINGS.NOTIFICATIONS_TOTAL}
             </p>
           </div>
           
@@ -103,7 +103,7 @@ export default function NotificationsPage() {
                 className="inline-flex items-center gap-1.5 text-[13px] font-bold text-violet-600 hover:text-violet-700 border border-violet-200 hover:border-violet-300 px-3 py-2 rounded-lg transition-colors bg-white shadow-sm"
               >
                 <CheckCheck size={14} />
-                Mark all read
+                {STATIC_STRINGS.NOTIFICATIONS_MARK_ALL_READ}
               </button>
             )}
             {notifications.length > 0 && (
@@ -112,7 +112,7 @@ export default function NotificationsPage() {
                 className="inline-flex items-center gap-1.5 text-[13px] font-bold text-slate-600 hover:text-red-600 border border-slate-200 hover:border-red-200 px-3 py-2 rounded-lg transition-colors bg-white shadow-sm"
               >
                 <Trash2 size={14} />
-                Clear all
+                {STATIC_STRINGS.NOTIFICATIONS_CLEAR_ALL}
               </button>
             )}
           </nav>
@@ -128,7 +128,7 @@ export default function NotificationsPage() {
                 activeTab === tab ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              {tab === 'unread' ? `Unread (${unreadCount})` : 'All'}
+              {tab === 'unread' ? `${STATIC_STRINGS.NOTIFICATIONS_UNREAD} (${unreadCount})` : STATIC_STRINGS.NOTIFICATIONS_ALL}
             </button>
           ))}
         </nav>
@@ -139,7 +139,7 @@ export default function NotificationsPage() {
             <article className="bg-white border border-slate-200 rounded-xl py-16 text-center text-slate-400">
               <Bell size={32} className="mx-auto mb-3 opacity-20" />
               <p className="text-[14px] font-medium italic">
-                {activeTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}
+                {activeTab === 'unread' ? STATIC_STRINGS.NOTIFICATIONS_NO_UNREAD : STATIC_STRINGS.NOTIFICATIONS_NO_NOTIFS}
               </p>
             </article>
           ) : (
@@ -172,7 +172,7 @@ export default function NotificationsPage() {
                     </header>
                     <p className="text-[12.5px] text-slate-500 mt-1 leading-relaxed">{notif.message}</p>
                     {notif.actor && (
-                      <p className="text-[10px] text-slate-400 mt-1 font-medium">By {notif.actor}</p>
+                      <p className="text-[10px] text-slate-400 mt-1 font-medium">{STATIC_STRINGS.NOTIFICATIONS_BY} {notif.actor}</p>
                     )}
                   </div>
 
@@ -181,7 +181,7 @@ export default function NotificationsPage() {
                       <button
                         onClick={() => markNotifRead(notif.id)}
                         className="p-1.5 rounded-lg hover:bg-violet-100 text-slate-400 hover:text-violet-600 transition-colors"
-                        title="Mark as read"
+                        title={STATIC_STRINGS.NOTIFICATIONS_MARK_AS_READ}
                       >
                         <CheckCheck size={13} />
                       </button>
@@ -189,7 +189,7 @@ export default function NotificationsPage() {
                     <button
                       onClick={() => handleDeleteNotification(notif.id)}
                       className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
-                      title="Delete"
+                      title={STATIC_STRINGS.NOTIFICATIONS_DELETE}
                     >
                       <Trash2 size={13} />
                     </button>

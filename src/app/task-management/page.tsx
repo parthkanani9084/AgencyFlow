@@ -7,34 +7,35 @@ import { Plus, Search, CheckSquare, AlertCircle, ChevronDown, User, Pencil, Tras
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useTasks } from '@/context/TaskContext';
 import { useAuth } from '@/context/AuthContext';
-import { Task, TaskStatus, TaskPriority, TaskRole } from '@/types';
+import { Task, TaskStatus, TaskPriority, TaskRole, UserRole } from '@/types';
+import { STATIC_STRINGS, ROLES, PAGE_ROLES, TEAM_MEMBERS as CONST_TEAM_MEMBERS } from '@/utils/constants';
 
 const ROLE_CONFIG: Record<string, { color: string; bg: string; icon: React.ElementType }> = {
-  Shooter: { color: 'text-blue-700', bg: 'bg-blue-100', icon: Camera },
-  Editor: { color: 'text-purple-700', bg: 'bg-purple-100', icon: Film },
-  'Ads Manager': { color: 'text-orange-700', bg: 'bg-orange-100', icon: Megaphone },
-  'Social Media Manager': { color: 'text-pink-700', bg: 'bg-pink-100', icon: TrendingUp },
-  Owner: { color: 'text-violet-700', bg: 'bg-violet-100', icon: User },
-  Manager: { color: 'text-teal-700', bg: 'bg-teal-100', icon: User },
+  [ROLES.SHOOTER]: { color: 'text-blue-700', bg: 'bg-blue-100', icon: Camera },
+  [ROLES.EDITOR]: { color: 'text-purple-700', bg: 'bg-purple-100', icon: Film },
+  [ROLES.ADS_MANAGER]: { color: 'text-orange-700', bg: 'bg-orange-100', icon: Megaphone },
+  [ROLES.SOCIAL_MEDIA_MANAGER]: { color: 'text-pink-700', bg: 'bg-pink-100', icon: TrendingUp },
+  [ROLES.OWNER]: { color: 'text-violet-700', bg: 'bg-violet-100', icon: User },
+  [ROLES.MANAGER]: { color: 'text-teal-700', bg: 'bg-teal-100', icon: User },
 };
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  pending: { label: 'Pending', color: 'text-slate-600', bg: 'bg-slate-100', icon: Circle },
-  in_progress: { label: 'In Progress', color: 'text-amber-700', bg: 'bg-amber-100', icon: Timer },
-  completed: { label: 'Completed', color: 'text-emerald-700', bg: 'bg-emerald-100', icon: CheckCircle2 },
+  pending: { label: STATIC_STRINGS.TASK_MGMT_PENDING, color: 'text-slate-600', bg: 'bg-slate-100', icon: Circle },
+  in_progress: { label: STATIC_STRINGS.TASK_MGMT_IN_PROGRESS, color: 'text-amber-700', bg: 'bg-amber-100', icon: Timer },
+  completed: { label: STATIC_STRINGS.TASK_MGMT_COMPLETED, color: 'text-emerald-700', bg: 'bg-emerald-100', icon: CheckCircle2 },
 };
 
 const ROLE_FILTERS: { label: string; value: TaskRole | 'all' }[] = [
   { label: 'All Roles', value: 'all' },
-  { label: 'Shooter', value: 'Shooter' },
-  { label: 'Editor', value: 'Editor' },
-  { label: 'Ads Manager', value: 'Ads Manager' },
+  { label: ROLES.SHOOTER, value: ROLES.SHOOTER as TaskRole },
+  { label: ROLES.EDITOR, value: ROLES.EDITOR as TaskRole },
+  { label: ROLES.ADS_MANAGER, value: ROLES.ADS_MANAGER as TaskRole },
 ];
 
 const EMPTY_FORM = {
   title: '',
   assignedTo: '',
-  role: 'Shooter' as TaskRole,
+  role: ROLES.SHOOTER as TaskRole,
   client: '',
   campaign: 'General',
   deadline: '',
@@ -43,14 +44,7 @@ const EMPTY_FORM = {
   description: '',
 };
 
-const TEAM_MEMBERS = [
-  { id: 'tm1', name: 'Marco Reyes', role: 'Shooter' },
-  { id: 'tm2', name: 'Jin Park', role: 'Editor' },
-  { id: 'tm3', name: 'Sofia Nguyen', role: 'Ads Manager' },
-  { id: 'tm4', name: 'Amara Diallo', role: 'Editor' },
-  { id: 'tm5', name: 'Priya Sharma', role: 'Manager' },
-  { id: 'tm6', name: 'Alex Rivera', role: 'Owner' },
-];
+const TEAM_MEMBERS = CONST_TEAM_MEMBERS;
 
 const CLIENT_OPTIONS = [
   'Luxe Apparel', 'TechWorld', 'Velocity Motors', 'GreenRoot', 'Nexus Capital', 'Orion Fitness',
@@ -62,7 +56,7 @@ const checkIsOverdue = (deadline: string, status: TaskStatus) => {
 };
 
 export default function TaskManagementPage() {
-  useRoleGuard(['Owner', 'Manager', 'Shooter', 'Editor', 'Ads Manager', 'Social Media Manager']);
+  useRoleGuard(PAGE_ROLES.TASK_MANAGEMENT as unknown as UserRole[]);
   
   const { user } = useAuth();
   const { tasks: rawTasks, addTask, updateTask, deleteTask } = useTasks();
@@ -78,7 +72,7 @@ export default function TaskManagementPage() {
   const [errors, setErrors] = useState<Partial<Record<keyof typeof EMPTY_FORM, string>>>({});
 
   const isRestricted = useMemo(() => 
-    user?.role && ['Shooter', 'Editor', 'Ads Manager'].includes(user.role)
+    user?.role && [ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER].includes(user.role as any)
   , [user?.role]);
 
   useEffect(() => {
@@ -90,7 +84,7 @@ export default function TaskManagementPage() {
 
   const tasks = useMemo(() => {
     if (!user) return [];
-    if (user.role === 'Owner' || user.role === 'Manager' || user.role === 'Social Media Manager') return rawTasks;
+    if (user.role === ROLES.OWNER || user.role === ROLES.MANAGER || user.role === ROLES.SOCIAL_MEDIA_MANAGER) return rawTasks;
     return rawTasks.filter(t => t.assignedTo === user.name || t.role === user.role);
   }, [rawTasks, user]);
 
@@ -177,24 +171,24 @@ export default function TaskManagementPage() {
       <div className="p-6 max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">Task Management</h1>
-            <p className="text-[13px] text-slate-500 mt-0.5">{tasks.length} tasks across all roles</p>
+            <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">{STATIC_STRINGS.TASK_MGMT_TITLE}</h1>
+            <p className="text-[13px] text-slate-500 mt-0.5">{tasks.length} {STATIC_STRINGS.TASK_MGMT_TASKS_SUBTITLE}</p>
           </div>
           <button
             onClick={handleOpenAdd}
             className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-700 active:scale-[0.98] text-white text-[13.5px] font-semibold transition-all shadow-sm"
           >
             <Plus size={16} />
-            Add Task
+            {STATIC_STRINGS.TASK_MGMT_ADD_TASK}
           </button>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[
-            { label: 'Total Tasks', value: stats.total, icon: CheckSquare, color: 'text-violet-600', bg: 'bg-violet-50' },
-            { label: 'In Progress', value: stats.inProgress, icon: Timer, color: 'text-amber-600', bg: 'bg-amber-50' },
-            { label: 'Completed', value: stats.completed, icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-            { label: 'Overdue', value: stats.overdue, icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50' },
+            { label: STATIC_STRINGS.TASK_MGMT_TOTAL_TASKS, value: stats.total, icon: CheckSquare, color: 'text-violet-600', bg: 'bg-violet-50' },
+            { label: STATIC_STRINGS.TASK_MGMT_IN_PROGRESS, value: stats.inProgress, icon: Timer, color: 'text-amber-600', bg: 'bg-amber-50' },
+            { label: STATIC_STRINGS.TASK_MGMT_COMPLETED, value: stats.completed, icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+            { label: STATIC_STRINGS.TASK_MGMT_OVERDUE, value: stats.overdue, icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50' },
           ].map((stat) => {
             const Icon = stat.icon;
             return (
@@ -239,10 +233,10 @@ export default function TaskManagementPage() {
                 onChange={(e) => setStatusFilter(e.target.value as TaskStatus | 'all')}
                 className="appearance-none pl-3 pr-8 py-1.5 rounded-lg border border-slate-200 bg-white text-[12.5px] text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-violet-500/30 cursor-pointer"
               >
-                <option value="all">All Statuses</option>
-                <option value="pending">Pending</option>
-                <option value="in_progress">In Progress</option>
-                <option value="completed">Completed</option>
+                <option value="all">{STATIC_STRINGS.TASK_MGMT_ALL_STATUSES}</option>
+                <option value="pending">{STATIC_STRINGS.TASK_MGMT_PENDING}</option>
+                <option value="in_progress">{STATIC_STRINGS.TASK_MGMT_IN_PROGRESS}</option>
+                <option value="completed">{STATIC_STRINGS.TASK_MGMT_COMPLETED}</option>
               </select>
               <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
@@ -251,7 +245,7 @@ export default function TaskManagementPage() {
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search tasks…"
+                placeholder={STATIC_STRINGS.TASK_MGMT_SEARCH_PLACEHOLDER}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-8 pr-8 py-1.5 rounded-lg border border-slate-200 bg-white text-[12.5px] text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 w-48"
@@ -264,20 +258,20 @@ export default function TaskManagementPage() {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50">
-                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Task</th>
-                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Assigned To</th>
-                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Role</th>
-                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Client</th>
-                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Deadline</th>
-                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Status</th>
-                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 text-right">Actions</th>
+                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{STATIC_STRINGS.TASK_MGMT_COL_TASK}</th>
+                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{STATIC_STRINGS.TASK_MGMT_COL_ASSIGNED_TO}</th>
+                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{STATIC_STRINGS.TASK_MGMT_COL_ROLE}</th>
+                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{STATIC_STRINGS.TASK_MGMT_COL_CLIENT}</th>
+                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{STATIC_STRINGS.TASK_MGMT_COL_DEADLINE}</th>
+                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{STATIC_STRINGS.TASK_MGMT_COL_STATUS}</th>
+                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 text-right">{STATIC_STRINGS.TASK_MGMT_COL_ACTIONS}</th>
               </tr>
             </thead>
             <tbody>
               {filteredTasks.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-5 py-14 text-center">
-                    <p className="text-[13px] text-slate-400">No tasks found</p>
+                    <p className="text-[13px] text-slate-400">{STATIC_STRINGS.TASK_MGMT_NO_TASKS}</p>
                   </td>
                 </tr>
               ) : (
@@ -296,7 +290,7 @@ export default function TaskManagementPage() {
                         </p>
                       </td>
                       <td className="px-5 py-3.5">
-                        <span className="text-[12.5px] text-slate-700">{task.assignedTo || 'Unassigned'}</span>
+                        <span className="text-[12.5px] text-slate-700">{task.assignedTo || STATIC_STRINGS.COMMON_UNASSIGNED}</span>
                       </td>
                       <td className="px-5 py-3.5">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${roleCfg.bg} ${roleCfg.color}`}>
@@ -338,10 +332,10 @@ export default function TaskManagementPage() {
         </div>
       </div>
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editingTask ? 'Edit Task' : 'Add New Task'} size="lg">
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editingTask ? STATIC_STRINGS.TASK_MGMT_EDIT_TASK : STATIC_STRINGS.TASK_MGMT_ADD_NEW_TASK} size="lg">
         <div className="px-6 py-5 space-y-4">
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Task Title <span className="text-red-500">*</span></label>
+            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_LABEL_TITLE} <span className="text-red-500">*</span></label>
             <input
               type="text"
               value={form.title}
@@ -351,48 +345,48 @@ export default function TaskManagementPage() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Assigned To</label>
+              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_ASSIGNED_TO}</label>
               <select value={form.assignedTo} onChange={(e) => setForm((f) => ({ ...f, assignedTo: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px]">
-                <option value="">Select teammate…</option>
+                <option value="">{STATIC_STRINGS.TASK_MGMT_SELECT_TEAMMATE}</option>
                 {TEAM_MEMBERS.map((m) => <option key={m.id} value={m.name}>{m.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Role</label>
+              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_ROLE}</label>
               <select value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as TaskRole }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px]">
-                <option value="Manager">Manager</option>
-                <option value="Shooter">Shooter</option>
-                <option value="Editor">Editor</option>
-                <option value="Ads Manager">Ads Manager</option>
+                <option value={ROLES.MANAGER}>{ROLES.MANAGER}</option>
+                <option value={ROLES.SHOOTER}>{ROLES.SHOOTER}</option>
+                <option value={ROLES.EDITOR}>{ROLES.EDITOR}</option>
+                <option value={ROLES.ADS_MANAGER}>{ROLES.ADS_MANAGER}</option>
               </select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Client</label>
+              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_CLIENT}</label>
               <select value={form.client} onChange={(e) => setForm((f) => ({ ...f, client: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px]">
-                <option value="">Select client…</option>
+                <option value="">{STATIC_STRINGS.TASK_MGMT_SELECT_CLIENT}</option>
                 {CLIENT_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">Deadline</label>
+              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_DEADLINE}</label>
               <input type="date" value={form.deadline} onChange={(e) => setForm((f) => ({ ...f, deadline: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px]" />
             </div>
           </div>
           <div className="flex justify-end gap-2.5 pt-4 border-t">
-            <button onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
-            <button onClick={handleSave} className="px-5 py-2 rounded-lg bg-violet-600 text-white text-[13px] font-semibold">Save Changes</button>
+            <button onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">{STATIC_STRINGS.FORM_CANCEL}</button>
+            <button onClick={handleSave} className="px-5 py-2 rounded-lg bg-violet-600 text-white text-[13px] font-semibold">{STATIC_STRINGS.FORM_SAVE_CHANGES}</button>
           </div>
         </div>
       </Modal>
 
-      <Modal open={deleteModal.open} onClose={() => setDeleteModal({ open: false, task: null })} title="Confirm Deletion" size="sm">
+      <Modal open={deleteModal.open} onClose={() => setDeleteModal({ open: false, task: null })} title={STATIC_STRINGS.TASK_MGMT_CONFIRM_DELETE} size="sm">
         <div className="px-6 py-5">
-          <p className="text-[13.5px] text-slate-600 mb-6 leading-relaxed">Are you sure you want to permanently delete the task <span className="font-black text-slate-900">"{deleteModal.task?.title}"</span>? </p>
+          <p className="text-[13.5px] text-slate-600 mb-6 leading-relaxed">{STATIC_STRINGS.TASK_MGMT_DELETE_PROMPT} <span className="font-black text-slate-900">"{deleteModal.task?.title}"</span>? </p>
           <div className="flex justify-end gap-2.5">
-            <button onClick={() => setDeleteModal({ open: false, task: null })} className="px-4 py-2 rounded-xl border border-slate-200 text-[13px] font-bold text-slate-500 hover:bg-slate-50 transition-colors">Cancel</button>
-            <button onClick={handleDelete} className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-[13px] font-black shadow-md transition-all active:scale-[0.98]"> Delete</button>
+            <button onClick={() => setDeleteModal({ open: false, task: null })} className="px-4 py-2 rounded-xl border border-slate-200 text-[13px] font-bold text-slate-500 hover:bg-slate-50 transition-colors">{STATIC_STRINGS.FORM_CANCEL}</button>
+            <button onClick={handleDelete} className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-[13px] font-black shadow-md transition-all active:scale-[0.98]">{STATIC_STRINGS.TASK_MGMT_BTN_DELETE}</button>
           </div>
         </div>
       </Modal>

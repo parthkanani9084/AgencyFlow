@@ -5,6 +5,7 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend, TooltipProps,
 } from 'recharts';
+import { STATIC_STRINGS } from '@/utils/constants';
 
 
 interface LeadDataPoint {
@@ -99,8 +100,8 @@ export default function DashboardCharts() {
       <section className="xl:col-span-3 bg-white border border-slate-200 rounded-xl p-5 flex flex-col">
         <header className="flex items-start justify-between mb-5 flex-shrink-0">
           <div>
-            <h3 className="text-[14px] font-semibold text-slate-800">Leads Generated</h3>
-            <p className="text-[12px] text-slate-400 mt-0.5">Weekly performance across Meta & Google Ads</p>
+            <h3 className="text-[14px] font-semibold text-slate-800">{STATIC_STRINGS.DASHBOARD_CHART_LEADS_TITLE}</h3>
+            <p className="text-[12px] text-slate-400 mt-0.5">{STATIC_STRINGS.DASHBOARD_CHART_LEADS_SUBTITLE}</p>
           </div>
           <nav className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5">
             {(['8w', '12w'] as const).map((r) => (
@@ -137,7 +138,7 @@ export default function DashboardCharts() {
               <Area
                 type="monotone"
                 dataKey="meta"
-                name="Meta"
+                name={STATIC_STRINGS.DEFAULT_PLATFORM}
                 stroke="#6C47FF"
                 strokeWidth={2}
                 fill="url(#metaGrad)"
@@ -147,7 +148,7 @@ export default function DashboardCharts() {
               <Area
                 type="monotone"
                 dataKey="google"
-                name="Google"
+                name={STATIC_STRINGS.DASHBOARD_CHART_LEGEND_GOOGLE}
                 stroke="#FF6B35"
                 strokeWidth={2}
                 fill="url(#googleGrad)"
@@ -167,8 +168,8 @@ export default function DashboardCharts() {
       {/* Bar Chart: Workflow Efficiency by Stage */}
       <section className="xl:col-span-2 bg-white border border-slate-200 rounded-xl p-5 flex flex-col">
         <header className="mb-5 flex-shrink-0">
-          <h3 className="text-[14px] font-semibold text-slate-800">Task Completion by Stage</h3>
-          <p className="text-[12px] text-slate-400 mt-0.5">Weekly tasks completed per workflow role</p>
+          <h3 className="text-[14px] font-semibold text-slate-800">{STATIC_STRINGS.DASHBOARD_CHART_TASK_TITLE}</h3>
+          <p className="text-[12px] text-slate-400 mt-0.5">{STATIC_STRINGS.DASHBOARD_CHART_TASK_SUBTITLE}</p>
         </header>
 
         <div className="flex-1 w-full min-h-[220px]">
@@ -178,18 +179,18 @@ export default function DashboardCharts() {
               <XAxis dataKey="week" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
               <Tooltip content={<CustomTaskTooltip />} />
-              <Bar dataKey="shooting" name="Shooting" stackId="a" fill="#6C47FF" />
-              <Bar dataKey="editing" name="Editing" stackId="a" fill="#8B6FFF" />
-              <Bar dataKey="adsSetup" name="Ads Setup" stackId="a" fill="#FF6B35" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="shooting" name={STATIC_STRINGS.DASHBOARD_CHART_LEGEND_SHOOTING} stackId="a" fill="#6C47FF" />
+              <Bar dataKey="editing" name={STATIC_STRINGS.DASHBOARD_CHART_LEGEND_EDITING} stackId="a" fill="#8B6FFF" />
+              <Bar dataKey="adsSetup" name={STATIC_STRINGS.DASHBOARD_CHART_LEGEND_ADS_SETUP} stackId="a" fill="#FF6B35" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
         <footer className="flex items-center gap-3 mt-4 flex-wrap flex-shrink-0">
           {[
-            { label: 'Shooting', color: '#6C47FF' },
-            { label: 'Editing', color: '#8B6FFF' },
-            { label: 'Ads Setup', color: '#FF6B35' },
+            { label: STATIC_STRINGS.DASHBOARD_CHART_LEGEND_SHOOTING, color: '#6C47FF' },
+            { label: STATIC_STRINGS.DASHBOARD_CHART_LEGEND_EDITING, color: '#8B6FFF' },
+            { label: STATIC_STRINGS.DASHBOARD_CHART_LEGEND_ADS_SETUP, color: '#FF6B35' },
           ].map((l) => (
             <span key={`legend-${l.label}`} className="flex items-center gap-1.5 text-[11px] text-slate-500">
               <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: l.color }} />

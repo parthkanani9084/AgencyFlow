@@ -8,14 +8,22 @@ import { useAuth } from '@/context/AuthContext';
 import { useTasks } from '@/context/TaskContext';
 import { Task, TaskStatus, TaskPriority } from '@/types';
 import TaskCompletionModal from '@/components/TaskCompletionModal';
+import { STATIC_STRINGS, PAGE_ROLES, ROLES, TEAM_MEMBERS as CONST_TEAM_MEMBERS } from '@/utils/constants';
+import { UserRole } from '@/types';
 
 // --- Constants ---
-const WORKFLOW_STAGES = ['Shooting', 'Raw Upload', 'Editing', 'Ads', 'Complete'];
+const WORKFLOW_STAGES = [
+  STATIC_STRINGS.DASHBOARD_STAGE_SHOOTING,
+  STATIC_STRINGS.DASHBOARD_STAGE_RAW_UPLOAD,
+  STATIC_STRINGS.DASHBOARD_STAGE_EDITING,
+  STATIC_STRINGS.DASHBOARD_STAGE_ADS,
+  STATIC_STRINGS.DASHBOARD_STAGE_COMPLETE
+];
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  pending: { label: 'Pending', color: 'text-slate-600', bg: 'bg-slate-100', icon: Circle },
-  in_progress: { label: 'In Progress', color: 'text-amber-700', bg: 'bg-amber-100', icon: Timer },
-  completed: { label: 'Completed', color: 'text-emerald-700', bg: 'bg-emerald-100', icon: CheckCircle2 },
+  pending: { label: STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_PENDING, color: 'text-slate-600', bg: 'bg-slate-100', icon: Circle },
+  in_progress: { label: STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_IN_PROGRESS, color: 'text-amber-700', bg: 'bg-amber-100', icon: Timer },
+  completed: { label: STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_COMPLETED, color: 'text-emerald-700', bg: 'bg-emerald-100', icon: CheckCircle2 },
 };
 
 const PRIORITY_DOT: Record<TaskPriority, string> = {
@@ -44,7 +52,7 @@ const getDaysLeft = (deadline: string) => {
 
 
 export default function ShooterDashboardPage() {
-  useRoleGuard(['Owner', 'Shooter', 'Manager']);
+  useRoleGuard(PAGE_ROLES.SHOOTER_DASHBOARD as unknown as UserRole[]);
   const { user } = useAuth();
   const { tasks: allTasks, updateTask } = useTasks();
   const [activeTab, setActiveTab] = useState<TaskStatus>('pending');
@@ -57,15 +65,15 @@ export default function ShooterDashboardPage() {
   }, []);
   const shooterTasks = useMemo(() => {
     return allTasks.filter(t => 
-      t.role === 'Shooter' || 
-      t.roleNotes?.some(n => n.role === 'Shooter') ||
+      t.role === ROLES.SHOOTER || 
+      t.roleNotes?.some(n => n.role === ROLES.SHOOTER) ||
       t.fromShooter === 'Marco Reyes' ||
       t.forwardedBy === 'Marco Reyes'
     );
   }, [allTasks]);
 
   const getEffectiveStatus = useCallback((t: Task): TaskStatus => {
-    const isHandedOff = t.role !== 'Shooter' && t.roleNotes?.some(n => n.role === 'Shooter');
+    const isHandedOff = t.role !== ROLES.SHOOTER && t.roleNotes?.some(n => n.role === ROLES.SHOOTER);
     if (isHandedOff) return 'completed';
     return t.status as TaskStatus;
   }, []);
@@ -105,17 +113,17 @@ export default function ShooterDashboardPage() {
             <Camera size={20} className="text-blue-700" />
           </div>
           <div>
-            <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">Shooter Dashboard</h1>
-            <p className="text-[13px] text-slate-500">Marco Reyes · Shooting Team</p>
+            <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">{STATIC_STRINGS.SHOOTER_DASHBOARD_TITLE}</h1>
+            <p className="text-[13px] text-slate-500">Marco Reyes · {ROLES.SHOOTER} Team</p>
           </div>
         </header>
 
         {/* Workload Summary Bar */}
         <section className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[
-            { label: 'Pending', value: stats.pending, color: 'text-slate-600', bg: 'bg-slate-50' },
-            { label: 'In Progress', value: stats.inProgress, color: 'text-amber-600', bg: 'bg-amber-50' },
-            { label: 'Completed', value: stats.completed, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+            { label: STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_PENDING, value: stats.pending, color: 'text-slate-600', bg: 'bg-slate-50' },
+            { label: STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_IN_PROGRESS, value: stats.inProgress, color: 'text-amber-600', bg: 'bg-amber-50' },
+            { label: STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_COMPLETED, value: stats.completed, color: 'text-emerald-600', bg: 'bg-emerald-50' },
           ].map((s) => (
             <div key={s.label} className="bg-white rounded-xl border border-slate-200 px-4 py-3.5 shadow-sm">
               <p className={`text-[24px] font-bold ${s.color}`}>{s.value}</p>
@@ -126,7 +134,7 @@ export default function ShooterDashboardPage() {
 
         {/* Production Stage Tracking */}
         <section className="bg-white rounded-xl border border-slate-200 p-5 mb-6 shadow-sm">
-          <h2 className="text-[14px] font-semibold text-slate-800 mb-4">Workflow Stage Overview</h2>
+          <h2 className="text-[14px] font-semibold text-slate-800 mb-4">{STATIC_STRINGS.DASHBOARD_WORKFLOW_OVERVIEW}</h2>
           <div className="flex items-center gap-1">
             {WORKFLOW_STAGES.map((stage, idx) => {
               const isActive = idx === 0;
@@ -148,7 +156,7 @@ export default function ShooterDashboardPage() {
         {/* Task Management Control */}
         <main className="space-y-4">
           <header className="flex items-center justify-between">
-            <h2 className="text-[14px] font-semibold text-slate-800">Assigned Tasks</h2>
+            <h2 className="text-[14px] font-semibold text-slate-800">{STATIC_STRINGS.DASHBOARD_ASSIGNED_TASKS}</h2>
             <nav className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
               {(['in_progress', 'pending', 'completed'] as const).map((tab) => (
                 <button
@@ -160,7 +168,7 @@ export default function ShooterDashboardPage() {
                       : 'text-slate-500 hover:text-slate-700'
                   }`}
                 >
-                  {tab === 'in_progress' ? 'In Progress' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  {tab === 'in_progress' ? STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_IN_PROGRESS : (STATUS_CONFIG[tab]?.label || tab)}
                 </button>
               ))}
             </nav>
@@ -169,7 +177,7 @@ export default function ShooterDashboardPage() {
           <div className="space-y-3">
             {filteredTasks.length === 0 ? (
               <article className="bg-white rounded-xl border border-dashed border-slate-200 py-12 text-center">
-                <p className="text-[13px] text-slate-400 font-medium">No tasks found in {activeTab}</p>
+                <p className="text-[13px] text-slate-400 font-medium">{STATIC_STRINGS.ADS_DASHBOARD_NO_TASKS}</p>
               </article>
             ) : (
               filteredTasks.map((task) => {
@@ -203,9 +211,9 @@ export default function ShooterDashboardPage() {
                           onChange={(e) => handleStatusChange(task, e.target.value as TaskStatus)}
                           className={`appearance-none pl-2.5 pr-8 py-1 rounded-lg text-[12px] font-medium transition-all cursor-pointer outline-none border-none ${(STATUS_CONFIG[currentStatus] || STATUS_CONFIG.pending).bg} ${(STATUS_CONFIG[currentStatus] || STATUS_CONFIG.pending).color} hover:opacity-80`}
                         >
-                          <option value="pending">Pending</option>
-                          <option value="in_progress">In Progress</option>
-                          <option value="completed">Completed</option>
+                          <option value="pending">{STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_PENDING}</option>
+                          <option value="in_progress">{STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_IN_PROGRESS}</option>
+                          <option value="completed">{STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_COMPLETED}</option>
                         </select>
                         <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none text-slate-400" size={12} />
                       </div>
@@ -223,7 +231,7 @@ export default function ShooterDashboardPage() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <header className="flex items-center justify-between mb-0.5">
-                                  <p className="text-[11px] font-bold text-slate-700">{note.role} Notes</p>
+                                  <p className="text-[11px] font-bold text-slate-700">{note.role} {STATIC_STRINGS.DASHBOARD_TEAM_NOTES}</p>
                                   <time className="text-[10px] text-slate-400">{new Date(note.timestamp).toLocaleDateString()}</time>
                                 </header>
                                 <p className="text-[12px] text-slate-600 italic">"{note.message}"</p>
@@ -236,17 +244,17 @@ export default function ShooterDashboardPage() {
                     <footer className="flex flex-wrap items-center gap-4 mt-3 pt-3 border-t border-slate-100">
                       <div className={`flex items-center gap-1.5 text-[12px] ${overdue ? 'text-red-600 font-semibold' : 'text-slate-500'}`}>
                         <Calendar size={12} />
-                        {overdue ? 'Overdue · ' : ''}{formatDeadline(task.deadline)}
+                        {overdue ? STATIC_STRINGS.DASHBOARD_OVERDUE_LABEL : ''}{formatDeadline(task.deadline)}
                         {!overdue && task.status !== 'completed' && (
                           <span className={`ml-1 ${daysLeft <= 3 ? 'text-red-500 font-semibold' : 'text-slate-400'}`}>
-                            ({daysLeft > 0 ? `${daysLeft}d left` : 'Today'})
+                            ({daysLeft > 0 ? `${daysLeft}${STATIC_STRINGS.DASHBOARD_DAYS_LEFT}` : STATIC_STRINGS.DASHBOARD_TODAY})
                           </span>
                         )}
                       </div>
                       {task.status === 'completed' && (
                         <div className="flex items-center gap-1 text-[12px] text-emerald-600 font-medium ml-auto">
                           <CheckCircle2 size={12} />
-                          {task.forwardedBy ? `Passed to ${task.assignedTo} (${task.role})` : 'Task Finalized'}
+                          {task.forwardedBy ? `${STATIC_STRINGS.DASHBOARD_PASSED_TO} ${task.assignedTo} (${task.role})` : STATIC_STRINGS.DASHBOARD_TASK_FINALIZED}
                         </div>
                       )}
                     </footer>
@@ -262,8 +270,8 @@ export default function ShooterDashboardPage() {
           onClose={() => setIsModalOpen(false)}
           task={selectedTask}
           onComplete={onCompleteTask}
-          userRole={user?.role || 'Shooter'}
-          teamMembers={TEAM_MEMBERS}
+          userRole={user?.role || ROLES.SHOOTER}
+          teamMembers={CONST_TEAM_MEMBERS as unknown as any}
         />
       </div>
     </AppLayout>

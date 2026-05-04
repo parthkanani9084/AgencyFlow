@@ -2,12 +2,12 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { useSuperAdminStore } from '@/store/superAdminStore';
-import { useAuth } from '@/context/AuthContext';
+
 import { mockService } from '@/services/mockService';
 import { Building2, Plus, Mail, User, Trash2, Edit2, Search, Phone, Clock, CreditCard, X, BarChart3, Activity, TrendingUp, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { Agency } from '@/modules/super-admin/types';
-import { ROLES } from '@/constants/roles';
+import { STATIC_STRINGS, ROLES } from '@/utils/constants';
 
 const scrollbarStyles = `
   .custom-scrollbar::-webkit-scrollbar {
@@ -39,7 +39,7 @@ export default function BusinessAgencyView() {
     email: '', 
     ownerName: '', 
     mobileNumber: '', 
-    subscription: 'Starter',
+    subscription: STATIC_STRINGS.BA_SUB_FREE as string,
     status: 'active' as 'active' | 'inactive',
     expiryDate: '',
     startDate: ''
@@ -107,7 +107,7 @@ export default function BusinessAgencyView() {
       email: '', 
       ownerName: '', 
       mobileNumber: '', 
-      subscription: 'Starter', 
+      subscription: STATIC_STRINGS.BA_SUB_FREE, 
       status: 'active', 
       expiryDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString().split('T')[0],
       startDate: new Date().toISOString().split('T')[0]
@@ -138,13 +138,13 @@ export default function BusinessAgencyView() {
       : mockService.agency.add({ ...formData, lastActive: new Date().toISOString() });
 
     toast.promise(promise, {
-      loading: isEditing ? 'Updating agency...' : 'Adding agency...',
+      loading: isEditing ? STATIC_STRINGS.BA_TOAST_UPDATING : STATIC_STRINGS.BA_TOAST_ADDING,
       success: () => {
         setIsModalOpen(false);
         refreshData();
-        return `Agency ${isEditing ? 'updated' : 'added'} successfully`;
+        return isEditing ? STATIC_STRINGS.BA_TOAST_UPDATED : STATIC_STRINGS.BA_TOAST_ADDED;
       },
-      error: (err) => err.message || `Failed to ${isEditing ? 'update' : 'add'} agency`
+      error: (err) => err.message || (isEditing ? 'Update failed' : 'Add failed')
     });
   };
 
@@ -153,25 +153,25 @@ export default function BusinessAgencyView() {
     
     try {
       await mockService.agency.update(id, { status: newStatus });
-      toast.success(`Agency marked as ${newStatus}`);
+      toast.success(`${STATIC_STRINGS.BA_TOAST_STATUS_PREFIX} ${newStatus}`);
       refreshData();
     } catch (error: any) {
-      toast.error(error.message || 'Update failed');
+      toast.error(error.message || STATIC_STRINGS.FORM_SYSTEM_ERROR);
     }
   }, [refreshData]);
 
   const deleteAgency = useCallback(async (id: string) => {
-    if (!confirm('Are you sure you want to delete this agency?')) return;
+    if (!confirm(STATIC_STRINGS.BA_CONFIRM_DELETE)) return;
     
     const promise = mockService.agency.delete(id);
 
     toast.promise(promise, {
-      loading: 'Deleting agency...',
+      loading: STATIC_STRINGS.BA_TOAST_DELETING,
       success: () => {
         refreshData();
-        return 'Agency deleted successfully';
+        return STATIC_STRINGS.BA_TOAST_DELETED;
       },
-      error: (err) => err.message || 'Delete failed'
+      error: (err) => err.message || STATIC_STRINGS.FORM_SYSTEM_ERROR
     });
   }, [refreshData]);
 
@@ -180,15 +180,15 @@ export default function BusinessAgencyView() {
       <style>{scrollbarStyles}</style>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Business Agencies</h1>
-          <p className="text-slate-500 text-sm mt-1 font-medium">Platform-wide agency governance and subscription management.</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{STATIC_STRINGS.BA_PAGE_TITLE}</h1>
+          <p className="text-slate-500 text-sm mt-1 font-medium">{STATIC_STRINGS.BA_PAGE_DESC}</p>
         </div>
         <button 
           onClick={openAddModal}
           className="flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all active:scale-95"
         >
           <Plus size={18} />
-          Add New Agency
+          {STATIC_STRINGS.BA_ADD_NEW}
         </button>
       </div>
 
@@ -198,7 +198,7 @@ export default function BusinessAgencyView() {
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input 
               type="text" 
-              placeholder="Search by name, owner, email or mobile..."
+              placeholder={STATIC_STRINGS.BA_SEARCH_PLACEHOLDER}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all"
@@ -210,12 +210,12 @@ export default function BusinessAgencyView() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Owner & Contact</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Agency </th>
-                <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-center">Subscription</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-center">Last Active</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
+                <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">{STATIC_STRINGS.BA_COL_OWNER}</th>
+                <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">{STATIC_STRINGS.BA_COL_AGENCY}</th>
+                <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-center">{STATIC_STRINGS.BA_COL_STATUS}</th>
+                <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-center">{STATIC_STRINGS.BA_COL_SUBSCRIPTION}</th>
+                <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-center">{STATIC_STRINGS.BA_COL_LAST_ACTIVE}</th>
+                <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-right">{STATIC_STRINGS.BA_COL_ACTIONS}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -224,13 +224,13 @@ export default function BusinessAgencyView() {
                   <td colSpan={6} className="px-6 py-20 text-center text-slate-400 text-sm italic">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-6 h-6 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
-                      Loading agencies...
+                      {STATIC_STRINGS.BA_LOADING}
                     </div>
                   </td>
                 </tr>
               ) : filteredAgencies.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-20 text-center text-slate-400 text-sm italic font-medium">No agencies match your search criteria</td>
+                  <td colSpan={6} className="px-6 py-20 text-center text-slate-400 text-sm italic font-medium">{STATIC_STRINGS.BA_NO_AGENCIES}</td>
                 </tr>
               ) : (
                 filteredAgencies.map((agency) => (
@@ -277,13 +277,13 @@ export default function BusinessAgencyView() {
                     </td>
                     <td className="px-6 py-4 text-center">
                       <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border ${
-                        agency.subscription === 'Starter' 
+                        agency.subscription === STATIC_STRINGS.BA_SUB_FREE 
                           ? 'bg-blue-50 text-blue-700 border-blue-100' 
                           : 'bg-violet-50 text-violet-700 border-violet-100'
                       }`}>
                         <CreditCard size={12} />
                         <span className="text-[11px] font-bold">
-                          {agency.subscription === 'Starter' ? 'Free Trial' : 'Premium'}
+                          {agency.subscription === STATIC_STRINGS.BA_SUB_FREE ? STATIC_STRINGS.BA_SUB_FREE : STATIC_STRINGS.BA_SUB_PREMIUM}
                         </span>
                       </div>
                     </td>
@@ -350,10 +350,10 @@ export default function BusinessAgencyView() {
                     <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 transition-transform">
                       <BarChart3 size={20} />
                     </div>
-                    <div className="text-[9px] font-bold text-blue-600 uppercase tracking-widest bg-blue-50/50 px-2 py-0.5 rounded-md border border-blue-100/50">Views</div>
+                    <div className="text-[9px] font-bold text-blue-600 uppercase tracking-widest bg-blue-50/50 px-2 py-0.5 rounded-md border border-blue-100/50">{STATIC_STRINGS.BA_DETAIL_VIEWS}</div>
                   </div>
                   <p className="text-2xl font-bold text-slate-900 tracking-tight">{agencyUsage.views.toLocaleString()}</p>
-                  <p className="text-[11px] font-bold text-slate-500 mt-1">Total Module Views</p>
+                  <p className="text-[11px] font-bold text-slate-500 mt-1">{STATIC_STRINGS.BA_DETAIL_VIEWS_DESC}</p>
                 </div>
 
                 {/* Card 2: Data Actions */}
@@ -362,10 +362,10 @@ export default function BusinessAgencyView() {
                     <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 transition-transform">
                       <Activity size={20} />
                     </div>
-                    <div className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50/50 px-2 py-0.5 rounded-md border border-emerald-100/50">Actions</div>
+                    <div className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50/50 px-2 py-0.5 rounded-md border border-emerald-100/50">{STATIC_STRINGS.BA_DETAIL_ACTIONS}</div>
                   </div>
                   <p className="text-2xl font-bold text-slate-900 tracking-tight">{agencyUsage.actions.toLocaleString()}</p>
-                  <p className="text-[11px] font-bold text-slate-500 mt-1">Total Data Actions</p>
+                  <p className="text-[11px] font-bold text-slate-500 mt-1">{STATIC_STRINGS.BA_DETAIL_ACTIONS_DESC}</p>
                 </div>
 
                 {/* Card 3: Top Module */}
@@ -374,10 +374,10 @@ export default function BusinessAgencyView() {
                     <div className="p-2.5 rounded-xl bg-violet-50 text-violet-600 transition-transform">
                       <TrendingUp size={20} />
                     </div>
-                    <div className="text-[9px] font-bold text-violet-600 uppercase tracking-widest bg-violet-50/50 px-2 py-0.5 rounded-md border border-violet-100/50">Best</div>
+                    <div className="text-[9px] font-bold text-violet-600 uppercase tracking-widest bg-violet-50/50 px-2 py-0.5 rounded-md border border-violet-100/50">{STATIC_STRINGS.BA_DETAIL_BEST}</div>
                   </div>
                   <p className="text-[13px] font-bold text-slate-900 leading-tight h-10 flex items-center">{agencyUsage.topModule}</p>
-                  <p className="text-[11px] font-bold text-slate-500 mt-1">Top Module</p>
+                  <p className="text-[11px] font-bold text-slate-500 mt-1">{STATIC_STRINGS.BA_DETAIL_TOP_MODULE}</p>
                 </div>
 
                 {/* Card 4: Low Module */}
@@ -386,10 +386,10 @@ export default function BusinessAgencyView() {
                     <div className="p-2.5 rounded-xl bg-orange-50 text-orange-600 transition-transform">
                       <TrendingUp size={20} className="rotate-180" />
                     </div>
-                    <div className="text-[9px] font-bold text-orange-600 uppercase tracking-widest bg-orange-50/50 px-2 py-0.5 rounded-md border border-orange-100/50">Low</div>
+                    <div className="text-[9px] font-bold text-orange-600 uppercase tracking-widest bg-orange-50/50 px-2 py-0.5 rounded-md border border-orange-100/50">{STATIC_STRINGS.BA_DETAIL_LOW}</div>
                   </div>
                   <p className="text-[13px] font-bold text-slate-900 leading-tight h-10 flex items-center">{agencyUsage.lowModule}</p>
-                  <p className="text-[11px] font-bold text-slate-500 mt-1">Low Module</p>
+                  <p className="text-[11px] font-bold text-slate-500 mt-1">{STATIC_STRINGS.BA_DETAIL_LOW_MODULE}</p>
                 </div>
               </div>
 
@@ -397,7 +397,7 @@ export default function BusinessAgencyView() {
               <div className="mt-8 pt-8 border-t border-slate-200/60">
                 <div className="flex items-center gap-2 mb-6">
                   <div className="w-1.5 h-6 bg-violet-600 rounded-full" />
-                  <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Business Snapshot</h4>
+                  <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{STATIC_STRINGS.BA_DETAIL_SNAPSHOT}</h4>
                 </div>
                 
                 <div className="grid grid-cols-3 gap-4">
@@ -407,7 +407,7 @@ export default function BusinessAgencyView() {
                       <div className="p-2 rounded-xl bg-slate-100 text-slate-500">
                         <User size={16} />
                       </div>
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Owner Detail</span>
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{STATIC_STRINGS.BA_DETAIL_OWNER_DETAIL}</span>
                     </div>
                     <p className="text-[13px] font-bold text-slate-900 truncate">{selectedAgencyForDetail.ownerName}</p>
                     <p className="text-[11px] font-semibold text-slate-600 truncate mt-0.5">{selectedAgencyForDetail.email}</p>
@@ -421,12 +421,12 @@ export default function BusinessAgencyView() {
                       }`}>
                         <CreditCard size={16} />
                       </div>
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Subscription</span>
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{STATIC_STRINGS.BA_COL_SUBSCRIPTION}</span>
                     </div>
                     <p className={`text-[13px] font-bold ${
-                      selectedAgencyForDetail.subscription === 'Starter' ? 'text-blue-700' : 'text-violet-700'
+                      selectedAgencyForDetail.subscription === STATIC_STRINGS.BA_SUB_FREE ? 'text-blue-700' : 'text-violet-700'
                     }`}>
-                      {selectedAgencyForDetail.subscription === 'Starter' ? 'Free Trial' : 'Premium'}
+                      {selectedAgencyForDetail.subscription === STATIC_STRINGS.BA_SUB_FREE ? STATIC_STRINGS.BA_SUB_FREE : STATIC_STRINGS.BA_SUB_PREMIUM}
                     </p>
                     <div className="flex items-center gap-1.5 mt-1">
                       <div className={`w-1.5 h-1.5 rounded-full ${selectedAgencyForDetail.status === 'active' ? 'bg-emerald-500' : 'bg-slate-400'}`} />
@@ -444,14 +444,14 @@ export default function BusinessAgencyView() {
                       <div className="p-2 rounded-xl bg-orange-50 text-orange-600">
                         <Calendar size={16} />
                       </div>
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Plan Timeline</span>
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{STATIC_STRINGS.BA_DETAIL_TIMELINE}</span>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[11px] font-bold text-slate-600">Started: <span className="text-slate-900">{new Date(selectedAgencyForDetail.startDate).toLocaleDateString()}</span></p>
-                      <p className="text-[11px] font-bold text-slate-600">Expires: <span className="text-slate-900">{new Date(selectedAgencyForDetail.expiryDate).toLocaleDateString()}</span></p>
+                      <p className="text-[11px] font-bold text-slate-600">{STATIC_STRINGS.BA_DETAIL_STARTED} <span className="text-slate-900">{new Date(selectedAgencyForDetail.startDate).toLocaleDateString()}</span></p>
+                      <p className="text-[11px] font-bold text-slate-600">{STATIC_STRINGS.BA_DETAIL_EXPIRES} <span className="text-slate-900">{new Date(selectedAgencyForDetail.expiryDate).toLocaleDateString()}</span></p>
                     </div>
                     <p className="text-[10px] font-extrabold text-orange-700 mt-2 uppercase tracking-widest bg-orange-50 px-2.5 py-1 rounded-lg inline-block border border-orange-100 shadow-sm">
-                      {Math.max(0, Math.ceil((new Date(selectedAgencyForDetail.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} Days Left
+                      {Math.max(0, Math.ceil((new Date(selectedAgencyForDetail.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} {STATIC_STRINGS.BA_DETAIL_DAYS_LEFT}
                     </p>
                   </div>
                 </div>
@@ -461,7 +461,7 @@ export default function BusinessAgencyView() {
               <div className="mt-10 pt-8 border-t border-slate-200/60">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-1.5 h-6 bg-violet-600 rounded-full" />
-                  <h4 className="text-[15px] font-bold text-slate-900 uppercase tracking-wider">Role-Wise Activity</h4>
+                  <h4 className="text-[15px] font-bold text-slate-900 uppercase tracking-wider">{STATIC_STRINGS.BA_DETAIL_ROLE_ACTIVITY}</h4>
                 </div>
                 
                 <div className="flex bg-slate-50 border border-slate-100 p-1 rounded-xl mb-6 overflow-x-auto">
@@ -484,13 +484,13 @@ export default function BusinessAgencyView() {
                   <table className="w-full text-left">
                     <thead className="bg-slate-50/50 border-b border-slate-100">
                       <tr>
-                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Module Name</th>
-                        <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">Views</th>
-                        <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">Entered</th>
-                        <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">Updated</th>
-                        <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">Deleted</th>
-                        <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">Current Records</th>
-                        <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">Score</th>
+                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">{STATIC_STRINGS.BA_DETAIL_COL_MODULE}</th>
+                        <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">{STATIC_STRINGS.BA_DETAIL_VIEWS}</th>
+                        <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">{STATIC_STRINGS.BA_DETAIL_COL_ENTERED}</th>
+                        <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">{STATIC_STRINGS.ADS_TABLE_COL_STATUS}</th>
+                        <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">{STATIC_STRINGS.COMMON_REMOVE}</th>
+                        <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">{STATIC_STRINGS.CLIENT_MGMT_LABEL_REELS_PER_MONTH}</th>
+                        <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">{STATIC_STRINGS.BA_DETAIL_COL_SCORE}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
@@ -527,8 +527,8 @@ export default function BusinessAgencyView() {
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 animate-slide-up">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
               <div>
-                <h3 className="text-lg font-bold text-slate-900">{isEditing ? 'Edit Agency' : 'Add New Agency'}</h3>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">Configure agency profile and subscription details.</p>
+                <h3 className="text-lg font-bold text-slate-900">{isEditing ? STATIC_STRINGS.BA_EDIT_TITLE : STATIC_STRINGS.BA_ADD_NEW}</h3>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">{STATIC_STRINGS.BA_EDIT_DESC}</p>
               </div>
               <button onClick={() => setIsModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-slate-100 text-slate-400 hover:text-slate-600 shadow-sm transition-all">
                 <X size={18} />
@@ -537,13 +537,13 @@ export default function BusinessAgencyView() {
             <form onSubmit={handleSubmit} className="p-8 space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Agency Name</label>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">{STATIC_STRINGS.BA_LABEL_NAME}</label>
                   <div className="relative">
                     <Building2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input 
                       required
                       type="text" 
-                      placeholder="Enter Agency Name"
+                      placeholder={STATIC_STRINGS.BA_PLACEHOLDER_NAME}
                       value={formData.name}
                       onChange={e => setFormData({...formData, name: e.target.value})}
                       className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all"
@@ -551,13 +551,13 @@ export default function BusinessAgencyView() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Owner Name</label>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">{STATIC_STRINGS.BA_LABEL_OWNER}</label>
                   <div className="relative">
                     <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input 
                       required
                       type="text" 
-                      placeholder="Enter Owner Name"
+                      placeholder={STATIC_STRINGS.BA_PLACEHOLDER_OWNER}
                       value={formData.ownerName}
                       onChange={e => setFormData({...formData, ownerName: e.target.value})}
                       className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all"
@@ -568,13 +568,13 @@ export default function BusinessAgencyView() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Email Address</label>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">{STATIC_STRINGS.BA_LABEL_EMAIL}</label>
                   <div className="relative">
                     <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input 
                       required
                       type="email" 
-                      placeholder="Enter Email Address"
+                      placeholder={STATIC_STRINGS.BA_PLACEHOLDER_EMAIL}
                       value={formData.email}
                       onChange={e => setFormData({...formData, email: e.target.value})}
                       autoComplete="new-email"
@@ -583,13 +583,13 @@ export default function BusinessAgencyView() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Mobile Number</label>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">{STATIC_STRINGS.BA_LABEL_MOBILE}</label>
                   <div className="relative">
                     <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input 
                       required
                       type="tel" 
-                      placeholder="Enter Mobile Number"
+                      placeholder={STATIC_STRINGS.BA_PLACEHOLDER_MOBILE}
                       value={formData.mobileNumber}
                       onChange={e => setFormData({...formData, mobileNumber: e.target.value})}
                       className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all"
@@ -605,13 +605,13 @@ export default function BusinessAgencyView() {
                   onClick={() => setIsModalOpen(false)}
                   className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-100 transition-colors"
                 >
-                  Cancel
+                  {STATIC_STRINGS.FORM_CANCEL}
                 </button>
                 <button 
                   type="submit"
                   className="px-10 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-violet-200 transition-all active:scale-95"
                 >
-                  {isEditing ? 'Save Changes' : 'Create Agency'}
+                  {isEditing ? STATIC_STRINGS.FORM_SAVE_CHANGES : STATIC_STRINGS.BA_CREATE_BTN}
                 </button>
               </div>
             </form>

@@ -17,6 +17,7 @@ import {
   Briefcase,
   TrendingUp
 } from 'lucide-react';
+import { STATIC_STRINGS } from '@/utils/constants';
 
 // --- Types ---
 export interface MetricCardData {
@@ -69,7 +70,7 @@ function ChangeIndicator({ change, label }: { change: number; label: string }) {
     return (
       <span className="flex items-center gap-0.5 text-[11.5px] text-slate-400">
         <Minus size={11} />
-        No change {label}
+        {STATIC_STRINGS.ADS_DASHBOARD_NO_TASKS.includes('No tasks') ? STATIC_STRINGS.DASHBOARD_INDICATOR_NO_CHANGE : STATIC_STRINGS.DASHBOARD_INDICATOR_STEADY} {label}
       </span>
     );
   }
@@ -118,12 +119,12 @@ export default function MetricSection({ title, metrics, cols = 4, action }: Metr
                   </p>
                   {metric.variant === 'warning' && (
                     <span className="inline-flex items-center gap-1 text-[10.5px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md font-semibold w-fit">
-                      <AlertTriangle size={9} /> Needs attention
+                      <AlertTriangle size={9} /> {STATIC_STRINGS.DASHBOARD_METRIC_NEEDS_ATTENTION}
                     </span>
                   )}
                   {metric.variant === 'danger' && (
                     <span className="inline-flex items-center gap-1 text-[10.5px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-md font-semibold w-fit">
-                      ⚠ Escalation risk
+                      ⚠ {STATIC_STRINGS.DASHBOARD_METRIC_ESCALATION_RISK}
                     </span>
                   )}
                 </div>
@@ -155,29 +156,29 @@ export default function MetricSection({ title, metrics, cols = 4, action }: Metr
 }
 
 export const clientMetrics: MetricCardData[] = [
-  { id: 'm-total-clients', label: 'Total Clients', value: '0', subValue: 'Active in workspace', icon: Briefcase, variant: 'default' },
+  { id: 'm-total-clients', label: STATIC_STRINGS.DASHBOARD_METRIC_TOTAL_CLIENTS, value: '0', subValue: STATIC_STRINGS.DASHBOARD_METRIC_ACTIVE_WORKSPACE, icon: Briefcase, variant: 'default' },
 ];
 
 export const revenueMetrics: MetricCardData[] = [
-  { id: 'm-sales', label: 'Sales', value: '₹0', change: 0, changeLabel: 'vs last month', icon: Wallet, variant: 'default', mono: true },
-  { id: 'm-collection', label: 'Collection', value: '₹0', subValue: '0% efficiency', icon: IndianRupee, variant: 'success', mono: true },
-  { id: 'm-pending', label: 'Pending', value: '₹0', subValue: 'No invoices overdue', icon: Clock, variant: 'warning', mono: true },
+  { id: 'm-sales', label: STATIC_STRINGS.DASHBOARD_METRIC_SALES, value: `${STATIC_STRINGS.CURRENCY_SYMBOL}0`, change: 0, changeLabel: STATIC_STRINGS.DASHBOARD_METRIC_VS_PREV, icon: Wallet, variant: 'default', mono: true },
+  { id: 'm-collection', label: STATIC_STRINGS.DASHBOARD_METRIC_COLLECTION, value: `${STATIC_STRINGS.CURRENCY_SYMBOL}0`, subValue: `0% ${STATIC_STRINGS.DASHBOARD_METRIC_EFFICIENCY}`, icon: IndianRupee, variant: 'success', mono: true },
+  { id: 'm-pending', label: STATIC_STRINGS.DASHBOARD_METRIC_PENDING, value: `${STATIC_STRINGS.CURRENCY_SYMBOL}0`, subValue: STATIC_STRINGS.DASHBOARD_METRIC_NO_OVERDUE, icon: Clock, variant: 'warning', mono: true },
 ];
 
 export const reelsMetrics: MetricCardData[] = [
-  { id: 'm-today-reels', label: "Today's Reels", value: '12', subValue: 'Scheduled for today', icon: Film, variant: 'default' },
-  { id: 'm-reels-pending', label: 'Pending', value: '8', subValue: 'Awaiting raw files', icon: Timer, variant: 'warning' },
-  { id: 'm-reels-processing', label: 'Processing', value: '4', subValue: 'In editing queue', icon: RefreshCw, variant: 'default' },
+  { id: 'm-today-reels', label: STATIC_STRINGS.DASHBOARD_METRIC_TODAY_REELS, value: '12', subValue: STATIC_STRINGS.DASHBOARD_METRIC_SCHEDULED_TODAY, icon: Film, variant: 'default' },
+  { id: 'm-reels-pending', label: STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_PENDING, value: '8', subValue: STATIC_STRINGS.DASHBOARD_METRIC_AWAITING_RAW, icon: Timer, variant: 'warning' },
+  { id: 'm-reels-processing', label: STATIC_STRINGS.DASHBOARD_METRIC_PROCESSING, value: '4', subValue: STATIC_STRINGS.DASHBOARD_METRIC_EDITING_QUEUE, icon: RefreshCw, variant: 'default' },
 ];
 
 export const metaAdsMetrics: MetricCardData[] = [
-  { id: 'm-ad-spend', label: 'Ad Spend MTD', value: '₹84,320', change: 12, changeLabel: 'vs last month', icon: IndianRupee, variant: 'default', mono: true },
-  { id: 'm-leads-gen', label: 'Leads Generated', value: '3,847', change: 18, changeLabel: 'vs last month', icon: UserPlus, variant: 'success', mono: true },
-  { id: 'm-avg-roas', label: 'Avg ROAS', value: '4.2×', subValue: 'Target: 3.5×', icon: TrendingUp, variant: 'success', mono: true },
-  { id: 'm-active-camp', label: 'Active Campaigns', value: '47', subValue: '12 launching soon', icon: Play, variant: 'default' },
+  { id: 'm-ad-spend', label: STATIC_STRINGS.DASHBOARD_METRIC_AD_SPEND_MTD, value: `${STATIC_STRINGS.CURRENCY_SYMBOL}84,320`, change: 12, changeLabel: STATIC_STRINGS.DASHBOARD_METRIC_VS_PREV, icon: IndianRupee, variant: 'default', mono: true },
+  { id: 'm-leads-gen', label: STATIC_STRINGS.ADS_TABLE_COL_LEADS, value: '3,847', change: 18, changeLabel: STATIC_STRINGS.DASHBOARD_METRIC_VS_PREV, icon: UserPlus, variant: 'success', mono: true },
+  { id: 'm-avg-roas', label: STATIC_STRINGS.ADS_TABLE_COL_ROAS, value: '4.2×', subValue: STATIC_STRINGS.DASHBOARD_METRIC_TARGET_ROAS, icon: TrendingUp, variant: 'success', mono: true },
+  { id: 'm-active-camp', label: STATIC_STRINGS.ADS_DASHBOARD_STAT_ACTIVE_CAMPAIGNS, value: '47', subValue: `12 ${STATIC_STRINGS.DASHBOARD_METRIC_LAUNCHING_SOON}`, icon: Play, variant: 'default' },
 ];
 
 export const todoMetrics: MetricCardData[] = [
-  { id: 'm-tasks-risk', label: 'Tasks At Risk', value: '14', subValue: 'Within 24h deadline', icon: AlertTriangle, variant: 'warning' },
-  { id: 'm-overdue-tasks', label: 'Overdue Tasks', value: '6', subValue: '3 escalated', icon: Clock, variant: 'danger' },
+  { id: 'm-tasks-risk', label: STATIC_STRINGS.DASHBOARD_METRIC_TASKS_AT_RISK, value: '14', subValue: STATIC_STRINGS.DASHBOARD_METRIC_NEAR_DEADLINE, icon: AlertTriangle, variant: 'warning' },
+  { id: 'm-overdue-tasks', label: STATIC_STRINGS.DASHBOARD_METRIC_OVERDUE_TASKS, value: '6', subValue: `3 ${STATIC_STRINGS.DASHBOARD_METRIC_ESCALATED}`, icon: Clock, variant: 'danger' },
 ];

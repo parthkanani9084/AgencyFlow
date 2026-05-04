@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { useSuperAdminStore } from '@/store/superAdminStore';
 import { Building2, Users, TrendingUp, Activity, BarChart3, MousePointer2, Trash2, RefreshCw, Plus } from 'lucide-react';
-import { ROLES } from '@/constants/roles';
+import { ROLES, STATIC_STRINGS } from '@/utils/constants';
 import { UserRole } from '@/types';
 
 export default function DashboardView() {
@@ -63,10 +63,10 @@ export default function DashboardView() {
   const topStats = useMemo(() => {
     if (!metrics) return [];
     return [
-      { label: 'Total Agency', value: metrics.totalAgencies, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50' },
-      { label: 'Active Agencies', value: metrics.activeAgencies, icon: Users, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-      { label: 'Total Module Views', value: metrics.totalViews.toLocaleString(), icon: BarChart3, color: 'text-violet-600', bg: 'bg-violet-50' },
-      { label: 'Total Data Actions', value: metrics.totalDataActions.toLocaleString(), icon: Activity, color: 'text-amber-600', bg: 'bg-amber-50' },
+      { label: STATIC_STRINGS.SA_METRIC_TOTAL_AGENCY, value: metrics.totalAgencies, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50' },
+      { label: STATIC_STRINGS.SA_METRIC_ACTIVE_AGENCIES, value: metrics.activeAgencies, icon: Users, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+      { label: STATIC_STRINGS.SA_METRIC_TOTAL_VIEWS, value: metrics.totalViews.toLocaleString(), icon: BarChart3, color: 'text-violet-600', bg: 'bg-violet-50' },
+      { label: STATIC_STRINGS.SA_METRIC_TOTAL_ACTIONS, value: metrics.totalDataActions.toLocaleString(), icon: Activity, color: 'text-amber-600', bg: 'bg-amber-50' },
     ];
   }, [metrics]);
 
@@ -80,7 +80,7 @@ export default function DashboardView() {
     return (
       <div className="p-8 flex flex-col items-center justify-center min-h-[400px] text-slate-500">
         <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="font-medium">Loading system metrics...</p>
+        <p className="font-medium">{STATIC_STRINGS.SA_DASHBOARD_LOADING}</p>
       </div>
     );
   }
@@ -89,8 +89,8 @@ export default function DashboardView() {
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
-          <p className="text-slate-500 text-sm mt-1 font-medium">Real-time governance and module performance analytics.</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{STATIC_STRINGS.SA_DASHBOARD_TITLE}</h1>
+          <p className="text-slate-500 text-sm mt-1 font-medium">{STATIC_STRINGS.SA_DASHBOARD_DESC}</p>
         </div>
       </div>
 
@@ -119,9 +119,9 @@ export default function DashboardView() {
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-[15px] font-bold text-slate-900 flex items-center gap-2">
               <TrendingUp size={18} className="text-emerald-500" />
-              Feature uses highlights
+              {STATIC_STRINGS.SA_HIGHLIGHTS_TITLE}
             </h2>
-            <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded uppercase tracking-wider">Daily Extreme</span>
+            <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded uppercase tracking-wider">{STATIC_STRINGS.SA_HIGHLIGHTS_EXTREME}</span>
           </div>
           
           <div className="space-y-6 flex-1 flex flex-col">
@@ -131,7 +131,7 @@ export default function DashboardView() {
                 <div className="p-6 rounded-2xl bg-[#f0fdf4]/60 border border-emerald-100 relative group transition-all">
                   <div className="flex items-start justify-between mb-4">
                     <span className="text-[9px] font-extrabold text-emerald-600 uppercase tracking-widest bg-white px-2.5 py-1 rounded-md border border-emerald-50 shadow-sm">
-                      HIGHEST USAGE
+                      {STATIC_STRINGS.SA_HIGHLIGHTS_HIGHEST}
                     </span>
                     <div className="p-2 rounded-xl bg-emerald-100 text-emerald-600 shadow-sm">
                       <TrendingUp size={18} />
@@ -140,11 +140,11 @@ export default function DashboardView() {
                   <h3 className="text-xl font-bold text-slate-900 mb-6">{extremeUsage.highest.module}</h3>
                   <div className="flex items-center gap-14">
                     <div className="flex flex-col gap-1.5">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Avg Views</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{STATIC_STRINGS.SA_HIGHLIGHTS_AVG_VIEWS}</p>
                       <p className="text-[20px] font-bold text-emerald-600 leading-none">{extremeUsage.highest.views.toLocaleString()}</p>
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Efficiency</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{STATIC_STRINGS.SA_HIGHLIGHTS_EFFICIENCY}</p>
                       <p className="text-[20px] font-bold text-slate-800 leading-none">98.4%</p>
                     </div>
                   </div>
@@ -154,7 +154,7 @@ export default function DashboardView() {
                 <div className="p-6 rounded-2xl bg-slate-50/50 border border-slate-100 relative group transition-all">
                   <div className="flex items-start justify-between mb-4">
                     <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest bg-white px-2.5 py-1 rounded-md border border-slate-100 shadow-sm">
-                      LOWEST USAGE
+                      {STATIC_STRINGS.SA_HIGHLIGHTS_LOWEST}
                     </span>
                     <div className="p-2 rounded-xl bg-white text-slate-400 border border-slate-100 shadow-sm">
                       <MousePointer2 size={18} />
@@ -163,11 +163,11 @@ export default function DashboardView() {
                   <h3 className="text-xl font-bold text-slate-900 mb-6">{extremeUsage.lowest.module}</h3>
                   <div className="flex items-center gap-14">
                     <div className="flex flex-col gap-1.5">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Avg Views</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{STATIC_STRINGS.SA_HIGHLIGHTS_AVG_VIEWS}</p>
                       <p className="text-[20px] font-bold text-slate-600 leading-none">{extremeUsage.lowest.views.toLocaleString()}</p>
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Action Req.</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{STATIC_STRINGS.SA_HIGHLIGHTS_ACTION_REQ}</p>
                       <p className="text-[20px] font-bold text-amber-600 leading-none">Pending</p>
                     </div>
                   </div>
@@ -185,13 +185,13 @@ export default function DashboardView() {
                 <Activity size={20} />
               </div>
               <div>
-                <h2 className="text-[15px] font-bold text-slate-900 leading-tight">Recent Activity</h2>
-                <p className="text-[11px] text-slate-400 font-medium mt-0.5">Platform governance feed</p>
+                <h2 className="text-[15px] font-bold text-slate-900 leading-tight">{STATIC_STRINGS.SA_ACTIVITY_TITLE}</h2>
+                <p className="text-[11px] text-slate-400 font-medium mt-0.5">{STATIC_STRINGS.SA_ACTIVITY_DESC}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-extrabold text-emerald-600 uppercase tracking-widest">Live Feed</span>
+              <span className="text-[10px] font-extrabold text-emerald-600 uppercase tracking-widest">{STATIC_STRINGS.SA_ACTIVITY_LIVE}</span>
             </div>
           </div>
 
@@ -274,7 +274,7 @@ export default function DashboardView() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-6 bg-violet-600 rounded-full" />
-            <h2 className="text-[15px] font-bold text-slate-900 uppercase tracking-wider">Module Usage Breakdown</h2>
+            <h2 className="text-[15px] font-bold text-slate-900 uppercase tracking-wider">{STATIC_STRINGS.SA_BREAKDOWN_TITLE}</h2>
           </div>
           
           {/* Role Tabs */}
@@ -302,13 +302,13 @@ export default function DashboardView() {
                 <div className="w-1 h-4 bg-violet-400 rounded-full" />
                 <div>
                   <h2 className="text-[13px] font-extrabold text-slate-900 uppercase tracking-wider">
-                    {activeTab} Panel Analytics
+                    {activeTab} {STATIC_STRINGS.SA_BREAKDOWN_PANEL}
                   </h2>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-                  {(roleWiseUsage[activeTab] || []).length} Active Modules
+                  {(roleWiseUsage[activeTab] || []).length} {STATIC_STRINGS.SA_BREAKDOWN_COUNT_SUFFIX}
                 </span>
               </div>
             </div>
@@ -317,20 +317,20 @@ export default function DashboardView() {
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-white border-b border-slate-100">
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">Module</th>
-                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Views/Clicks</th>
-                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Data Entered</th>
-                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Updated</th>
-                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Deleted</th>
-                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Current Records</th>
-                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Unique Base</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">{STATIC_STRINGS.TASK_MGMT_COL_TASK}</th>
+                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">{STATIC_STRINGS.SA_BREAKDOWN_COL_VIEWS}</th>
+                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">{STATIC_STRINGS.BA_DETAIL_COL_ENTERED}</th>
+                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">{STATIC_STRINGS.ADS_TABLE_COL_STATUS}</th>
+                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">{STATIC_STRINGS.COMMON_REMOVE}</th>
+                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">{STATIC_STRINGS.CLIENT_MGMT_LABEL_REELS_PER_MONTH}</th>
+                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">{STATIC_STRINGS.SA_BREAKDOWN_COL_UNIQUE}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   {(!roleWiseUsage[activeTab] || roleWiseUsage[activeTab].length === 0) ? (
                     <tr>
                       <td colSpan={7} className="px-6 py-12 text-center text-slate-400 text-xs italic">
-                        No active modules found for this role.
+                        {STATIC_STRINGS.SA_BREAKDOWN_EMPTY}
                       </td>
                     </tr>
                   ) : (

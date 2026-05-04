@@ -7,6 +7,8 @@ import { Eye, EyeOff, ArrowRight, Zap, BarChart3, Users, Shield } from 'lucide-r
 import AppLogo from '@/components/ui/AppLogo';
 import { toast } from 'sonner';
 import { useAuth, ROLE_HOME } from '@/context/AuthContext';
+import { STATIC_STRINGS, ROLES } from '@/utils/constants';
+import { UserRole } from '@/types';
 
 interface FormValues {
   email: string;
@@ -14,7 +16,7 @@ interface FormValues {
   remember: boolean;
 }
 
-type Role = 'Owner' | 'Shooter' | 'Editor' | 'Ads Manager' | 'Manager' | 'Social Media Manager' | 'Client';
+type Role = typeof ROLES[keyof typeof ROLES];
 
 interface DemoCredential {
   role: Role;
@@ -24,20 +26,20 @@ interface DemoCredential {
 }
 
 const demoCredentials: DemoCredential[] = [
-  { role: 'Owner', email: 'alex.owens@agencyflow.io', password: 'Owner@2026', color: 'bg-violet-100 text-violet-700' },
-  { role: 'Manager', email: 'priya.sharma@agencyflow.io', password: 'Manager@2026', color: 'bg-blue-100 text-blue-700' },
-  { role: 'Shooter', email: 'marco.reyes@agencyflow.io', password: 'Shooter@2026', color: 'bg-emerald-100 text-emerald-700' },
-  { role: 'Editor', email: 'jin.park@agencyflow.io', password: 'Editor@2026', color: 'bg-amber-100 text-amber-700' },
-  { role: 'Ads Manager', email: 'sofia.nguyen@agencyflow.io', password: 'AdsManager@2026', color: 'bg-rose-100 text-rose-700' },
-  { role: 'Social Media Manager', email: 'sam.rivera@agencyflow.io', password: 'Social@2026', color: 'bg-indigo-100 text-indigo-700' },
-  { role: 'Client', email: 'jordan.lee@novabrew.com', password: 'Client@2026', color: 'bg-indigo-100 text-indigo-700' },
+  { role: ROLES.OWNER, email: 'alex.owens@agencyflow.io', password: 'Owner@2026', color: 'bg-violet-100 text-violet-700' },
+  { role: ROLES.MANAGER, email: 'priya.sharma@agencyflow.io', password: 'Manager@2026', color: 'bg-blue-100 text-blue-700' },
+  { role: ROLES.SHOOTER, email: 'marco.reyes@agencyflow.io', password: 'Shooter@2026', color: 'bg-emerald-100 text-emerald-700' },
+  { role: ROLES.EDITOR, email: 'jin.park@agencyflow.io', password: 'Editor@2026', color: 'bg-amber-100 text-amber-700' },
+  { role: ROLES.ADS_MANAGER, email: 'sofia.nguyen@agencyflow.io', password: 'AdsManager@2026', color: 'bg-rose-100 text-rose-700' },
+  { role: ROLES.SOCIAL_MEDIA_MANAGER, email: 'sam.rivera@agencyflow.io', password: 'Social@2026', color: 'bg-indigo-100 text-indigo-700' },
+  { role: ROLES.CLIENT, email: 'jordan.lee@novabrew.com', password: 'Client@2026', color: 'bg-indigo-100 text-indigo-700' },
 ];
 
 const features = [
-  { icon: Zap, text: 'Auto-route tasks through your entire production pipeline' },
-  { icon: BarChart3, text: 'Track ad spend, ROAS, and leads across Meta & Google' },
-  { icon: Users, text: 'Manage 50+ clients and 200+ active tasks simultaneously' },
-  { icon: Shield, text: 'Role-based access for every team member' },
+  { icon: Zap, text: STATIC_STRINGS.LOGIN_FEATURE_PIPELINE },
+  { icon: BarChart3, text: STATIC_STRINGS.LOGIN_FEATURE_ADS },
+  { icon: Users, text: STATIC_STRINGS.LOGIN_FEATURE_SCALE },
+  { icon: Shield, text: STATIC_STRINGS.LOGIN_FEATURE_ROLES },
 ];
 
 export default function LoginForm() {
@@ -58,7 +60,7 @@ export default function LoginForm() {
   const handleUseCredential = useCallback((cred: DemoCredential) => {
     setValue('email', cred.email, { shouldValidate: true });
     setValue('password', cred.password, { shouldValidate: true });
-    toast.success(`Autofilled ${cred.role} credentials`);
+    toast.success(`${STATIC_STRINGS.LOGIN_AUTH_AUTOFILLED} ${cred.role} ${STATIC_STRINGS.LOGIN_AUTH_CREDENTIALS}`);
   }, [setValue]);
 
   const onSubmit = async (data: FormValues) => {
@@ -74,8 +76,8 @@ export default function LoginForm() {
     }
 
     const matched = demoCredentials.find((c) => c.email === data.email);
-    const home = matched ? ROLE_HOME[matched.role] : '/dashboard';
-    toast.success(`Welcome back! Signing in as ${matched?.role ?? 'user'}…`);
+    const home = matched ? ROLE_HOME[matched.role as UserRole] : '/dashboard';
+    toast.success(`${STATIC_STRINGS.LOGIN_AUTH_WELCOME_BACK} ${matched?.role ?? 'user'}…`);
     await new Promise((r) => setTimeout(r, 500));
     router.push(home);
   };
@@ -92,21 +94,21 @@ export default function LoginForm() {
         <div className="relative z-10 flex flex-col h-full p-10 xl:p-14">
           <div className="flex items-center gap-3">
             <AppLogo size={36} />
-            <span className="text-white font-semibold text-xl tracking-tight">AgencyFlow</span>
+            <span className="text-white font-semibold text-xl tracking-tight">{STATIC_STRINGS.LOGIN_PLATFORM_NAME}</span>
           </div>
 
           <div className="mt-16 xl:mt-20">
             <div className="inline-flex items-center gap-2 bg-violet-500/20 border border-violet-400/30 rounded-full px-3 py-1 mb-6">
               <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
-              <span className="text-violet-300 text-[12px] font-medium">Campaign Automation Platform</span>
+              <span className="text-violet-300 text-[12px] font-medium">{STATIC_STRINGS.LOGIN_SUBTITLE_PLATFORM}</span>
             </div>
             <h1 className="text-3xl xl:text-4xl font-bold text-white leading-tight">
-              Your entire agency
+              {STATIC_STRINGS.LOGIN_HERO_TITLE_PART1}
               <br />
-              <span className="text-violet-400">on autopilot.</span>
+              <span className="text-violet-400">{STATIC_STRINGS.LOGIN_HERO_TITLE_PART2}</span>
             </h1>
             <p className="mt-4 text-slate-400 text-[14.5px] leading-relaxed max-w-sm">
-              From shoot to ad launch — AgencyFlow routes every task automatically so your team ships faster and your clients see results.
+              {STATIC_STRINGS.LOGIN_HERO_DESC}
             </p>
           </div>
 
@@ -127,9 +129,9 @@ export default function LoginForm() {
           <div className="mt-auto pt-10">
             <div className="grid grid-cols-3 gap-4 border-t border-white/10 pt-8">
               {[
-                { value: '50+', label: 'Active Clients' },
-                { value: '200+', label: 'Tasks Managed' },
-                { value: '4.2×', label: 'Avg ROAS' },
+                { value: '50+', label: STATIC_STRINGS.LOGIN_STAT_CLIENTS },
+                { value: '200+', label: STATIC_STRINGS.LOGIN_STAT_TASKS },
+                { value: '4.2×', label: STATIC_STRINGS.LOGIN_STAT_ROAS },
               ].map((stat) => (
                 <div key={`stat-${stat.label}`}>
                   <p className="text-2xl font-bold text-white tabular-nums">{stat.value}</p>
@@ -145,32 +147,32 @@ export default function LoginForm() {
         <div className="w-full max-w-[420px]">
           <div className="flex items-center gap-2 mb-8 lg:hidden">
             <AppLogo size={32} />
-            <span className="font-semibold text-slate-900 text-lg">AgencyFlow</span>
+            <span className="font-semibold text-slate-900 text-lg">{STATIC_STRINGS.LOGIN_PLATFORM_NAME}</span>
           </div>
 
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">Sign in</h2>
+            <h2 className="text-2xl font-bold text-slate-900">{STATIC_STRINGS.LOGIN_FORM_SIGN_IN_BTN}</h2>
             <p className="mt-1 text-[13.5px] text-slate-500">
-              Access your agency dashboard and campaign tools.
+              {STATIC_STRINGS.LOGIN_SUBTITLE}
             </p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5" noValidate>
             <div>
               <label htmlFor="email" className="block text-[13px] font-semibold text-slate-700 mb-1.5">
-                Work Email
+                {STATIC_STRINGS.LOGIN_FORM_EMAIL_LABEL}
               </label>
               <input
                 id="email"
                 type="email"
                 autoComplete="email"
-                placeholder="you@agency.io"
+                placeholder={STATIC_STRINGS.LOGIN_FORM_EMAIL_PLACEHOLDER}
                 className={`w-full px-3.5 py-2.5 rounded-lg border text-[13.5px] bg-white text-slate-900 placeholder-slate-400 transition-colors outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 ${
                   errors.email ? 'border-red-400 bg-red-50' : 'border-slate-200 hover:border-slate-300'
                 }`}
                 {...register('email', {
-                  required: 'Email is required',
-                  pattern: { value: /^\S+@\S+\.\S+$/, message: 'Enter a valid email address' },
+                  required: STATIC_STRINGS.LOGIN_ERR_EMAIL_REQ,
+                  pattern: { value: /^\S+@\S+\.\S+$/, message: STATIC_STRINGS.LOGIN_ERR_EMAIL_INVALID },
                 })}
               />
               {errors.email && (
@@ -183,10 +185,10 @@ export default function LoginForm() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label htmlFor="password" className="block text-[13px] font-semibold text-slate-700">
-                  Password
+                  {STATIC_STRINGS.LOGIN_FORM_PWD_LABEL}
                 </label>
                 <button type="button" className="text-[12px] text-violet-600 hover:text-violet-700 font-medium transition-colors">
-                  Forgot password?
+                  {STATIC_STRINGS.LOGIN_FORM_PWD_FORGOT}
                 </button>
               </div>
               <div className="relative">
@@ -194,13 +196,13 @@ export default function LoginForm() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
-                  placeholder="••••••••"
+                  placeholder={STATIC_STRINGS.LOGIN_FORM_PWD_PLACEHOLDER}
                   className={`w-full px-3.5 py-2.5 pr-10 rounded-lg border text-[13.5px] bg-white text-slate-900 placeholder-slate-400 transition-colors outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 ${
                     errors.password ? 'border-red-400 bg-red-50' : 'border-slate-200 hover:border-slate-300'
                   }`}
                   {...register('password', {
-                    required: 'Password is required',
-                    minLength: { value: 6, message: 'Password must be at least 6 characters' },
+                    required: STATIC_STRINGS.LOGIN_ERR_PWD_REQ,
+                    minLength: { value: 6, message: STATIC_STRINGS.LOGIN_ERR_PWD_MIN },
                   })}
                 />
                 <button
@@ -225,7 +227,7 @@ export default function LoginForm() {
                 {...register('remember')}
               />
               <label htmlFor="remember" className="text-[13px] text-slate-600 cursor-pointer">
-                Keep me signed in for 30 days
+                {STATIC_STRINGS.LOGIN_FORM_REMEMBER}
               </label>
             </div>
 
@@ -240,11 +242,11 @@ export default function LoginForm() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                   </svg>
-                  Signing in…
+                  {STATIC_STRINGS.LOGIN_FORM_SIGNING_IN}
                 </>
               ) : (
                 <>
-                  Sign In
+                  {STATIC_STRINGS.LOGIN_FORM_SIGN_IN_BTN}
                   <ArrowRight size={15} />
                 </>
               )}
@@ -262,9 +264,9 @@ export default function LoginForm() {
               <table className="w-full text-[12px]">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-100">
-                    <th className="text-left px-3 py-2 text-slate-500 font-semibold">Role</th>
-                    <th className="text-left px-3 py-2 text-slate-500 font-semibold">Email</th>
-                    <th className="px-2 py-2 text-slate-500 font-semibold text-center">Use</th>
+                    <th className="text-left px-3 py-2 text-slate-500 font-semibold">{STATIC_STRINGS.LOGIN_DEMO_ROLE}</th>
+                    <th className="text-left px-3 py-2 text-slate-500 font-semibold">{STATIC_STRINGS.LOGIN_DEMO_EMAIL}</th>
+                    <th className="px-2 py-2 text-slate-500 font-semibold text-center">{STATIC_STRINGS.LOGIN_DEMO_USE}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -288,7 +290,7 @@ export default function LoginForm() {
                           className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-violet-50 hover:bg-violet-100 text-violet-700 text-[10.5px] font-semibold transition-colors"
                         >
                           <ArrowRight size={10} />
-                          Use
+                          {STATIC_STRINGS.LOGIN_DEMO_USE}
                         </button>
                       </td>
                     </tr>
@@ -297,22 +299,22 @@ export default function LoginForm() {
               </table>
             </div>
             <p className="mt-2 text-center text-[11px] text-slate-400">
-              All demo accounts share the same password format: <span className="font-mono text-slate-500">Role@2026</span>
+              {STATIC_STRINGS.LOGIN_DEMO_PWD_NOTICE} <span className="font-mono text-slate-500">Role@2026</span>
             </p>
           </div>
 
           <p className="mt-6 text-center text-[12px] text-slate-500">
-            Don&apos;t have an account?{' '}
+            {STATIC_STRINGS.LOGIN_NO_ACCOUNT}{' '}
             <button type="button" className="text-violet-600 hover:text-violet-700 font-semibold transition-colors">
-              Request access
+              {STATIC_STRINGS.LOGIN_REQUEST_ACCESS}
             </button>
           </p>
 
           <p className="mt-4 text-center text-[11px] text-slate-400">
-            By signing in, you agree to our{' '}
-            <button type="button" className="underline hover:text-slate-600 transition-colors">Terms of Service</button>
-            {' '}and{' '}
-            <button type="button" className="underline hover:text-slate-600 transition-colors">Privacy Policy</button>.
+            {STATIC_STRINGS.LOGIN_TERMS_AGREEMENT}{' '}
+            <button type="button" className="underline hover:text-slate-600 transition-colors">{STATIC_STRINGS.LOGIN_TERMS_SERVICE}</button>
+            {' '}{STATIC_STRINGS.LOGIN_AND}{' '}
+            <button type="button" className="underline hover:text-slate-600 transition-colors">{STATIC_STRINGS.LOGIN_PRIVACY_POLICY}</button>.
           </p>
         </div>
       </div>

@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { ROLE_HOME } from '@/context/AuthContext';
 import type { UserRole } from '@/types';
 
-export function useRoleGuard(allowedRoles: UserRole[]) {
+export function useRoleGuard(allowedRoles: readonly UserRole[]) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
