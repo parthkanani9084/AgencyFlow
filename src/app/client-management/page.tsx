@@ -596,7 +596,7 @@ export default function ClientManagementPage() {
                 type="text"
                 value={form.name}
                 onChange={(e) => { setForm(f => ({ ...f, name: e.target.value })); setErrors(er => ({ ...er, name: '' })); }}
-                placeholder="e.g. Jordan Lee"
+                placeholder={STATIC_STRINGS.CLIENT_MGMT_PLACEHOLDER_NAME}
                 className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 transition ${errors.name ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-white focus:border-violet-400'}`}
               />
               {errors.name && <p className="mt-1 text-[11.5px] text-red-500">{errors.name}</p>}
@@ -607,7 +607,7 @@ export default function ClientManagementPage() {
                 type="text"
                 value={form.brand}
                 onChange={(e) => { setForm(f => ({ ...f, brand: e.target.value })); setErrors(er => ({ ...er, brand: '' })); }}
-                placeholder="e.g. NovaBrew Coffee"
+                placeholder={STATIC_STRINGS.CLIENT_MGMT_PLACEHOLDER_BRAND}
                 className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 transition ${errors.brand ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-white focus:border-violet-400'}`}
               />
               {errors.brand && <p className="mt-1 text-[11.5px] text-red-500">{errors.brand}</p>}
@@ -646,6 +646,7 @@ export default function ClientManagementPage() {
                   type="number"
                   value={form.packageAmount}
                   onChange={(e) => { setForm(f => ({ ...f, packageAmount: e.target.value })); setErrors(er => ({ ...er, packageAmount: '' })); }}
+                  placeholder={STATIC_STRINGS.CLIENT_MGMT_PLACEHOLDER_PACKAGE}
                   className={`w-full pl-8 pr-3.5 py-2.5 rounded-lg border text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 transition ${errors.packageAmount ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-white focus:border-violet-400'}`}
                 />
               </div>
@@ -659,6 +660,7 @@ export default function ClientManagementPage() {
                   type="number"
                   value={form.perDaySpend}
                   onChange={(e) => setForm(f => ({ ...f, perDaySpend: e.target.value }))}
+                  placeholder={STATIC_STRINGS.CLIENT_MGMT_PLACEHOLDER_SPEND}
                   className="w-full pl-8 pr-3.5 py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition"
                 />
               </div>
@@ -690,6 +692,7 @@ export default function ClientManagementPage() {
                 type="text"
                 value={form.adType}
                 onChange={(e) => setForm(f => ({ ...f, adType: e.target.value }))}
+                placeholder={STATIC_STRINGS.CLIENT_MGMT_PLACEHOLDER_AD_RUN}
                 className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition"
               />
             </div>
@@ -699,6 +702,7 @@ export default function ClientManagementPage() {
                 type="number"
                 value={form.reelsPerMonth}
                 onChange={(e) => setForm(f => ({ ...f, reelsPerMonth: e.target.value }))}
+                placeholder={STATIC_STRINGS.CLIENT_MGMT_PLACEHOLDER_REELS}
                 className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition"
               />
             </div>
@@ -725,6 +729,7 @@ export default function ClientManagementPage() {
                     type="url"
                     value={form.websiteLink}
                     onChange={(e) => setForm(f => ({ ...f, websiteLink: e.target.value }))}
+                    placeholder={STATIC_STRINGS.CLIENT_MGMT_PLACEHOLDER_WEBSITE}
                     className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 animate-in slide-in-from-top-1"
                   />
                 </>
@@ -736,6 +741,7 @@ export default function ClientManagementPage() {
                     type="text"
                     value={form.location}
                     onChange={(e) => setForm(f => ({ ...f, location: e.target.value }))}
+                    placeholder={STATIC_STRINGS.CLIENT_MGMT_PLACEHOLDER_LOCATION}
                     className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 animate-in slide-in-from-top-1"
                   />
                 </>

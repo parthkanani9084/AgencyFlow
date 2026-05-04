@@ -8,7 +8,7 @@ import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useTasks } from '@/context/TaskContext';
 import { useAuth } from '@/context/AuthContext';
 import { Task, TaskStatus, TaskPriority, TaskRole, UserRole } from '@/types';
-import { STATIC_STRINGS, ROLES, PAGE_ROLES, TEAM_MEMBERS as CONST_TEAM_MEMBERS } from '@/utils/constants';
+import { STATIC_STRINGS, ROLES, PAGE_ROLES, TEAM_MEMBERS as CONST_TEAM_MEMBERS, CLIENT_OPTIONS } from '@/utils/constants';
 
 const ROLE_CONFIG: Record<string, { color: string; bg: string; icon: React.ElementType }> = {
   [ROLES.SHOOTER]: { color: 'text-blue-700', bg: 'bg-blue-100', icon: Camera },
@@ -26,18 +26,30 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 };
 
 const ROLE_FILTERS: { label: string; value: TaskRole | 'all' }[] = [
-  { label: 'All Roles', value: 'all' },
+  { label: STATIC_STRINGS.TASK_MGMT_ALL_ROLES, value: 'all' },
   { label: ROLES.SHOOTER, value: ROLES.SHOOTER as TaskRole },
   { label: ROLES.EDITOR, value: ROLES.EDITOR as TaskRole },
   { label: ROLES.ADS_MANAGER, value: ROLES.ADS_MANAGER as TaskRole },
 ];
 
-const EMPTY_FORM = {
+interface TaskForm {
+  title: string;
+  assignedTo: string;
+  role: TaskRole;
+  client: string;
+  campaign: string;
+  deadline: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  description: string;
+}
+
+const EMPTY_FORM: TaskForm = {
   title: '',
   assignedTo: '',
   role: ROLES.SHOOTER as TaskRole,
   client: '',
-  campaign: 'General',
+  campaign: STATIC_STRINGS.TASK_MGMT_DEFAULT_CAMPAIGN,
   deadline: '',
   status: 'pending' as TaskStatus,
   priority: 'medium' as TaskPriority,
@@ -45,10 +57,6 @@ const EMPTY_FORM = {
 };
 
 const TEAM_MEMBERS = CONST_TEAM_MEMBERS;
-
-const CLIENT_OPTIONS = [
-  'Luxe Apparel', 'TechWorld', 'Velocity Motors', 'GreenRoot', 'Nexus Capital', 'Orion Fitness',
-];
 
 const checkIsOverdue = (deadline: string, status: TaskStatus) => {
   if (!deadline || status === 'completed') return false;
@@ -68,8 +76,8 @@ export default function TaskManagementPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; task: Task | null }>({ open: false, task: null });
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [errors, setErrors] = useState<Partial<Record<keyof typeof EMPTY_FORM, string>>>({});
+  const [form, setForm] = useState<TaskForm>(EMPTY_FORM);
+  const [errors, setErrors] = useState<Partial<Record<keyof TaskForm, string>>>({});
 
   const isRestricted = useMemo(() => 
     user?.role && [ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER].includes(user.role as any)
@@ -123,7 +131,7 @@ export default function TaskManagementPage() {
       assignedTo: task.assignedTo,
       role: task.role,
       client: task.client,
-      campaign: task.campaign || 'General',
+      campaign: task.campaign || STATIC_STRINGS.TASK_MGMT_DEFAULT_CAMPAIGN,
       deadline: task.deadline,
       status: task.status as TaskStatus,
       priority: task.priority,
@@ -134,13 +142,13 @@ export default function TaskManagementPage() {
   }, []);
 
   const handleSave = () => {
-    if (!form.title.trim()) { setErrors({ title: 'Required' }); return; }
-    if (!form.assignedTo.trim()) { setErrors({ assignedTo: 'Required' }); return; }
+    if (!form.title.trim()) { setErrors({ title: STATIC_STRINGS.TASK_MGMT_REQUIRED }); return; }
+    if (!form.assignedTo.trim()) { setErrors({ assignedTo: STATIC_STRINGS.TASK_MGMT_REQUIRED }); return; }
 
     const payload = {
       ...form,
       campaignId: editingTask?.campaignId || `c_${form.client.toLowerCase().replace(/\s+/g, '_')}`,
-      campaign: editingTask?.campaign || form.campaign || 'General Delivery',
+      campaign: editingTask?.campaign || form.campaign || STATIC_STRINGS.TASK_MGMT_DEFAULT_DELIVERY,
     };
 
     if (editingTask) {
@@ -278,7 +286,7 @@ export default function TaskManagementPage() {
                 filteredTasks.map((task) => {
                   const statusCfg = STATUS_CONFIG[task.status] || STATUS_CONFIG.pending;
                   const StatusIcon = statusCfg.icon;
-                  const roleCfg = ROLE_CONFIG[task.role] || ROLE_CONFIG.Shooter;
+                  const roleCfg = ROLE_CONFIG[task.role] || ROLE_CONFIG[ROLES.SHOOTER];
                   const RoleIcon = roleCfg.icon;
                   const overdue = checkIsOverdue(task.deadline, task.status as TaskStatus);
 
@@ -340,20 +348,31 @@ export default function TaskManagementPage() {
               type="text"
               value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px]"
+              placeholder={STATIC_STRINGS.TASK_MGMT_PLACEHOLDER_TITLE}
+              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition"
+            />
+          </div>
+          <div>
+            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_LABEL_DESCRIPTION}</label>
+            <textarea
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              placeholder={STATIC_STRINGS.TASK_MGMT_PLACEHOLDER_DESC}
+              rows={3}
+              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition resize-none"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_ASSIGNED_TO}</label>
-              <select value={form.assignedTo} onChange={(e) => setForm((f) => ({ ...f, assignedTo: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px]">
+              <select value={form.assignedTo} onChange={(e) => setForm((f) => ({ ...f, assignedTo: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition bg-white">
                 <option value="">{STATIC_STRINGS.TASK_MGMT_SELECT_TEAMMATE}</option>
                 {TEAM_MEMBERS.map((m) => <option key={m.id} value={m.name}>{m.name}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_ROLE}</label>
-              <select value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as TaskRole }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px]">
+              <select value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as TaskRole }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition bg-white">
                 <option value={ROLES.MANAGER}>{ROLES.MANAGER}</option>
                 <option value={ROLES.SHOOTER}>{ROLES.SHOOTER}</option>
                 <option value={ROLES.EDITOR}>{ROLES.EDITOR}</option>
@@ -364,14 +383,14 @@ export default function TaskManagementPage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_CLIENT}</label>
-              <select value={form.client} onChange={(e) => setForm((f) => ({ ...f, client: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px]">
+              <select value={form.client} onChange={(e) => setForm((f) => ({ ...f, client: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition bg-white">
                 <option value="">{STATIC_STRINGS.TASK_MGMT_SELECT_CLIENT}</option>
                 {CLIENT_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_DEADLINE}</label>
-              <input type="date" value={form.deadline} onChange={(e) => setForm((f) => ({ ...f, deadline: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px]" />
+              <input type="date" value={form.deadline} onChange={(e) => setForm((f) => ({ ...f, deadline: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition" />
             </div>
           </div>
           <div className="flex justify-end gap-2.5 pt-4 border-t">

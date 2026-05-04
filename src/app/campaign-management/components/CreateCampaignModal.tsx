@@ -143,35 +143,35 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
                 <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CAMPAIGN_FIELD_NAME} <span className="text-red-500">*</span></label>
                 <input
                   type="text"
-                  placeholder="e.g. Spring Launch Campaign"
+                  placeholder={STATIC_STRINGS.CREATE_CAMPAIGN_PLACEHOLDER_NAME}
                   className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all ${errors.name ? 'border-red-400 bg-red-50' : 'border-slate-200'}`}
                   {...register('name', { required: STATIC_STRINGS.FORM_NAME_REQUIRED })}
                 />
                 {errors.name && <p className="mt-1 text-[11.5px] text-red-600">{errors.name.message}</p>}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                {/* 2. Ad Platform */}
-                <div className="col-span-2">
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-2">{STATIC_STRINGS.CREATE_CAMPAIGN_PLATFORM} <span className="text-red-500">*</span></label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {PLATFORM_OPTIONS.filter(p => p !== STATIC_STRINGS.MULTI_PLATFORM).map((p) => (
-                      <label key={`plat-${p}`} className="flex items-center gap-2 rounded-lg cursor-pointer transition-all">
-                        <input
-                          type="checkbox"
-                          value={p}
-                          className="w-4 h-4 rounded text-violet-600 focus:ring-violet-500/20 border-slate-300"
-                          {...register('platforms', { validate: (val) => val.length > 0 || STATIC_STRINGS.CREATE_CAMPAIGN_ERR_SELECT_PLATFORM })}
-                        />
-                        <span className="text-[13px] text-slate-600">{p}</span>
-                      </label>
-                    ))}
-                  </div>
-                  {errors.platforms && <p className="mt-1 text-[11.5px] text-red-600">{errors.platforms.message as string}</p>}
+              {/* 2. Ad Platform */}
+              <div>
+                <label className="block text-[12.5px] font-semibold text-slate-700 mb-2">{STATIC_STRINGS.CREATE_CAMPAIGN_PLATFORM} <span className="text-red-500">*</span></label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {PLATFORM_OPTIONS.filter(p => p !== STATIC_STRINGS.MULTI_PLATFORM).map((p) => (
+                    <label key={`plat-${p}`} className="flex items-center gap-2 rounded-lg cursor-pointer transition-all">
+                      <input
+                        type="checkbox"
+                        value={p}
+                        className="w-4 h-4 rounded text-violet-600 focus:ring-violet-500/20 border-slate-300"
+                        {...register('platforms', { validate: (val) => val.length > 0 || STATIC_STRINGS.CREATE_CAMPAIGN_ERR_SELECT_PLATFORM })}
+                      />
+                      <span className="text-[13px] text-slate-600">{p}</span>
+                    </label>
+                  ))}
                 </div>
+                {errors.platforms && <p className="mt-1 text-[11.5px] text-red-600">{errors.platforms.message as string}</p>}
+              </div>
 
-                {/* 3. Objective (Moved to full row or separate depending on space) */}
-                <div className="col-span-2">
+              <div className="grid grid-cols-2 gap-4">
+                {/* 3. Objective */}
+                <div>
                   <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_OBJECTIVE} <span className="text-red-500">*</span></label>
                   <select
                     className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all bg-white ${errors.objective ? 'border-red-400' : 'border-slate-200'}`}
@@ -181,9 +181,7 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
                     {OBJECTIVE_OPTIONS.map((o) => <option key={`obj-${o}`} value={o}>{o}</option>)}
                   </select>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
                 {/* 4. Daily Budget (INR) */}
                 <div>
                   <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_BUDGET} <span className="text-red-500">*</span></label>
@@ -191,49 +189,61 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
                     <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[13px]">{STATIC_STRINGS.CURRENCY_SYMBOL}</span>
                     <input
                       type="number"
-                      placeholder="500"
+                      placeholder={STATIC_STRINGS.CREATE_CAMPAIGN_PLACEHOLDER_BUDGET}
                       className={`w-full pl-8 pr-3.5 py-2.5 rounded-lg border text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all ${errors.dailyBudget ? 'border-red-400 bg-red-50' : 'border-slate-200'}`}
                       {...register('dailyBudget', { required: STATIC_STRINGS.CREATE_CAMPAIGN_ERR_BUDGET_REQUIRED })}
                     />
                   </div>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 {/* 5. Location */}
                 <div>
                   <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_LOCATION}</label>
                   <input
                     type="text"
-                    placeholder="e.g. Mumbai, Maharashtra"
+                    placeholder={STATIC_STRINGS.CREATE_CAMPAIGN_PLACEHOLDER_LOCATION}
                     className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all"
                     {...register('location')}
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 {/* 6. Target Audience */}
                 <div>
                   <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_AUDIENCE}</label>
                   <input
                     type="text"
-                    placeholder="e.g. Students 18-24"
+                    placeholder={STATIC_STRINGS.CREATE_CAMPAIGN_PLACEHOLDER_AUDIENCE}
                     className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all"
                     {...register('targetAudience')}
-                  />
-                </div>
-                {/* 7. Photo/Video Location */}
-                <div>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_MEDIA_LOCATION}</label>
-                  <input
-                    type="text"
-                    placeholder="Drive link or storage path"
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all"
-                    {...register('photoVideoLocation')}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                {/* 8. Ad Manager (Relocated) */}
+                {/* 7. Photo/Video Location */}
+                <div>
+                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_MEDIA_LOCATION}</label>
+                  <input
+                    type="text"
+                    placeholder={STATIC_STRINGS.CREATE_CAMPAIGN_PLACEHOLDER_MEDIA_LOCATION}
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all"
+                    {...register('photoVideoLocation')}
+                  />
+                </div>
+                {/* 8. Campaign Deadline */}
+                <div>
+                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_DEADLINE} <span className="text-red-500">*</span></label>
+                  <input
+                    type="date"
+                    className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all ${errors.deadline ? 'border-red-400 bg-red-50' : 'border-slate-200'}`}
+                    {...register('deadline', { required: STATIC_STRINGS.FORM_EMAIL_REQUIRED })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {/* 9. Ad Manager */}
                 <div>
                   <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_AD_MANAGER} <span className="text-red-500">*</span></label>
                   <select
@@ -246,23 +256,14 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
                     ))}
                   </select>
                 </div>
-                {/* Campaign Deadline from original flow (kept for data completeness) */}
-                <div>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_DEADLINE} <span className="text-red-500">*</span></label>
-                  <input
-                    type="date"
-                    className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all ${errors.deadline ? 'border-red-400 bg-red-50' : 'border-slate-200'}`}
-                    {...register('deadline', { required: STATIC_STRINGS.FORM_EMAIL_REQUIRED })}
-                  />
-                </div>
               </div>
 
-              {/* 9. Note */}
+              {/* 10. Note */}
               <div>
                 <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_NOTE}</label>
                 <textarea
-                  rows={3}
-                  placeholder="Additional campaign instructions..."
+                  rows={2}
+                  placeholder={STATIC_STRINGS.CREATE_CAMPAIGN_PLACEHOLDER_NOTE}
                   className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all resize-none placeholder-slate-400"
                   {...register('note')}
                 />

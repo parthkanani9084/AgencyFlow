@@ -2,6 +2,13 @@ import { ROLES } from '@/constants/roles';
 export { ROLES };
 
 export const STATIC_STRINGS = {
+  // Task Management Defaults
+  TASK_MGMT_ALL_ROLES: 'All Roles',
+  TASK_MGMT_LABEL_DESCRIPTION: 'Description',
+  TASK_MGMT_DEFAULT_CAMPAIGN: 'General',
+  TASK_MGMT_DEFAULT_DELIVERY: 'General Delivery',
+  TASK_MGMT_REQUIRED: 'Required',
+
   //Super Admin Dashboard
   DASHBOARD_TITLE: 'Super Admin Dashboard',
   DASHBOARD_LOGOUT: 'Logout',
@@ -297,6 +304,12 @@ export const STATIC_STRINGS = {
   DASHBOARD_EXPORT: 'Export',
   DASHBOARD_NEW_CAMPAIGN: 'New Campaign',
   DASHBOARD_ARIA_DATE_RANGE: 'Select date range',
+  CREATE_CAMPAIGN_PLACEHOLDER_NAME: 'Enter your campaign name',
+  CREATE_CAMPAIGN_PLACEHOLDER_BUDGET: 'Enter daily budget',
+  CREATE_CAMPAIGN_PLACEHOLDER_LOCATION: 'Enter target locations',
+  CREATE_CAMPAIGN_PLACEHOLDER_AUDIENCE: 'Enter target audience details',
+  CREATE_CAMPAIGN_PLACEHOLDER_MEDIA_LOCATION: 'Enter drive link or storage path',
+  CREATE_CAMPAIGN_PLACEHOLDER_NOTE: 'Enter additional campaign instructions',
   DASHBOARD_ROUTE_CAMPAIGN_MGMT: '/campaign-management',
   DASHBOARD_DEFAULT_DATE_RANGE: '30d',
   DASHBOARD_INDICATOR_STEADY: 'Steady',
@@ -491,6 +504,14 @@ export const STATIC_STRINGS = {
   CLIENT_MGMT_LABEL_PLATFORM_TYPE: 'Platform Type',
   CLIENT_MGMT_LABEL_WEBSITE_LINK: 'Website Link',
   CLIENT_MGMT_LABEL_LOCATION: 'Location',
+  CLIENT_MGMT_PLACEHOLDER_NAME: 'Enter client full name',
+  CLIENT_MGMT_PLACEHOLDER_BRAND: 'Enter brand or business name',
+  CLIENT_MGMT_PLACEHOLDER_PACKAGE: 'Enter package amount',
+  CLIENT_MGMT_PLACEHOLDER_SPEND: 'Enter per day spend',
+  CLIENT_MGMT_PLACEHOLDER_AD_RUN: 'Enter ad types to run',
+  CLIENT_MGMT_PLACEHOLDER_REELS: 'Enter number of reels',
+  CLIENT_MGMT_PLACEHOLDER_WEBSITE: 'Enter website URL',
+  CLIENT_MGMT_PLACEHOLDER_LOCATION: 'Enter business location',
   CLIENT_MGMT_EDIT_CLIENT: 'Edit Client',
   CLIENT_MGMT_DELETE_CLIENT: 'Delete Client',
   CLIENT_MGMT_DELETE_CONFIRM: 'Are you sure you want to delete',
@@ -614,12 +635,15 @@ export const STATIC_STRINGS = {
   TASK_MGMT_NO_TASKS: 'No tasks found',
   TASK_MGMT_EDIT_TASK: 'Edit Task',
   TASK_MGMT_ADD_NEW_TASK: 'Add New Task',
+  TASK_MGMT_PLACEHOLDER_TITLE: 'Enter task title',
+  TASK_MGMT_PLACEHOLDER_DESC: 'Enter detailed task description',
   TASK_MGMT_LABEL_TITLE: 'Task Title',
   TASK_MGMT_SELECT_TEAMMATE: 'Select teammate…',
   TASK_MGMT_SELECT_CLIENT: 'Select client…',
   TASK_MGMT_CONFIRM_DELETE: 'Confirm Deletion',
   TASK_MGMT_DELETE_PROMPT: 'Are you sure you want to permanently delete the task',
   TASK_MGMT_BTN_DELETE: 'Delete',
+
   TEAM_PAGE_TITLE: 'Team',
   TEAM_PAGE_SUBTITLE_PART1: 'active',
   TEAM_PAGE_SUBTITLE_PART2: 'total members',
