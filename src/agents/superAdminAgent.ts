@@ -1,38 +1,60 @@
-import { superAdminService } from '@/services/superAdminService';
+import { mockService } from '@/services/mockService';
 
 export const superAdminAgent = {
-  async processAction(action: 'get_owners' | 'add_owner' | 'delete_owner' | 'update_owner', payload: any) {
-    console.log(`[SuperAdminAgent] Processing action: ${action}`, payload);
+  async processAction(params: { action: string; module: string; payload: any; role: string }) {
+    const { action, module, payload, role } = params;
+    
+    console.log(`[SuperAdminAgent] Processing: ${module}/${action}`, payload);
 
-    switch (action) {
-      case 'get_owners':
-        const owners = await superAdminService.getOwners();
-        return { success: true, data: owners };
+    if (role !== 'Super Admin') {
+      return { success: false, error: 'Unauthorized: Super Admin role required' };
+    }
 
-      case 'add_owner':
-        if (!payload.name || !payload.email || !payload.agencyName) {
-          return { success: false, error: 'Name, email, and agency name are required' };
-        }
-        // Basic validation
-        if (!payload.email.includes('@')) {
-          return { success: false, error: 'Invalid email format' };
-        }
-        return await superAdminService.addOwner(payload);
+    try {
+      switch (module) {
+        case 'business-agency':
+          switch (action) {
+            case 'list':
+              return { success: true, data: await mockService.agency.getAll() };
+            case 'add':
+              if (!payload.name || !payload.email) {
+                return { success: false, error: 'Name and Email are required' };
+              }
+              const newAgency = await mockService.agency.add(payload);
+              return { success: true, data: newAgency };
+            case 'update':
+              if (!payload.id) return { success: false, error: 'ID is required' };
+              const updatedAgency = await mockService.agency.update(payload.id, payload.data);
+              return { success: true, data: updatedAgency };
+            case 'delete':
+              if (!payload.id) return { success: false, error: 'ID is required' };
+              await mockService.agency.delete(payload.id);
+              return { success: true };
+            default:
+              return { success: false, error: 'Unknown agency action' };
+          }
 
-      case 'delete_owner':
-        if (!payload.id) {
-          return { success: false, error: 'Owner ID is required' };
-        }
-        return await superAdminService.deleteOwner(payload.id);
+        case 'subscription':
+          switch (action) {
+            case 'list':
+              return { success: true, data: await mockService.subscription.getAll() };
+            case 'update-status':
+              if (!payload.id || !payload.status) return { success: false, error: 'ID and Status are required' };
+              const updatedSub = await mockService.subscription.updateStatus(payload.id, payload.status);
+              return { success: true, data: updatedSub };
+            case 'update-plan':
+               if (!payload.id) return { success: false, error: 'ID is required' };
+               const updatedPlan = await mockService.subscription.updatePlan(payload.id, payload.data);
+               return { success: true, data: updatedPlan };
+            default:
+              return { success: false, error: 'Unknown subscription action' };
+          }
 
-      case 'update_owner':
-        if (!payload.id) {
-          return { success: false, error: 'Owner ID is required' };
-        }
-        return await superAdminService.updateOwner(payload.id, payload.data);
-
-      default:
-        return { success: false, error: 'Unknown action' };
+        default:
+          return { success: false, error: 'Unknown module' };
+      }
+    } catch (error: any) {
+      return { success: false, error: error.message || 'An error occurred' };
     }
   }
 };

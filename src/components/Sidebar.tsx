@@ -61,8 +61,9 @@ export default function Sidebar() {
     { id: 'nav-campaigns',     label: 'Campaigns',     icon: Megaphone,       href: '/campaign-management',   badge: 3, group: 'main', allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
     { id: 'nav-clients',       label: 'Clients',       icon: Briefcase,       href: '/client-management',     group: 'main',      allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
     { id: 'nav-tasks',         label: 'Tasks',         icon: CheckSquare,     href: '/task-management',       badge: tasks.length, group: 'main', allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
-    { id: 'nav-sa-dashboard',  label: 'Overview',      icon: LayoutDashboard, href: '/superadmin/dashboard',  group: 'main',      allowedRoles: [ROLES.SUPER_ADMIN] },
-    { id: 'nav-sa-owners',     label: 'Manage Owners', icon: Users,           href: '/superadmin/dashboard',  group: 'main',      allowedRoles: [ROLES.SUPER_ADMIN] },
+    { id: 'nav-sa-dashboard',  label: 'Dashboard',      icon: LayoutDashboard, href: '/superadmin/dashboard',  group: 'main',      allowedRoles: [ROLES.SUPER_ADMIN] },
+    { id: 'nav-sa-agencies',   label: 'Business Agency', icon: Briefcase,       href: '/superadmin/business-agency', group: 'main',      allowedRoles: [ROLES.SUPER_ADMIN] },
+    { id: 'nav-sa-subs',       label: 'Subscription',    icon: Megaphone,       href: '/superadmin/subscription', group: 'main',      allowedRoles: [ROLES.SUPER_ADMIN] },
 
     // Role Dashboards
     { id: 'nav-manager',       label: 'Manager',       icon: UserCheck,       href: '/manager-dashboard',     group: 'roles',     allowedRoles: [ROLES.OWNER, ROLES.MANAGER] },
@@ -79,9 +80,7 @@ export default function Sidebar() {
     { id: 'nav-team',          label: 'Team',          icon: Users,           href: '/team',                  group: 'settings',  allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
     { id: 'nav-notifications', label: 'Notifications', icon: Bell,            href: '/notifications',         badge: unreadCount > 0 ? unreadCount : undefined, group: 'settings', allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
     { id: 'nav-settings',      label: 'Settings',      icon: Settings,        href: '/settings',              group: 'settings',  allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
-    
-    // Super Admin - Settings
-    { id: 'nav-sa-settings',   label: 'System Settings', icon: Settings,      href: '/settings',              group: 'settings',  allowedRoles: [ROLES.SUPER_ADMIN] },
+    // Super Admin - Settings (Removed as per request)
   ];
 
   // Filter nav items to only those the current user's role can access

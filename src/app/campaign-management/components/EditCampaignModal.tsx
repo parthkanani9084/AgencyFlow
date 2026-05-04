@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form';
 import Modal from '@/components/ui/Modal';
 import { useAuth } from '@/context/AuthContext';
 import { auditService } from '@/lib/services/auditService';
-import { toast } from 'sonner';
 
 interface CampaignFormValues {
   name: string;
