@@ -37,3 +37,4 @@ jest-test-results.json
 turbo/
 # Added by code-review-graph
 .code-review-graph/
+.env

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { Task, TaskStatus, TaskRole, Notification, AuthUser, TaskNote, ActivityLog } from '@/types';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Task, TaskRole, Notification, TaskNote, ActivityLog } from '@/types';
 import { useAuth } from './AuthContext';
 
 interface TaskContextType {
@@ -16,11 +16,8 @@ interface TaskContextType {
 }
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
-
 export const DEMO_VERSION = 'v1.9'; 
-
 export const INITIAL_TASKS: Task[] = [
-
   {
     id: 't1', title: 'Product Shoot: Summer Footwear', assignedTo: 'Marco Reyes',
     role: 'Shooter', client: 'Luxe Apparel', campaign: 'Summer Collection',
@@ -40,8 +37,6 @@ export const INITIAL_TASKS: Task[] = [
     description: 'Focus on small gadgets and accessories.',
     roleNotes: [{ role: 'Shooter', message: 'All raws uploaded to the main server.', timestamp: new Date(Date.now() - 864000000).toISOString(), author: 'Marco Reyes' }]
   },
-
-  // --- EDITOR TASKS ---
   {
     id: 't4', title: 'Color Grading: Spring Lookbook', assignedTo: 'Jin Park',
     role: 'Editor', client: 'Luxe Apparel', campaign: 'Spring Launch',
@@ -64,8 +59,6 @@ export const INITIAL_TASKS: Task[] = [
       { role: 'Editor', message: 'Final exports uploaded to Dropbox.', timestamp: new Date(Date.now() - 864000000).toISOString(), author: 'Jin Park' }
     ]
   },
-
-  // --- ADS MANAGER TASKS ---
   {
     id: 't7', title: 'Ad Set Creation: Meta Conversion Ads', assignedTo: 'Sofia Nguyen',
     role: 'Ads Manager', client: 'Luxe Apparel', campaign: 'Summer Sale',

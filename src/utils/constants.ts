@@ -910,31 +910,6 @@ export const CAMPAIGN_STATUS_OPTIONS = [
 
 export const CAMPAIGN_STAGE_OPTIONS = ['in draft', 'in review', 'process', 'publish'] as const;
 
-export const CAMPAIGN_STATUS_STYLES: Record<string, string> = {
-  [STATIC_STRINGS.ADS_STATUS_ACTIVE]: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
-  [STATIC_STRINGS.ADS_STATUS_DRAFT]: 'bg-slate-100 text-slate-500 border border-slate-200',
-  [STATIC_STRINGS.ADS_STATUS_PAUSED]: 'bg-orange-50 text-orange-700 border border-orange-200',
-  [STATIC_STRINGS.ADS_STATUS_COMPLETED]: 'bg-blue-50 text-blue-700 border border-blue-200',
-  [STATIC_STRINGS.ADS_STATUS_ARCHIVED]: 'bg-slate-100 text-slate-400 border border-slate-200',
-};
-
-export const CAMPAIGN_STAGE_STYLES: Record<string, string> = {
-  'in draft': 'bg-slate-100 text-slate-600',
-  'in review': 'bg-sky-50 text-sky-700',
-  'process': 'bg-violet-50 text-violet-700',
-  'publish': 'bg-emerald-50 text-emerald-700',
-};
-
-export const PLATFORM_STYLES: Record<string, string> = {
-  Meta: 'bg-blue-50 text-blue-700',
-  Facebook: 'bg-blue-50 text-blue-700',
-  Instagram: 'bg-pink-50 text-pink-700 px-2.5',
-  Google: 'bg-red-50 text-red-600',
-  TikTok: 'bg-slate-800 text-white',
-  LinkedIn: 'bg-sky-50 text-sky-700',
-  Multi: 'bg-violet-50 text-violet-700',
-};
-
 export const ADS_DATE_RANGE_OPTIONS = [
   { label: STATIC_STRINGS.ADS_DATE_RANGE_7D, value: '7d' },
   { label: STATIC_STRINGS.ADS_DATE_RANGE_30D, value: '30d' },

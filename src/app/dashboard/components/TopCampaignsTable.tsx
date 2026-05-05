@@ -3,7 +3,8 @@
 import React from 'react';
 import { ArrowUpRight, ArrowDownRight, ExternalLink } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { STATIC_STRINGS, PLATFORM_STYLES } from '@/utils/constants';
+import { STATIC_STRINGS } from '@/utils/constants';
+import { PLATFORM_STYLES, UI_PALETTE } from '@/utils/ui-configs';
 
 interface CampaignRow {
   id: string;
@@ -19,10 +20,10 @@ interface CampaignRow {
 }
 
 const STAGE_COLORS: Record<string, string> = {
-  [STATIC_STRINGS.DASHBOARD_STAGE_ADS_LIVE]: 'bg-emerald-50 text-emerald-700',
-  [STATIC_STRINGS.DASHBOARD_STAGE_REVIEW]: 'bg-blue-50 text-blue-700',
-  [STATIC_STRINGS.DASHBOARD_STAGE_EDITING]: 'bg-amber-50 text-amber-700',
-  [STATIC_STRINGS.DASHBOARD_STAGE_SHOOTING]: 'bg-violet-50 text-violet-700',
+  [STATIC_STRINGS.DASHBOARD_STAGE_ADS_LIVE]: UI_PALETTE.SUCCESS,
+  [STATIC_STRINGS.DASHBOARD_STAGE_REVIEW]: UI_PALETTE.INFO,
+  [STATIC_STRINGS.DASHBOARD_STAGE_EDITING]: UI_PALETTE.WARNING,
+  [STATIC_STRINGS.DASHBOARD_STAGE_SHOOTING]: UI_PALETTE.PRIMARY,
 };
 
 const TOP_CAMPAIGNS: CampaignRow[] = [

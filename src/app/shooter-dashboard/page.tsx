@@ -2,13 +2,14 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { Camera, CheckCircle2, Timer, Circle, Calendar, ChevronRight, AlertCircle } from 'lucide-react';
+import { Camera, CheckCircle2,Calendar, ChevronRight, AlertCircle } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/context/AuthContext';
 import { useTasks } from '@/context/TaskContext';
-import { Task, TaskStatus, TaskPriority } from '@/types';
+import { Task, TaskStatus } from '@/types';
 import TaskCompletionModal from '@/components/TaskCompletionModal';
 import { STATIC_STRINGS, PAGE_ROLES, ROLES, TEAM_MEMBERS as CONST_TEAM_MEMBERS } from '@/utils/constants';
+import { PRIORITY_STYLES as PRIORITY_DOT, STATUS_CONFIG } from '@/utils/ui-configs';
 import { UserRole } from '@/types';
 
 const WORKFLOW_STAGES = [
@@ -18,21 +19,6 @@ const WORKFLOW_STAGES = [
   STATIC_STRINGS.DASHBOARD_STAGE_ADS,
   STATIC_STRINGS.DASHBOARD_STAGE_COMPLETE
 ];
-
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  pending: { label: STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_PENDING, color: 'text-slate-600', bg: 'bg-slate-100', icon: Circle },
-  in_progress: { label: STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_IN_PROGRESS, color: 'text-amber-700', bg: 'bg-amber-100', icon: Timer },
-  completed: { label: STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_COMPLETED, color: 'text-emerald-700', bg: 'bg-emerald-100', icon: CheckCircle2 },
-};
-
-const PRIORITY_DOT: Record<TaskPriority, string> = {
-  low: 'bg-slate-400',
-  medium: 'bg-amber-400',
-  high: 'bg-red-500',
-};
-
-
-
 // --- Helpers ---
 const isOverdue = (deadline: string, status: TaskStatus) => {
   return status !== 'completed' && new Date(deadline) < new Date();

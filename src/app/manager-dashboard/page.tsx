@@ -8,8 +8,6 @@ import { useTasks } from '@/context/TaskContext';
 import { Task, TaskStatus, TaskPriority, TaskRole } from '@/types';
 import TaskCompletionModal from '@/components/TaskCompletionModal';
 import { useAuth } from '@/context/AuthContext';
-
-
 import { STATIC_STRINGS, PAGE_ROLES, ROLES, TEAM_MEMBERS as CONST_TEAM_MEMBERS } from '@/utils/constants';
 import { UserRole } from '@/types';
  

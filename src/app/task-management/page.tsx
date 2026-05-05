@@ -4,27 +4,14 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import Modal from '@/components/ui/Modal';
 import Pagination from '@/components/ui/Pagination';
-import { Plus, Search, CheckSquare, AlertCircle, ChevronDown, User, Pencil, Trash2, CheckCircle2, Circle, Timer, Camera, Film, Megaphone, TrendingUp } from 'lucide-react';
+import { Plus, Search, CheckSquare, AlertCircle, ChevronDown, Pencil, Trash2, CheckCircle2, Timer } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useTasks } from '@/context/TaskContext';
 import { useAuth } from '@/context/AuthContext';
 import { Task, TaskStatus, TaskPriority, TaskRole, UserRole } from '@/types';
 import { STATIC_STRINGS, ROLES, PAGE_ROLES, TEAM_MEMBERS as CONST_TEAM_MEMBERS, CLIENT_OPTIONS } from '@/utils/constants';
+import { ROLE_CONFIG, STATUS_CONFIG } from '@/utils/ui-configs';
 
-const ROLE_CONFIG: Record<string, { color: string; bg: string; icon: React.ElementType }> = {
-  [ROLES.SHOOTER]: { color: 'text-blue-700', bg: 'bg-blue-100', icon: Camera },
-  [ROLES.EDITOR]: { color: 'text-purple-700', bg: 'bg-purple-100', icon: Film },
-  [ROLES.ADS_MANAGER]: { color: 'text-orange-700', bg: 'bg-orange-100', icon: Megaphone },
-  [ROLES.SOCIAL_MEDIA_MANAGER]: { color: 'text-pink-700', bg: 'bg-pink-100', icon: TrendingUp },
-  [ROLES.OWNER]: { color: 'text-violet-700', bg: 'bg-violet-100', icon: User },
-  [ROLES.MANAGER]: { color: 'text-teal-700', bg: 'bg-teal-100', icon: User },
-};
-
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  pending: { label: STATIC_STRINGS.TASK_MGMT_PENDING, color: 'text-slate-600', bg: 'bg-slate-100', icon: Circle },
-  in_progress: { label: STATIC_STRINGS.TASK_MGMT_IN_PROGRESS, color: 'text-amber-700', bg: 'bg-amber-100', icon: Timer },
-  completed: { label: STATIC_STRINGS.TASK_MGMT_COMPLETED, color: 'text-emerald-700', bg: 'bg-emerald-100', icon: CheckCircle2 },
-};
 
 const ROLE_FILTERS: { label: string; value: TaskRole | 'all' }[] = [
   { label: STATIC_STRINGS.TASK_MGMT_ALL_ROLES, value: 'all' },

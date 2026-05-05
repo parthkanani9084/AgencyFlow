@@ -9,7 +9,7 @@ import { STATIC_STRINGS, ROLES } from '@/utils/constants';
 interface TaskCompletionModalProps {
   open: boolean;
   onClose: () => void;
-  task: Task | Reel | any | null; // Allow Reel and any for flexibility in dashboards
+  task: Task | Reel | any | null;
   onComplete: (taskId: string, notes: string, nextMember?: { name: string; role: string }, screenshot?: string) => void;
   userRole: UserRole | string;
   teamMembers: readonly { id: string; name: string; role: string }[];

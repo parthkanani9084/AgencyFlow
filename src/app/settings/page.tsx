@@ -18,7 +18,6 @@ interface ProfileForm {
   email: string;
   bio: string;
 }
-
 interface TabItem {
   id: SettingsTab;
   label: string;

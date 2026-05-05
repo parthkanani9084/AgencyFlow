@@ -20,6 +20,11 @@ import {
   ADS_DATE_RANGE_KEYS,
   ADS_DATE_RANGE_OPTIONS 
 } from '@/utils/constants';
+import { 
+  PLATFORM_BRAND_COLORS,
+  PLATFORM_STYLES, 
+  CAMPAIGN_STATUS_STYLES as STATUS_STYLES 
+} from '@/utils/ui-configs';
 import { UserRole } from '@/types';
 
 interface AdCampaign {
@@ -53,24 +58,11 @@ const WEEKLY_DATA = [
 ];
 
 const PLATFORM_BREAKDOWN = [
-  { platform: ADS_FILTER_KEYS.META,      spend: 8000,  leads: 452, color: '#1877f2' },
-  { platform: ADS_FILTER_KEYS.GOOGLE,    spend: 2300,  leads: 152, color: '#34a853' },
-  { platform: ADS_FILTER_KEYS.INSTAGRAM, spend: 3500,  leads: 218, color: '#e1306c' },
-  { platform: ADS_FILTER_KEYS.TIKTOK,    spend: 2500,  leads: 88,  color: '#010101' },
+  { platform: ADS_FILTER_KEYS.META,      spend: 8000,  leads: 452, color: PLATFORM_BRAND_COLORS.Meta },
+  { platform: ADS_FILTER_KEYS.GOOGLE,    spend: 2300,  leads: 152, color: PLATFORM_BRAND_COLORS.Google },
+  { platform: ADS_FILTER_KEYS.INSTAGRAM, spend: 3500,  leads: 218, color: PLATFORM_BRAND_COLORS.Instagram },
+  { platform: ADS_FILTER_KEYS.TIKTOK,    spend: 2500,  leads: 88,  color: PLATFORM_BRAND_COLORS.TikTok },
 ];
-
-const PLATFORM_STYLES: Record<string, string> = {
-  [ADS_FILTER_KEYS.META]:      'bg-blue-100 text-blue-700',
-  [ADS_FILTER_KEYS.GOOGLE]:    'bg-green-100 text-green-700',
-  [ADS_FILTER_KEYS.INSTAGRAM]: 'bg-pink-100 text-pink-700',
-  [ADS_FILTER_KEYS.TIKTOK]:    'bg-slate-100 text-slate-700',
-};
-
-const STATUS_STYLES: Record<string, string> = {
-  [STATIC_STRINGS.ADS_STATUS_ACTIVE]:    'bg-emerald-100 text-emerald-700',
-  [STATIC_STRINGS.ADS_STATUS_PAUSED]:    'bg-amber-100 text-amber-700',
-  [STATIC_STRINGS.ADS_STATUS_COMPLETED]: 'bg-slate-100 text-slate-600',
-};
 
 const DATE_RANGES = ADS_DATE_RANGE_OPTIONS;
 

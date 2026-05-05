@@ -15,10 +15,10 @@ import LogPerformanceModal from './LogPerformanceModal';
 import CampaignHistoryModal from './CampaignHistoryModal';
 import Pagination from '@/components/ui/Pagination';
 import {
- STATIC_STRINGS, ROLES,
-  CAMPAIGN_STATUS_OPTIONS, CAMPAIGN_STAGE_OPTIONS,
-  CAMPAIGN_STATUS_STYLES, CAMPAIGN_STAGE_STYLES, PLATFORM_STYLES
+  STATIC_STRINGS, ROLES,
+  CAMPAIGN_STATUS_OPTIONS, CAMPAIGN_STAGE_OPTIONS
 } from '@/utils/constants';
+import { CAMPAIGN_STATUS_STYLES, CAMPAIGN_STAGE_STYLES, PLATFORM_STYLES } from '@/utils/ui-configs';
 
 
 type CampaignStatus = 'active' | 'draft' | 'paused' | 'completed' | 'archived';
