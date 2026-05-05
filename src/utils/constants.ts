@@ -2,6 +2,7 @@ import { ROLES } from '@/constants/roles';
 export { ROLES };
 
 export const STATIC_STRINGS = {
+  TITLE: 'AgencyFlow',
   // Task Management Defaults
   TASK_MGMT_ALL_ROLES: 'All Roles',
   TASK_MGMT_LABEL_DESCRIPTION: 'Description',
@@ -129,6 +130,16 @@ export const STATIC_STRINGS = {
   ADS_STATUS_COMPLETED: 'completed',
   ADS_STATUS_DRAFT: 'draft',
   ADS_STATUS_ARCHIVED: 'archived',
+
+  ADS_CHART_WEEK_1: 'Week 1',
+  ADS_CHART_WEEK_2: 'Week 2',
+  ADS_CHART_WEEK_3: 'Week 3',
+  ADS_CHART_WEEK_4: 'Week 4',
+
+  ADS_PLATFORM_META: 'Meta',
+  ADS_PLATFORM_GOOGLE: 'Google',
+  ADS_PLATFORM_INSTAGRAM: 'Instagram',
+  ADS_PLATFORM_TIKTOK: 'TikTok',
 
   // Ads Reporting
   ADS_REPORT_TITLE: "Today's Performance Overview",
@@ -480,6 +491,15 @@ export const STATIC_STRINGS = {
   CLIENT_MGMT_ADD_CLIENT: 'Add Client',
   CLIENT_MGMT_SEARCH_PLACEHOLDER: 'Search by name or brand…',
   CLIENT_MGMT_NO_CLIENTS: 'No clients found',
+  SETTINGS_ERR_NAME_REQ: 'Name is required',
+  SETTINGS_TOAST_PROFILE_UPDATED: 'Profile updated successfully',
+  SETTINGS_ERR_CURRENT_PWD_REQ: 'Enter your current password',
+  SETTINGS_ERR_PWD_MIN: 'New password must be at least 8 characters',
+  SETTINGS_ERR_PWD_MISMATCH: 'Passwords do not match',
+  SETTINGS_TOAST_PWD_CHANGED: 'Password changed successfully',
+  SETTINGS_TOAST_NOTIF_UPDATED: 'Notification preferences updated',
+  SETTINGS_TOAST_ACCENT_APPLIED: 'accent applied',
+  SETTINGS_TOAST_SIDEBAR_COMING: 'mode coming in next update',
   CLIENT_MGMT_RECORD_PAYMENT: 'Record Client Payment',
   CLIENT_MGMT_RECORD_PAYMENT_SUBTITLE: 'Log a new payment received from this client',
   CLIENT_MGMT_RECORD_PAYMENT_BTN: 'Record Payment',
@@ -643,6 +663,9 @@ export const STATIC_STRINGS = {
   TASK_MGMT_CONFIRM_DELETE: 'Confirm Deletion',
   TASK_MGMT_DELETE_PROMPT: 'Are you sure you want to permanently delete the task',
   TASK_MGMT_BTN_DELETE: 'Delete',
+  TASK_MGMT_PAGINATION_SHOW: 'Show',
+  TASK_MGMT_PAGINATION_OF: 'of',
+  TASK_MGMT_PAGINATION_ENTRIES: 'entries',
 
   TEAM_PAGE_TITLE: 'Team',
   TEAM_PAGE_SUBTITLE_PART1: 'active',
@@ -857,6 +880,20 @@ export const STORAGE_KEYS = {
   USER_DATA: 'user_data',
   ADS_METRICS: 'agencyflow_ads_metrics',
   CAMPAIGNS: 'agencyflow_campaigns',
+} as const;
+
+export const ADS_FILTER_KEYS = {
+  ALL: 'all',
+  META: 'Meta',
+  GOOGLE: 'Google',
+  INSTAGRAM: 'Instagram',
+  TIKTOK: 'TikTok',
+} as const;
+
+export const ADS_DATE_RANGE_KEYS = {
+  LAST_7D: '7d',
+  LAST_30D: '30d',
+  LAST_90D: '90d',
 } as const;
 
 export const STORAGE_KEY_CAMPAIGNS = STORAGE_KEYS.CAMPAIGNS;

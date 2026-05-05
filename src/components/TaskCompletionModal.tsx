@@ -44,7 +44,7 @@ export default function TaskCompletionModal({
       }
     })();
 
-    if (roleToCheck === ROLES.EDITOR) return roles;
+    if (roleToCheck === ROLES.EDITOR || roleToCheck === ROLES.SHOOTER) return roles;
     
     // Default fallback for admin roles or non-editor handoffs
     return Array.from(new Set([...roles, ROLES.MANAGER, ROLES.OWNER]));

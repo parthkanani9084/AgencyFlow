@@ -29,7 +29,6 @@ export const authService = {
   },
 
   async verifyOTP(email: string, otp: string): Promise<{ success: boolean; user?: AuthUser; error?: string }> {
-    // Explicitly allow '123456' for the Super Admin for testing convenience
     const isHardcodedValid = email === SUPER_ADMIN_CREDENTIALS.email && otp === '123456';
     
     if (isHardcodedValid || (mockOTPs[email] && mockOTPs[email] === otp)) {

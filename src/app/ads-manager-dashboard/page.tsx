@@ -31,11 +31,9 @@ export default function AdsManagerDashboardPage() {
   
   const { user } = useAuth();
   const { tasks: allTasks, updateTask } = useTasks();
-  
   const [activeTab, setActiveTab] = useState<TaskStatus>('pending');
   const [mounted, setMounted] = useState(false);
   const [allCampaigns, setAllCampaigns] = useState<Campaign[]>([]);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 

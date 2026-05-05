@@ -5,10 +5,8 @@ export const SUPER_ADMIN_CREDENTIALS = {
   password: 'Admin@2026',
 };
 
-// Mock OTP storage (temporary)
 export const mockOTPs: Record<string, string> = {};
 
-// Mock Owners
 export const mockOwners: TeamMember[] = [
   {
     id: 'u1',

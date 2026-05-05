@@ -13,6 +13,7 @@ import DeleteConfirmModal from './DeleteConfirmModal';
 import EditCampaignModal from './EditCampaignModal';
 import LogPerformanceModal from './LogPerformanceModal';
 import CampaignHistoryModal from './CampaignHistoryModal';
+import Pagination from '@/components/ui/Pagination';
 import {
  STATIC_STRINGS, ROLES,
   CAMPAIGN_STATUS_OPTIONS, CAMPAIGN_STAGE_OPTIONS,
@@ -68,14 +69,9 @@ const INITIAL_CAMPAIGNS: Campaign[] = [
   { id: 'camp-012', name: 'Tech Event Sponsorship', client: 'Synapse Tech', status: 'active', stage: 'process', assignee: 'Marco Reyes', assigneeInitials: 'MR', deadline: '04/16/2026', spend: '$2,400', budget: '$7,000', leads: 88, roas: 2.1, platform: 'LinkedIn', createdAt: '03/28/2026' },
 ];
 
-/**
- * CampaignTable
- * Comprehensive campaign management interface with filtering, sorting, and bulk actions.
- */
+
 export default function CampaignTable() {
   const { user } = useAuth();
-
-  // -- State --
   const [campaigns, setCampaigns] = useState<Campaign[]>(INITIAL_CAMPAIGNS);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<CampaignStatus | ''>('');
@@ -88,15 +84,12 @@ export default function CampaignTable() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(8);
   const [statusDropdownId, setStatusDropdownId] = useState<string | null>(null);
-
-  // -- Modal Targets --
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Campaign | null>(null);
   const [logTarget, setLogTarget] = useState<Campaign | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Campaign | null>(null);
   const [historyTarget, setHistoryTarget] = useState<Campaign | null>(null);
 
-  // -- Initialization & Persistence --
   useEffect(() => {
     const saved = localStorage.getItem('agencyflow_campaigns');
     if (saved) {
@@ -227,7 +220,6 @@ export default function CampaignTable() {
     setPage(1);
   };
 
-  // -- Render Helpers --
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return <ChevronsUpDown size={12} className="text-slate-300" />;
     return sortDir === 'asc' ? <ChevronUp size={12} className="text-violet-600" /> : <ChevronDown size={12} className="text-violet-600" />;
@@ -235,7 +227,7 @@ export default function CampaignTable() {
 
   const isDeadlineCritical = (deadline: string) => {
     const d = new Date(deadline);
-    const now = new Date('2026-04-09'); // Normalized system date
+    const now = new Date('2026-04-09'); 
     const diff = (d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
     return diff >= 0 && diff <= 3;
   };
@@ -243,7 +235,7 @@ export default function CampaignTable() {
   return (
     <>
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-        {/* Toolbar Section */}
+
         <header className="px-5 py-4 border-b border-slate-100">
           <div className="flex items-start justify-between mb-4">
             <div>
@@ -482,33 +474,21 @@ export default function CampaignTable() {
           </table>
         </div>
 
-        {/* Pagination Section */}
-        <footer className="flex items-center justify-between px-5 py-3 border-t border-slate-100 bg-slate-50/50">
-          <div className="flex items-center gap-2 text-[12px] text-slate-500">
-            <span>{STATIC_STRINGS.CAMPAIGN_MGMT_PAGINATION_SHOW}</span>
-            <select
-              value={perPage}
-              onChange={(e) => { setPerPage(Number(e.target.value)); setPage(1); }}
-              className="px-2 py-1 border border-slate-200 rounded-lg bg-white outline-none focus:border-violet-400"
-            >
-              {[8, 12, 20, 50].map(n => <option key={n} value={n}>{n}</option>)}
-            </select>
-            <span>{STATIC_STRINGS.CAMPAIGN_MGMT_PAGINATION_OF} {filtered.length} {STATIC_STRINGS.CAMPAIGN_MGMT_PAGINATION_ENTRIES}</span>
-          </div>
-
-          <nav className="flex items-center gap-1">
-            <button onClick={() => setPage(1)} disabled={page === 1} className="px-2.5 py-1 rounded-lg text-[12px] text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors">«</button>
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-2.5 py-1 rounded-lg text-[12px] text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors">‹</button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).filter(n => Math.abs(n - page) <= 2).map(n => (
-              <button key={n} onClick={() => setPage(n)} className={`px-2.5 py-1 rounded-lg text-[12px] font-medium transition-colors ${page === n ? 'bg-violet-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-100'}`}>{n}</button>
-            ))}
-            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages || totalPages === 0} className="px-2.5 py-1 rounded-lg text-[12px] text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors">›</button>
-            <button onClick={() => setPage(totalPages)} disabled={page === totalPages || totalPages === 0} className="px-2.5 py-1 rounded-lg text-[12px] text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors">»</button>
-          </nav>
-        </footer>
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          perPage={perPage}
+          onPerPageChange={setPerPage}
+          totalEntries={filtered.length}
+          labels={{
+            show: STATIC_STRINGS.CAMPAIGN_MGMT_PAGINATION_SHOW,
+            of: STATIC_STRINGS.CAMPAIGN_MGMT_PAGINATION_OF,
+            entries: STATIC_STRINGS.CAMPAIGN_MGMT_PAGINATION_ENTRIES
+          }}
+        />
       </div>
 
-      {/* Floating Selection Bar */}
       {selectedIds.size > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl z-40 animate-slide-up">
           <span className="text-[13px] font-bold">{selectedIds.size} {STATIC_STRINGS.CAMPAIGN_MGMT_SELECTED}</span>

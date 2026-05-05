@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import Modal from '@/components/ui/Modal';
+import Pagination from '@/components/ui/Pagination';
 import { Plus, Search, CheckSquare, AlertCircle, ChevronDown, User, Pencil, Trash2, CheckCircle2, Circle, Timer, Camera, Film, Megaphone, TrendingUp } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useTasks } from '@/context/TaskContext';
@@ -78,6 +79,8 @@ export default function TaskManagementPage() {
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; task: Task | null }>({ open: false, task: null });
   const [form, setForm] = useState<TaskForm>(EMPTY_FORM);
   const [errors, setErrors] = useState<Partial<Record<keyof TaskForm, string>>>({});
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(8);
 
   const isRestricted = useMemo(() => 
     user?.role && [ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER].includes(user.role as any)
@@ -108,6 +111,11 @@ export default function TaskManagementPage() {
       return matchSearch && matchRole && matchStatus;
     });
   }, [tasks, search, roleFilter, statusFilter]);
+
+  const totalPages = Math.ceil(filteredTasks.length / perPage);
+  const paginatedTasks = useMemo(() => {
+    return filteredTasks.slice((page - 1) * perPage, page * perPage);
+  }, [filteredTasks, page, perPage]);
 
   const stats = useMemo(() => ({
     total: tasks.length,
@@ -223,7 +231,7 @@ export default function TaskManagementPage() {
               return (
                 <button
                   key={rf.value}
-                  onClick={() => setRoleFilter(rf.value)}
+                  onClick={() => { setRoleFilter(rf.value); setPage(1); }}
                   className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12.5px] font-semibold transition-all border ${
                     isActive ? 'bg-violet-600 text-white border-violet-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                   }`}
@@ -238,7 +246,7 @@ export default function TaskManagementPage() {
             <div className="relative">
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as TaskStatus | 'all')}
+                onChange={(e) => { setStatusFilter(e.target.value as TaskStatus | 'all'); setPage(1); }}
                 className="appearance-none pl-3 pr-8 py-1.5 rounded-lg border border-slate-200 bg-white text-[12.5px] text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-violet-500/30 cursor-pointer"
               >
                 <option value="all">{STATIC_STRINGS.TASK_MGMT_ALL_STATUSES}</option>
@@ -255,7 +263,7 @@ export default function TaskManagementPage() {
                 type="text"
                 placeholder={STATIC_STRINGS.TASK_MGMT_SEARCH_PLACEHOLDER}
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 className="pl-8 pr-8 py-1.5 rounded-lg border border-slate-200 bg-white text-[12.5px] text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 w-48"
               />
             </div>
@@ -276,14 +284,14 @@ export default function TaskManagementPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredTasks.length === 0 ? (
+              {paginatedTasks.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-5 py-14 text-center">
                     <p className="text-[13px] text-slate-400">{STATIC_STRINGS.TASK_MGMT_NO_TASKS}</p>
                   </td>
                 </tr>
               ) : (
-                filteredTasks.map((task) => {
+                paginatedTasks.map((task) => {
                   const statusCfg = STATUS_CONFIG[task.status] || STATUS_CONFIG.pending;
                   const StatusIcon = statusCfg.icon;
                   const roleCfg = ROLE_CONFIG[task.role] || ROLE_CONFIG[ROLES.SHOOTER];
@@ -337,6 +345,20 @@ export default function TaskManagementPage() {
               )}
             </tbody>
           </table>
+          
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            perPage={perPage}
+            onPerPageChange={setPerPage}
+            totalEntries={filteredTasks.length}
+            labels={{
+              show: STATIC_STRINGS.TASK_MGMT_PAGINATION_SHOW,
+              of: STATIC_STRINGS.TASK_MGMT_PAGINATION_OF,
+              entries: STATIC_STRINGS.TASK_MGMT_PAGINATION_ENTRIES
+            }}
+          />
         </div>
       </div>
 

@@ -1,9 +1,4 @@
-/**
- * Centralized Type Registry
- * This file serves as the single source of truth for all project-wide types.
- */
 
-// --- Roles ---
 export type UserRole =
   | "Super Admin"
   | "Owner"
@@ -14,7 +9,6 @@ export type UserRole =
   | "Social Media Manager"
   | "Client";
 
-// --- Auth ---
 export interface AuthUser {
   id: string;
   name: string;
@@ -23,10 +17,8 @@ export interface AuthUser {
   avatarInitials: string;
 }
 
-// --- Workflow ---
 export type WorkflowStage = 'In Draft' | 'In Review' | 'Process' | 'Publish';
 
-// --- Tasks ---
 export type TaskStatus = "pending" | "in_progress" | "completed";
 export type TaskPriority = "low" | "medium" | "high";
 export type TaskRole = "Shooter" | "Editor" | "Ads Manager" | "Social Media Manager" | "Owner" | "Manager";
@@ -89,8 +81,6 @@ export interface Reel {
   createdAt: string;
   clientName?: string;
 }
-
-// --- Campaigns ---
 export type CampaignStatus = "active" | "paused" | "completed" | "in draft" | "archived";
 
 export interface Campaign {
@@ -135,8 +125,6 @@ export interface AuditLog {
   timestamp: string;
   changes?: Record<string, { from: any; to: any }>;
 }
-
-// --- Clients ---
 export interface Client {
   id: string;
   name: string;
@@ -145,8 +133,6 @@ export interface Client {
   planType: 'monthly' | 'weekly';
   createdAt: string;
 }
-
-// --- Files ---
 export type FileType = 'image' | 'video' | 'document' | 'archive';
 export type FileStage = 'raw' | 'edited' | 'final' | 'asset';
 
@@ -162,8 +148,6 @@ export interface ManagedFile {
   uploadedAt: string;
   url?: string;
 }
-
-// --- Notifications ---
 export type NotificationType = 
   | 'task_assigned' 
   | 'task_completed' 
@@ -184,8 +168,6 @@ export interface Notification {
   targetId?: string;
   targetType?: 'task' | 'campaign' | 'client';
 }
-
-// --- Reports ---
 export interface CampaignReport {
   campaignId: string;
   campaignName: string;
@@ -200,8 +182,6 @@ export interface CampaignReport {
   startDate: string;
   endDate: string;
 }
-
-// --- Team ---
 export interface TeamMember {
   id: string;
   name: string;

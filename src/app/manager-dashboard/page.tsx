@@ -56,8 +56,6 @@ const ROLE_FILTERS: { label: string; value: TaskRole | 'all' }[] = [
   { label: ROLES.ADS_MANAGER, value: ROLES.ADS_MANAGER as TaskRole },
 ];
 
-
-// --- Helpers ---
 const isOverdue = (deadline: string, status: string) => {
   return status !== 'completed' && new Date(deadline) < new Date();
 };
@@ -178,7 +176,6 @@ export default function ManagerDashboardPage() {
           </div>
         </section>
 
-        {/* Global Task Control Registry */}
         <main>
           <header className="flex items-center justify-between mb-3">
             <h2 className="text-[14px] font-semibold text-slate-800">{STATIC_STRINGS.DASHBOARD_ALL_TASKS}</h2>

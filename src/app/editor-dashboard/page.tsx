@@ -40,8 +40,6 @@ const TEAM_MEMBERS = [
   { id: 'm5', name: 'Sofia Nguyen', role: 'Ads Manager' },
   { id: 'm7', name: 'Sam Rivera', role: 'Social Media Manager' },
 ];
-
-// --- Helpers ---
 const isOverdue = (deadline: string, status: TaskStatus) => {
   return status !== 'completed' && new Date(deadline) < new Date();
 };
@@ -114,7 +112,7 @@ export default function EditorDashboardPage() {
           </div>
           <div>
             <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">{STATIC_STRINGS.EDITOR_DASHBOARD_TITLE}</h1>
-            <p className="text-[13px] text-slate-500">Jin Park · {ROLES.EDITOR} Team</p>
+            <p className="text-[13px] text-slate-500">(Jin Park )· {ROLES.EDITOR} Team</p>
           </div>
         </header>
 

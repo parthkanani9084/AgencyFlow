@@ -3,17 +3,14 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Bell, CheckCheck, Trash2, CheckCircle2, AlertCircle, Megaphone, ArrowRight, Settings } from 'lucide-react';
-import { Toaster, toast } from 'sonner';
-import { Notification, NotificationType } from '@/types';
+import { Toaster } from 'sonner';
+import { NotificationType } from '@/types';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useTasks } from '@/context/TaskContext';
-import { STATIC_STRINGS, PAGE_ROLES, ROLES } from '@/utils/constants';
+import { STATIC_STRINGS, ROLES } from '@/utils/constants';
 import { UserRole } from '@/types';
-
-// --- Types ---
 type FilterTab = 'all' | 'unread';
 
-// --- Constants ---
 const TYPE_CONFIG: Record<NotificationType | string, { icon: React.ElementType; color: string; bg: string }> = {
   task_assigned:   { icon: CheckCircle2, color: 'text-violet-600', bg: 'bg-violet-50' },
   task_completed:  { icon: CheckCheck,   color: 'text-emerald-600', bg: 'bg-emerald-50' },
@@ -24,7 +21,6 @@ const TYPE_CONFIG: Record<NotificationType | string, { icon: React.ElementType; 
   TASK_VERIFICATION: { icon: CheckCheck, color: 'text-indigo-600', bg: 'bg-indigo-50' },
 };
 
-// --- Helpers ---
 const formatTimeAgo = (ts: string): string => {
   const diff = Date.now() - new Date(ts).getTime();
   const mins = Math.floor(diff / 60000);
@@ -39,8 +35,6 @@ const formatTimeAgo = (ts: string): string => {
 export default function NotificationsPage() {
   useRoleGuard(Object.values(ROLES) as unknown as UserRole[]);
   const { notifications, markNotifRead, clearNotifications } = useTasks();
-  
-  // -- State --
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [mounted, setMounted] = useState(false);
 

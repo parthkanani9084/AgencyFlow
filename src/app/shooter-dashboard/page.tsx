@@ -11,7 +11,6 @@ import TaskCompletionModal from '@/components/TaskCompletionModal';
 import { STATIC_STRINGS, PAGE_ROLES, ROLES, TEAM_MEMBERS as CONST_TEAM_MEMBERS } from '@/utils/constants';
 import { UserRole } from '@/types';
 
-// --- Constants ---
 const WORKFLOW_STAGES = [
   STATIC_STRINGS.DASHBOARD_STAGE_SHOOTING,
   STATIC_STRINGS.DASHBOARD_STAGE_RAW_UPLOAD,
@@ -32,10 +31,7 @@ const PRIORITY_DOT: Record<TaskPriority, string> = {
   high: 'bg-red-500',
 };
 
-const TEAM_MEMBERS = [
-  { id: 'tm2', name: 'Jin Park', role: 'Editor' },
-  { id: 'tm4', name: 'Amara Diallo', role: 'Editor' },
-];
+
 
 // --- Helpers ---
 const isOverdue = (deadline: string, status: TaskStatus) => {

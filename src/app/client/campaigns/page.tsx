@@ -160,16 +160,12 @@ export default function ClientCampaignsPage() {
                           </div>
                           
                           <div className="relative w-full pb-8 mt-2 px-4">
-                            {/* Linear Progress Bar Background */}
+
                             <div className="absolute top-[14px] left-4 right-4 h-1 bg-slate-100 rounded-full" />
-                            
-                            {/* Filled Progress Indicator */}
                             <div 
                               className="absolute top-[14px] left-4 h-1 bg-indigo-500 rounded-full transition-all duration-500"
                               style={{ width: `calc(${progressPercentage}% - 0px)` }} 
                             />
-
-                            {/* Workflow Step Nodes */}
                             <div className="relative z-10 flex justify-between w-full">
                               {WORKFLOW_STAGES.map((stage, idx) => {
                                 const isDone = idx < stageIndex;

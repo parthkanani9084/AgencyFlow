@@ -18,14 +18,6 @@ interface CampaignRow {
   progress: number;
 }
 
-
-const PLATFORM_COLORS: Record<string, string> = {
-  Meta: 'bg-blue-50 text-blue-700',
-  Google: 'bg-red-50 text-red-600',
-  TikTok: 'bg-slate-800 text-white px-2.5',
-  LinkedIn: 'bg-sky-50 text-sky-700',
-};
-
 const STAGE_COLORS: Record<string, string> = {
   [STATIC_STRINGS.DASHBOARD_STAGE_ADS_LIVE]: 'bg-emerald-50 text-emerald-700',
   [STATIC_STRINGS.DASHBOARD_STAGE_REVIEW]: 'bg-blue-50 text-blue-700',

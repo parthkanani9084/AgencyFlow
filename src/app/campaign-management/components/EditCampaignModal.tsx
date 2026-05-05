@@ -44,14 +44,11 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
 
   useEffect(() => {
     if (campaign) {
-      // Transform MM/DD/YYYY to YYYY-MM-DD for the native date input
       let initialDate = campaign.deadline;
       if (initialDate && initialDate.includes('/')) {
         const [m, d, y] = initialDate.split('/');
         initialDate = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
       }
-
-      // Normalize Stage mapping (handle legacy values)
       let currentStage = campaign.stage || 'in draft';
       const stageMap: Record<string, string> = {
         'Briefing': 'in draft',
@@ -109,7 +106,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
         : STATIC_STRINGS.COMMON_UNASSIGNED_INITIALS
     };
 
-    // Atomic update with audit logging
+
     const finalCampaign = auditService.performAtomicUpdate(campaign, updatedData, user as any);
 
     setIsSubmitting(false);
@@ -126,7 +123,6 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
     >
       <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-5">
 
-        {/* Row 1: Core Info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CAMPAIGN_FIELD_NAME}</label>

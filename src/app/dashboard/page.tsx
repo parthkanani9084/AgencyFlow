@@ -18,8 +18,6 @@ import { useAdsData } from '@/context/AdsDataContext';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { STATIC_STRINGS, STORAGE_KEYS, PAGE_ROLES } from '@/utils/constants';
 import { UserRole } from '@/types';
-
-// --- Types ---
 interface ClientData {
   id: string;
   name: string;

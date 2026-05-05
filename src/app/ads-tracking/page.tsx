@@ -12,9 +12,14 @@ import {
   ResponsiveContainer, Legend, LineChart, Line,
 } from 'recharts';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
-import { useAuth } from '@/context/AuthContext';
 import { useAdsData } from '@/context/AdsDataContext';
-import { PAGE_ROLES } from '@/utils/constants';
+import { 
+  PAGE_ROLES, 
+  STATIC_STRINGS, 
+  ADS_FILTER_KEYS, 
+  ADS_DATE_RANGE_KEYS,
+  ADS_DATE_RANGE_OPTIONS 
+} from '@/utils/constants';
 import { UserRole } from '@/types';
 
 interface AdCampaign {
@@ -32,69 +37,62 @@ interface AdCampaign {
 }
 
 const AD_CAMPAIGNS: AdCampaign[] = [
-  { id: 'ac1', name: 'NovaBrew Spring Launch',   client: 'Jordan Lee',    platform: 'Meta',      budget: 5000,  spent: 3800,  leads: 142, clicks: 2840, impressions: 48000, roas: 4.1, status: 'active' },
-  { id: 'ac2', name: 'PulseWear Q2 Reel',        client: 'Samantha Cruz', platform: 'Instagram', budget: 3500,  spent: 3500,  leads: 218, clicks: 4100, impressions: 72000, roas: 3.8, status: 'completed' },
-  { id: 'ac3', name: 'GreenRoot Awareness',      client: 'Ethan Patel',   platform: 'Meta',      budget: 8000,  spent: 4200,  leads: 310, clicks: 5600, impressions: 95000, roas: 5.2, status: 'active' },
-  { id: 'ac4', name: 'LuxeHome Interior Series', client: 'Mia Tanaka',    platform: 'Google',    budget: 2000,  spent: 800,   leads: 34,  clicks: 920,  impressions: 18000, roas: 2.9, status: 'active' },
-  { id: 'ac5', name: 'NovaBrew Brand Awareness', client: 'Jordan Lee',    platform: 'TikTok',    budget: 2500,  spent: 2500,  leads: 88,  clicks: 3200, impressions: 120000, roas: 3.2, status: 'completed' },
-  { id: 'ac6', name: 'PulseWear Google Search',  client: 'Samantha Cruz', platform: 'Google',    budget: 1500,  spent: 1500,  leads: 118, clicks: 2100, impressions: 31000, roas: 4.6, status: 'completed' },
+  { id: 'ac1', name: 'NovaBrew Spring Launch',   client: 'Jordan Lee',    platform: ADS_FILTER_KEYS.META,      budget: 5000,  spent: 3800,  leads: 142, clicks: 2840, impressions: 48000, roas: 4.1, status: STATIC_STRINGS.ADS_STATUS_ACTIVE as any },
+  { id: 'ac2', name: 'PulseWear Q2 Reel',        client: 'Samantha Cruz', platform: ADS_FILTER_KEYS.INSTAGRAM, budget: 3500,  spent: 3500,  leads: 218, clicks: 4100, impressions: 72000, roas: 3.8, status: STATIC_STRINGS.ADS_STATUS_COMPLETED as any },
+  { id: 'ac3', name: 'GreenRoot Awareness',      client: 'Ethan Patel',   platform: ADS_FILTER_KEYS.META,      budget: 8000,  spent: 4200,  leads: 310, clicks: 5600, impressions: 95000, roas: 5.2, status: STATIC_STRINGS.ADS_STATUS_ACTIVE as any },
+  { id: 'ac4', name: 'LuxeHome Interior Series', client: 'Mia Tanaka',    platform: ADS_FILTER_KEYS.GOOGLE,    budget: 2000,  spent: 800,   leads: 34,  clicks: 920,  impressions: 18000, roas: 2.9, status: STATIC_STRINGS.ADS_STATUS_ACTIVE as any },
+  { id: 'ac5', name: 'NovaBrew Brand Awareness', client: 'Jordan Lee',    platform: ADS_FILTER_KEYS.TIKTOK,    budget: 2500,  spent: 2500,  leads: 88,  clicks: 3200, impressions: 120000, roas: 3.2, status: STATIC_STRINGS.ADS_STATUS_COMPLETED as any },
+  { id: 'ac6', name: 'PulseWear Google Search',  client: 'Samantha Cruz', platform: ADS_FILTER_KEYS.GOOGLE,    budget: 1500,  spent: 1500,  leads: 118, clicks: 2100, impressions: 31000, roas: 4.6, status: STATIC_STRINGS.ADS_STATUS_COMPLETED as any },
 ];
 
 const WEEKLY_DATA = [
-  { week: 'Week 1', spend: 3200, leads: 120, clicks: 4800 },
-  { week: 'Week 2', spend: 4800, leads: 198, clicks: 7200 },
-  { week: 'Week 3', spend: 6100, leads: 265, clicks: 9400 },
-  { week: 'Week 4', spend: 7200, leads: 327, clicks: 11200 },
+  { week: STATIC_STRINGS.ADS_CHART_WEEK_1, spend: 3200, leads: 120, clicks: 4800 },
+  { week: STATIC_STRINGS.ADS_CHART_WEEK_2, spend: 4800, leads: 198, clicks: 7200 },
+  { week: STATIC_STRINGS.ADS_CHART_WEEK_3, spend: 6100, leads: 265, clicks: 9400 },
+  { week: STATIC_STRINGS.ADS_CHART_WEEK_4, spend: 7200, leads: 327, clicks: 11200 },
 ];
 
 const PLATFORM_BREAKDOWN = [
-  { platform: 'Meta',      spend: 8000,  leads: 452, color: '#1877f2' },
-  { platform: 'Google',    spend: 2300,  leads: 152, color: '#34a853' },
-  { platform: 'Instagram', spend: 3500,  leads: 218, color: '#e1306c' },
-  { platform: 'TikTok',    spend: 2500,  leads: 88,  color: '#010101' },
+  { platform: ADS_FILTER_KEYS.META,      spend: 8000,  leads: 452, color: '#1877f2' },
+  { platform: ADS_FILTER_KEYS.GOOGLE,    spend: 2300,  leads: 152, color: '#34a853' },
+  { platform: ADS_FILTER_KEYS.INSTAGRAM, spend: 3500,  leads: 218, color: '#e1306c' },
+  { platform: ADS_FILTER_KEYS.TIKTOK,    spend: 2500,  leads: 88,  color: '#010101' },
 ];
 
 const PLATFORM_STYLES: Record<string, string> = {
-  Meta:      'bg-blue-100 text-blue-700',
-  Google:    'bg-green-100 text-green-700',
-  Instagram: 'bg-pink-100 text-pink-700',
-  TikTok:    'bg-slate-100 text-slate-700',
+  [ADS_FILTER_KEYS.META]:      'bg-blue-100 text-blue-700',
+  [ADS_FILTER_KEYS.GOOGLE]:    'bg-green-100 text-green-700',
+  [ADS_FILTER_KEYS.INSTAGRAM]: 'bg-pink-100 text-pink-700',
+  [ADS_FILTER_KEYS.TIKTOK]:    'bg-slate-100 text-slate-700',
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  active:    'bg-emerald-100 text-emerald-700',
-  paused:    'bg-amber-100 text-amber-700',
-  completed: 'bg-slate-100 text-slate-600',
+  [STATIC_STRINGS.ADS_STATUS_ACTIVE]:    'bg-emerald-100 text-emerald-700',
+  [STATIC_STRINGS.ADS_STATUS_PAUSED]:    'bg-amber-100 text-amber-700',
+  [STATIC_STRINGS.ADS_STATUS_COMPLETED]: 'bg-slate-100 text-slate-600',
 };
 
-const DATE_RANGES = [
-  { label: 'Last 7 days', value: '7d' },
-  { label: 'Last 30 days', value: '30d' },
-  { label: 'Last 90 days', value: '90d' },
-];
+const DATE_RANGES = ADS_DATE_RANGE_OPTIONS;
 
 export default function AdsTrackingPage() {
   useRoleGuard(PAGE_ROLES.ADS_TRACKING as unknown as UserRole[]);
-  
-  const { user } = useAuth();
   const { adsMetrics, updateAdsMetrics } = useAdsData();
-  
-  const [dateRange, setDateRange] = useState('30d');
-  const [platformFilter, setPlatformFilter] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<string>(ADS_DATE_RANGE_KEYS.LAST_30D);
+  const [platformFilter, setPlatformFilter] = useState<string>(ADS_FILTER_KEYS.ALL);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [adsForm, setAdsForm] = useState({ spend: 0, leads: 0, clicks: 0, roas: 0 });
 
   // Memoized derived data
   const { filteredCampaigns, kpis, totalPlatformSpend } = useMemo(() => {
     const filtered = AD_CAMPAIGNS.filter(
-      (c) => platformFilter === 'all' || c.platform === platformFilter
+      (c) => platformFilter === ADS_FILTER_KEYS.ALL || c.platform === platformFilter
     );
 
     const kpiList = [
-      { label: 'Total Spend',  value: `₹${adsMetrics.totalSpend.toLocaleString()}`,  icon: IndianRupee, color: 'text-violet-600 bg-violet-50', change: '+12%', up: true },
-      { label: 'Total Leads',  value: adsMetrics.totalLeads.toLocaleString(),         icon: Users,      color: 'text-blue-600 bg-blue-50',    change: '+24%', up: true },
-      { label: 'Total Clicks', value: adsMetrics.totalClicks.toLocaleString(),        icon: TrendingUp, color: 'text-emerald-600 bg-emerald-50', change: '+18%', up: true },
-      { label: 'Avg ROAS',     value: `${adsMetrics.avgRoas}×`,                       icon: Target,     color: 'text-amber-600 bg-amber-50',  change: '-0.3×', up: false },
+      { label: STATIC_STRINGS.ADS_KPI_TOTAL_SPEND,  value: `₹${adsMetrics.totalSpend.toLocaleString()}`,  icon: IndianRupee, color: 'text-violet-600 bg-violet-50', change: STATIC_STRINGS.ADS_KPI_SPEND_CHANGE, up: true },
+      { label: STATIC_STRINGS.ADS_KPI_TOTAL_LEADS,  value: adsMetrics.totalLeads.toLocaleString(),         icon: Users,      color: 'text-blue-600 bg-blue-50',    change: STATIC_STRINGS.ADS_KPI_LEADS_CHANGE, up: true },
+      { label: STATIC_STRINGS.ADS_KPI_TOTAL_CLICKS, value: adsMetrics.totalClicks.toLocaleString(),        icon: TrendingUp, color: 'text-emerald-600 bg-emerald-50', change: STATIC_STRINGS.ADS_KPI_CLICKS_CHANGE, up: true },
+      { label: STATIC_STRINGS.ADS_KPI_AVG_ROAS,     value: `${adsMetrics.avgRoas}×`,                       icon: Target,     color: 'text-amber-600 bg-amber-50',  change: STATIC_STRINGS.ADS_KPI_ROAS_CHANGE, up: false },
     ];
 
     const totalSpend = PLATFORM_BREAKDOWN.reduce((sum, item) => sum + item.spend, 0);
@@ -115,7 +113,7 @@ export default function AdsTrackingPage() {
     
     updateAdsMetrics(newMetrics);
     setIsModalOpen(false);
-    toast.success('Ads performance data updated');
+    toast.success(STATIC_STRINGS.ADS_TOAST_METRICS_UPDATED);
   };
 
   return (
@@ -128,10 +126,10 @@ export default function AdsTrackingPage() {
           <div>
             <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
               <TrendingUp size={20} className="text-violet-600" />
-              Ads Tracking
+              {STATIC_STRINGS.ADS_PAGE_TITLE}
             </h1>
             <p className="text-[13px] text-slate-500 mt-0.5">
-              Cross-platform ad performance across all campaigns
+              {STATIC_STRINGS.ADS_PAGE_SUBTITLE}
             </p>
           </div>
           
@@ -156,7 +154,7 @@ export default function AdsTrackingPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
               <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                <h2 className="text-[16px] font-bold text-slate-800">Update Performance Data</h2>
+                <h2 className="text-[16px] font-bold text-slate-800">{STATIC_STRINGS.ADS_MODAL_TITLE}</h2>
                 <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
                   <X size={20} />
                 </button>
@@ -165,20 +163,20 @@ export default function AdsTrackingPage() {
               <div className="p-6 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="block text-[12.5px] font-medium text-slate-700">Add to Spend (₹)</label>
+                    <label className="block text-[12.5px] font-medium text-slate-700">{STATIC_STRINGS.ADS_MODAL_LABEL_SPEND}</label>
                     <input
                       type="number"
                       className="w-full text-[13px] border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-violet-500/30 transition-all"
-                      placeholder="0"
+                      placeholder={STATIC_STRINGS.ADS_MODAL_PLACEHOLDER_ZERO}
                       onChange={(e) => setAdsForm({ ...adsForm, spend: Number(e.target.value) })}
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="block text-[12.5px] font-medium text-slate-700">Add to Leads</label>
+                    <label className="block text-[12.5px] font-medium text-slate-700">{STATIC_STRINGS.ADS_MODAL_LABEL_LEADS}</label>
                     <input
                       type="number"
                       className="w-full text-[13px] border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-violet-500/30 transition-all"
-                      placeholder="0"
+                      placeholder={STATIC_STRINGS.ADS_MODAL_PLACEHOLDER_ZERO}
                       onChange={(e) => setAdsForm({ ...adsForm, leads: Number(e.target.value) })}
                     />
                   </div>
@@ -186,16 +184,16 @@ export default function AdsTrackingPage() {
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="block text-[12.5px] font-medium text-slate-700">Add to Clicks</label>
+                    <label className="block text-[12.5px] font-medium text-slate-700">{STATIC_STRINGS.ADS_MODAL_LABEL_CLICKS}</label>
                     <input
                       type="number"
                       className="w-full text-[13px] border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-violet-500/30 transition-all"
-                      placeholder="0"
+                      placeholder={STATIC_STRINGS.ADS_MODAL_PLACEHOLDER_ZERO}
                       onChange={(e) => setAdsForm({ ...adsForm, clicks: Number(e.target.value) })}
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="block text-[12.5px] font-medium text-slate-700">Average ROAS (×)</label>
+                    <label className="block text-[12.5px] font-medium text-slate-700">{STATIC_STRINGS.ADS_MODAL_LABEL_ROAS}</label>
                     <input
                       type="number"
                       step="0.1"
@@ -211,13 +209,13 @@ export default function AdsTrackingPage() {
                     onClick={() => setIsModalOpen(false)}
                     className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors"
                   >
-                    Cancel
+                    {STATIC_STRINGS.ADS_MODAL_BTN_CANCEL}
                   </button>
                   <button
                     onClick={handleUpdateMetrics}
                     className="px-4 py-2 text-[13px] font-medium text-white bg-violet-600 hover:bg-violet-700 rounded-lg transition-colors shadow-sm"
                   >
-                    Update Metrics
+                    {STATIC_STRINGS.ADS_MODAL_BTN_SUBMIT}
                   </button>
                 </footer>
               </div>
@@ -251,7 +249,7 @@ export default function AdsTrackingPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
           {/* Weekly Performance Trend */}
           <section className="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-            <h2 className="text-[13.5px] font-semibold text-slate-800 mb-4">Weekly Spend vs Leads</h2>
+            <h2 className="text-[13.5px] font-semibold text-slate-800 mb-4">{STATIC_STRINGS.ADS_CHART_WEEKLY_TITLE}</h2>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={WEEKLY_DATA} barGap={4}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -259,15 +257,15 @@ export default function AdsTrackingPage() {
                 <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0' }} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="spend" name="Spend (₹)" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="leads" name="Leads" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="spend" name={STATIC_STRINGS.ADS_CHART_SERIES_SPEND} fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="leads" name={STATIC_STRINGS.ADS_CHART_SERIES_LEADS} fill="#10b981" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </section>
 
           {/* Platform Resource Allocation */}
           <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-            <h2 className="text-[13.5px] font-semibold text-slate-800 mb-4">Platform Breakdown</h2>
+            <h2 className="text-[13.5px] font-semibold text-slate-800 mb-4">{STATIC_STRINGS.ADS_CHART_PLATFORM_TITLE}</h2>
             <div className="space-y-3">
               {PLATFORM_BREAKDOWN.map((p) => {
                 const pct = totalPlatformSpend > 0 ? Math.round((p.spend / totalPlatformSpend) * 100) : 0;
@@ -283,7 +281,7 @@ export default function AdsTrackingPage() {
                         style={{ width: `${pct}%`, backgroundColor: p.color }}
                       />
                     </div>
-                    <p className="text-[10.5px] text-slate-400 mt-0.5">{pct}% of total spend</p>
+                    <p className="text-[10.5px] text-slate-400 mt-0.5">{pct}{STATIC_STRINGS.ADS_PLATFORM_SPEND_PCT_LABEL}</p>
                   </div>
                 );
               })}
@@ -293,14 +291,14 @@ export default function AdsTrackingPage() {
 
         {/* Engagement Trend */}
         <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm mb-6">
-          <h2 className="text-[13.5px] font-semibold text-slate-800 mb-4">Click Trend</h2>
+          <h2 className="text-[13.5px] font-semibold text-slate-800 mb-4">{STATIC_STRINGS.ADS_CHART_CLICK_TITLE}</h2>
           <ResponsiveContainer width="100%" height={160}>
             <LineChart data={WEEKLY_DATA}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis dataKey="week" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0' }} />
-              <Line type="monotone" dataKey="clicks" stroke="#6366f1" strokeWidth={2} dot={{ r: 4, fill: '#6366f1' }} name="Clicks" />
+              <Line type="monotone" dataKey="clicks" stroke="#6366f1" strokeWidth={2} dot={{ r: 4, fill: '#6366f1' }} name={STATIC_STRINGS.ADS_CHART_SERIES_CLICKS} />
             </LineChart>
           </ResponsiveContainer>
         </section>
@@ -310,16 +308,16 @@ export default function AdsTrackingPage() {
           <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
             <h2 className="text-[13.5px] font-semibold text-slate-800 flex items-center gap-2">
               <BarChart3 size={15} className="text-violet-600" />
-              Campaign Performance
+              {STATIC_STRINGS.ADS_TABLE_SECTION_TITLE}
             </h2>
             <nav className="flex gap-1.5">
               <button
-                onClick={() => setPlatformFilter('all')}
-                className={`px-3 py-1 rounded-lg text-[12px] font-medium transition-all ${platformFilter === 'all' ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                onClick={() => setPlatformFilter(ADS_FILTER_KEYS.ALL)}
+                className={`px-3 py-1 rounded-lg text-[12px] font-medium transition-all ${platformFilter === ADS_FILTER_KEYS.ALL ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
               >
-                All
+                {STATIC_STRINGS.ADS_TABLE_FILTER_ALL}
               </button>
-              {['Meta', 'Google', 'Instagram', 'TikTok'].map((p) => (
+              {[ADS_FILTER_KEYS.META, ADS_FILTER_KEYS.GOOGLE, ADS_FILTER_KEYS.INSTAGRAM, ADS_FILTER_KEYS.TIKTOK].map((p) => (
                 <button
                   key={p}
                   onClick={() => setPlatformFilter(p)}
@@ -334,13 +332,13 @@ export default function AdsTrackingPage() {
             <table className="w-full text-[13px]">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Campaign</th>
-                  <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider hidden md:table-cell">Platform</th>
-                  <th className="text-right px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Spend</th>
-                  <th className="text-right px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider hidden sm:table-cell">Leads</th>
-                  <th className="text-right px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider hidden lg:table-cell">Clicks</th>
-                  <th className="text-right px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider">ROAS</th>
-                  <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Status</th>
+                  <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider">{STATIC_STRINGS.ADS_TABLE_COL_CAMPAIGN}</th>
+                  <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider hidden md:table-cell">{STATIC_STRINGS.ADS_TABLE_COL_PLATFORM}</th>
+                  <th className="text-right px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider">{STATIC_STRINGS.ADS_TABLE_COL_SPEND}</th>
+                  <th className="text-right px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider hidden sm:table-cell">{STATIC_STRINGS.ADS_TABLE_COL_LEADS}</th>
+                  <th className="text-right px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider hidden lg:table-cell">{STATIC_STRINGS.ADS_TABLE_COL_CLICKS}</th>
+                  <th className="text-right px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider">{STATIC_STRINGS.ADS_TABLE_COL_ROAS}</th>
+                  <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider">{STATIC_STRINGS.ADS_TABLE_COL_STATUS}</th>
                 </tr>
               </thead>
               <tbody>

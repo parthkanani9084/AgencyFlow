@@ -9,10 +9,8 @@ import {
 import { Toaster, toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
-import { STATIC_STRINGS, PAGE_ROLES, ROLES } from '@/utils/constants';
+import { STATIC_STRINGS, ROLES } from '@/utils/constants';
 import { UserRole } from '@/types';
-
-// --- Types ---
 type SettingsTab = 'profile' | 'notifications' | 'security' | 'appearance';
  
 interface ProfileForm {
@@ -54,8 +52,6 @@ const ACCENT_COLORS = [
 export default function SettingsPage() {
   useRoleGuard(Object.values(ROLES) as unknown as UserRole[]);
   const { user } = useAuth();
-
-  // -- State --
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [profileForm, setProfileForm] = useState<ProfileForm>({
     name: user?.name ?? '',
@@ -73,29 +69,28 @@ export default function SettingsPage() {
   const [passwordForm, setPasswordForm] = useState({ current: '', next: '', confirm: '' });
   const [selectedAccent, setSelectedAccent] = useState('violet');
 
-  // -- Handlers --
   const handleProfileSave = useCallback(() => {
     if (!profileForm.name.trim()) {
-      toast.error('Name is required');
+      toast.error(STATIC_STRINGS.SETTINGS_ERR_NAME_REQ);
       return;
     }
-    toast.success('Profile updated successfully');
+    toast.success(STATIC_STRINGS.SETTINGS_TOAST_PROFILE_UPDATED);
   }, [profileForm.name]);
 
   const handlePasswordSave = useCallback(() => {
     if (!passwordForm.current) {
-      toast.error('Enter your current password');
+      toast.error(STATIC_STRINGS.SETTINGS_ERR_CURRENT_PWD_REQ);
       return;
     }
     if (passwordForm.next.length < 8) {
-      toast.error('New password must be at least 8 characters');
+      toast.error(STATIC_STRINGS.SETTINGS_ERR_PWD_MIN);
       return;
     }
     if (passwordForm.next !== passwordForm.confirm) {
-      toast.error('Passwords do not match');
+      toast.error(STATIC_STRINGS.SETTINGS_ERR_PWD_MISMATCH);
       return;
     }
-    toast.success('Password changed successfully');
+    toast.success(STATIC_STRINGS.SETTINGS_TOAST_PWD_CHANGED);
     setPasswordForm({ current: '', next: '', confirm: '' });
   }, [passwordForm]);
 
@@ -273,7 +268,7 @@ export default function SettingsPage() {
                 </div>
                 <footer className="px-6 py-4 border-t border-slate-100 flex justify-end">
                   <button
-                    onClick={() => toast.success('Notification preferences updated')}
+                    onClick={() => toast.success(STATIC_STRINGS.SETTINGS_TOAST_NOTIF_UPDATED)}
                     className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-[13px] font-bold shadow-sm transition-all active:scale-[0.98]"
                   >
                     <Save size={14} />
@@ -360,7 +355,7 @@ export default function SettingsPage() {
                       {ACCENT_COLORS.map((c) => (
                         <button
                           key={c.value}
-                          onClick={() => { setSelectedAccent(c.value); toast.success(`${c.label} accent applied`); }}
+                          onClick={() => { setSelectedAccent(c.value); toast.success(`${c.label} ${STATIC_STRINGS.SETTINGS_TOAST_ACCENT_APPLIED}`); }}
                           className={`w-10 h-10 rounded-full ${c.cls} flex items-center justify-center transition-all hover:scale-110 active:scale-95 shadow-sm ${selectedAccent === c.value ? 'ring-2 ring-offset-2 ring-slate-300 scale-110 shadow-md' : ''}`}
                           title={c.label}
                         >
@@ -376,7 +371,7 @@ export default function SettingsPage() {
                       {[STATIC_STRINGS.SIDEBAR_COMPACT, STATIC_STRINGS.SIDEBAR_EXPANDED].map((style) => (
                         <button
                           key={style}
-                          onClick={() => toast.info(`${style} mode coming in next update`)}
+                          onClick={() => toast.info(`${style} ${STATIC_STRINGS.SETTINGS_TOAST_SIDEBAR_COMING}`)}
                           className="flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-xl border border-slate-200 text-[13px] font-bold text-slate-700 hover:bg-slate-50 transition-all hover:border-slate-300 active:scale-[0.98]"
                         >
                           <Palette size={15} className="text-slate-400" />

@@ -25,9 +25,7 @@ import { useAuth } from '@/context/AuthContext';
 import type { UserRole } from '@/types';
 import { useTasks } from '@/context/TaskContext';
 import { ROLES } from '@/constants/roles';
-
-
-
+import { STATIC_STRINGS } from '@/utils/constants';
 interface NavItem {
   id: string;
   label: string;
@@ -99,7 +97,7 @@ export default function Sidebar() {
         <AppLogo size={32} />
         {!collapsed && (
           <span className="font-semibold text-[15px] text-slate-900 tracking-tight whitespace-nowrap">
-            AgencyFlow
+            {STATIC_STRINGS.TITLE}
           </span>
         )}
       </div>

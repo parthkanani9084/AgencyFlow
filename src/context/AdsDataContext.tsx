@@ -11,7 +11,6 @@ export interface AdsMetrics {
   totalCollection: number;
   updatedAt: string;
 }
-
 interface AdsDataContextType {
   adsMetrics: AdsMetrics;
   updateAdsMetrics: (metrics: AdsMetrics) => void;

@@ -17,10 +17,10 @@ interface TaskContextType {
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
-export const DEMO_VERSION = 'v1.9'; // Incremented to force fresh data sync with 12 tasks
+export const DEMO_VERSION = 'v1.9'; 
 
 export const INITIAL_TASKS: Task[] = [
-  // --- SHOOTER TASKS ---
+
   {
     id: 't1', title: 'Product Shoot: Summer Footwear', assignedTo: 'Marco Reyes',
     role: 'Shooter', client: 'Luxe Apparel', campaign: 'Summer Collection',

@@ -1,16 +1,8 @@
 import { Task, AuthUser, TaskStatus, ActivityLog, TaskNote } from '@/types';
 import { taskAgent } from '../agent/taskAgent';
-import { taskWorkflowAgent } from '../agent/taskWorkflowAgent';
 
-/**
- * Service Layer: Standardized Task Engine
- * Responsibility: Atomic status transitions (3-state only), unified completion metadata, and audit logging.
- */
 export const taskService = {
-  /**
-   * Performs an atomic status update.
-   * Enforces mandatory notes for 'completed' status across ALL roles.
-   */
+
   updateTaskStatus: (
     tasks: Task[], 
     task: Task, 
@@ -21,15 +13,12 @@ export const taskService = {
     screenshot?: string
   ): { updatedTasks: Task[]; finalStatus: TaskStatus } => {
     if (!user) throw new Error('Authentication required');
-
-    // 1. Standardize & Validate Status
-    const nextStatus = taskWorkflowAgent.determineNextStatus(task, requestedStatus, user);
+    const nextStatus = requestedStatus;
     
-    if (nextStatus === 'completed') {
-      taskWorkflowAgent.validateCompletion(notes);
+    if (nextStatus === 'completed' && (!notes || notes.trim().length < 5)) {
+      throw new Error('Completion notes are mandatory for all roles (min 5 characters).');
     }
 
-    // 2. Normalize Metadata & Handoff Logic
     let roleUpdates: Partial<Task> = {};
     const timestamp = new Date().toISOString();
 
@@ -43,23 +32,19 @@ export const taskService = {
 
       roleUpdates = {
         roleNotes: [...(task.roleNotes || []), completionNote],
-        notes: notes, // Legacy field support
+        notes: notes, 
         screenshot: screenshot || task.screenshot
       };
-
-      // Handle Automatic Handoff if next role member is provided
       if (nextRoleMember) {
         roleUpdates = {
           ...roleUpdates,
-          status: 'pending', // Reset for next person
+          status: 'pending',
           assignedTo: nextRoleMember.name,
           role: nextRoleMember.role as any,
           forwardedBy: user.name
         };
       }
     }
-
-    // 3. Create Audit Log
     const log: ActivityLog = {
       id: `task-log-${Date.now()}`,
       status: nextStatus,
@@ -68,8 +53,6 @@ export const taskService = {
       timestamp: timestamp,
       note: notes || (nextStatus === 'completed' ? 'Task completed/handed off' : undefined)
     };
-
-    // 4. Atomic State Update
     const updatedTasks = tasks.map(t => {
       if (t.id === task.id) {
         return {
@@ -88,9 +71,6 @@ export const taskService = {
     };
   },
 
-  /**
-   * RBAC Visibility.
-   */
   getFilteredTasks: (tasks: Task[], user: AuthUser | null) => {
     if (!user) return { tasks: [], uiFlags: {} };
     return {

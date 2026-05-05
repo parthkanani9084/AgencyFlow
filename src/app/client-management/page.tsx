@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import Modal from '@/components/ui/Modal';
+import Pagination from '@/components/ui/Pagination';
 import { 
   Plus, Pencil, Trash2, Search, Briefcase, 
   AlertTriangle, X, IndianRupee, History 
@@ -11,7 +12,7 @@ import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/context/AuthContext';
 import { useAdsData } from '@/context/AdsDataContext';
 import { toast, Toaster } from 'sonner';
-import { STATIC_STRINGS, STORAGE_KEYS, PAGE_ROLES, ROLES } from '@/utils/constants';
+import { STATIC_STRINGS, PAGE_ROLES, ROLES } from '@/utils/constants';
 import { UserRole } from '@/types';
 
 interface Payment {
@@ -106,6 +107,9 @@ export default function ClientManagementPage() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [errors, setErrors] = useState<Partial<FormState>>({});
 
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(12);
+
   useEffect(() => {
     localStorage.setItem('agencyflow_clients', JSON.stringify(clients));
   }, [clients]);
@@ -129,12 +133,26 @@ export default function ClientManagementPage() {
 
   const filteredClients = useMemo(() => {
     const query = search.toLowerCase().trim();
-    if (!query) return clients;
-    return clients.filter(c => 
-      c.name.toLowerCase().includes(query) || 
-      c.brand.toLowerCase().includes(query)
-    );
+    let result = clients;
+    if (query) {
+      result = clients.filter(c => 
+        c.name.toLowerCase().includes(query) || 
+        c.brand.toLowerCase().includes(query)
+      );
+    }
+    return result;
   }, [clients, search]);
+
+  const totalPages = Math.ceil(filteredClients.length / perPage);
+  const paginatedClients = useMemo(() => {
+    const start = (page - 1) * perPage;
+    return filteredClients.slice(start, start + perPage);
+  }, [filteredClients, page, perPage]);
+
+  // Reset page on search
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
 
   const openAdd = () => {
@@ -341,7 +359,7 @@ export default function ClientManagementPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredClients.length === 0 ? (
+                {paginatedClients.length === 0 ? (
                   <tr>
                     <td colSpan={isOwner ? 6 : 2} className="px-5 py-14 text-center">
                       <div className="flex flex-col items-center gap-2 text-slate-400">
@@ -351,7 +369,7 @@ export default function ClientManagementPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredClients.map((client, idx) => {
+                  paginatedClients.map((client, idx) => {
                     const totalPaid = getClientTotalPaid(client);
                     return (
                       <tr
@@ -432,6 +450,20 @@ export default function ClientManagementPage() {
               </tbody>
             </table>
           </div>
+
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            perPage={perPage}
+            onPerPageChange={setPerPage}
+            totalEntries={filteredClients.length}
+            labels={{
+              show: STATIC_STRINGS.CAMPAIGN_MGMT_PAGINATION_SHOW,
+              of: STATIC_STRINGS.CAMPAIGN_MGMT_PAGINATION_OF,
+              entries: STATIC_STRINGS.CAMPAIGN_MGMT_PAGINATION_ENTRIES
+            }}
+          />
         </main>
       </div>
 
