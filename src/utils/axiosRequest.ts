@@ -8,6 +8,8 @@ import axios, {
 import { ROUTES } from '../constants/routes';
 import { shouldShowToast, TOAST_CONFIG } from './toastConfig';
 import { showErrorToast, showSuccessToast } from './toastHandler';
+import store from './localstorage';
+import { STORAGE_KEYS } from './constants';
 
 const baseConfig: AxiosRequestConfig = {
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -65,8 +67,11 @@ export const createAxiosInstance = (): AxiosInstance => {
         return config;
       }
 
-      if (typeof window === 'undefined') {
-        return config;
+      if (typeof window !== 'undefined') {
+        const token = store.getValue(STORAGE_KEYS.AUTH_TOKEN);
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
       }
 
       if (config.data instanceof FormData) {
