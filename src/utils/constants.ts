@@ -573,7 +573,7 @@ export const STATIC_STRINGS = {
   CLIENT_PROFILE_REELS_SUFFIX: 'Reels / Month',
   LOGIN_AUTH_AUTOFILLED: 'Autofilled',
   LOGIN_AUTH_CREDENTIALS: 'credentials',
-  LOGIN_AUTH_WELCOME_BACK: 'Welcome back! Signing in as',
+
   LOGIN_PLATFORM_NAME: 'AgencyFlow',
   LOGIN_SUBTITLE_PLATFORM: 'Campaign Automation Platform',
   LOGIN_HERO_TITLE_PART1: 'Your entire agency',
@@ -594,7 +594,6 @@ export const STATIC_STRINGS = {
   LOGIN_FORM_REMEMBER: 'Keep me signed in for 30 days',
   LOGIN_FORM_SIGNING_IN: 'Signing in…',
   LOGIN_FORM_SIGN_IN_BTN: 'Sign In',
-  LOGIN_DEMO_ACCOUNTS: 'Demo accounts',
   LOGIN_DEMO_ROLE: 'Role',
   LOGIN_DEMO_EMAIL: 'Email',
   LOGIN_DEMO_USE: 'Use',

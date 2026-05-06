@@ -6,7 +6,6 @@ import type { AuthUser, UserRole } from '@/types';
 import { ROLES } from '@/constants/roles';
 import { ROUTES } from '@/constants/routes';
 
-// ─── Demo credentials (mirrors LoginForm) ─────────────────────────────────────
 const DEMO_USERS: (AuthUser & { password: string })[] = [
   { id: 'u1', name: 'Alex Owens',    email: 'alex.owens@agencyflow.io',    password: 'Owner@2026',      role: ROLES.OWNER,       avatarInitials: 'AO' },
   { id: 'u2', name: 'Priya Sharma',  email: 'priya.sharma@agencyflow.io',  password: 'Manager@2026',    role: ROLES.MANAGER,     avatarInitials: 'PS' },
@@ -32,7 +31,7 @@ export const ROLE_HOME: Record<UserRole, string> = {
 // Pages accessible without login
 const PUBLIC_PATHS = [ROUTES.LOGIN, ROUTES.SUPER_ADMIN_LOGIN, ROUTES.SUPER_ADMIN_VERIFY];
 
-// ─── Context shape ────────────────────────────────────────────────────────────
+
 interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
@@ -43,7 +42,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-// ─── Provider ─────────────────────────────────────────────────────────────────
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router   = useRouter();
   const pathname = usePathname();
@@ -130,7 +129,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>');

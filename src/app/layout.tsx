@@ -6,6 +6,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import { AdsDataProvider } from '@/context/AdsDataContext';
 import { TaskProvider } from '@/context/TaskContext';
 import { SuperAdminProvider } from '@/store/superAdminStore';
+import QueryProvider from '@/components/QueryProvider';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -24,29 +25,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="antialiased">
-        <SuperAdminProvider>
-          <AuthProvider>
-            <AdsDataProvider>
-              <TaskProvider>
-                {children}
-              </TaskProvider>
-            </AdsDataProvider>
-          </AuthProvider>
-        </SuperAdminProvider>
+        <QueryProvider>
+          <SuperAdminProvider>
+            <AuthProvider>
+              <AdsDataProvider>
+                <TaskProvider>
+                  {children}
+                </TaskProvider>
+              </AdsDataProvider>
+            </AuthProvider>
+          </SuperAdminProvider>
+        </QueryProvider>
 
         <Toaster position="top-right" expand={false} richColors />
-
-        {/* Third-party Analytics/Scripts */}
-        <script 
-          type="module" 
-          async 
-          src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Fagencyflow7064back.builtwithrocket.new&_be=https%3A%2F%2Fappanalytics.rocket.new&_v=0.1.18" 
-        />
-        <script 
-          type="module" 
-          defer 
-          src="https://static.rocket.new/rocket-shot.js?v=0.0.2" 
-        />
       </body>
     </html>
   );
