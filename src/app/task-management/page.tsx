@@ -9,8 +9,9 @@ import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useTasks } from '@/context/TaskContext';
 import { useAuth } from '@/context/AuthContext';
 import { Task, TaskStatus, TaskPriority, TaskRole, UserRole } from '@/types';
-import { STATIC_STRINGS, ROLES, PAGE_ROLES, TEAM_MEMBERS as CONST_TEAM_MEMBERS, CLIENT_OPTIONS } from '@/utils/constants';
+import { STATIC_STRINGS, ROLES, PAGE_ROLES, TEAM_MEMBERS as CONST_TEAM_MEMBERS } from '@/utils/constants';
 import { ROLE_CONFIG, STATUS_CONFIG } from '@/utils/ui-configs';
+import { clientService } from '@/api/services/client.service';
 
 
 const ROLE_FILTERS: { label: string; value: TaskRole | 'all' }[] = [
@@ -69,16 +70,36 @@ export default function TaskManagementPage() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(8);
 
+  const [clientsList, setClientsList] = useState<{ id: string; name: string }[]>([]);
+  const [isFetchingClients, setIsFetchingClients] = useState(false);
+
   const isRestricted = useMemo(() => 
     user?.role && [ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER].includes(user.role as any)
   , [user?.role]);
 
+  const fetchClientsForDropdown = useCallback(async () => {
+    setIsFetchingClients(true);
+    try {
+      const response = await clientService.getClients({ page: 1, limit: 100 });
+      if (response?.results?.data) {
+        setClientsList(response.results.data.map((c: any) => ({
+          id: c.id,
+          name: c.clientName
+        })));
+      }
+    } catch (error) {
+    } finally {
+      setIsFetchingClients(false);
+    }
+  }, []);
+
   useEffect(() => {
     setMounted(true);
+    fetchClientsForDropdown();
     if (isRestricted && user?.role) {
       setRoleFilter(user.role as TaskRole);
     }
-  }, [isRestricted, user?.role]);
+  }, [isRestricted, user?.role, fetchClientsForDropdown]);
 
   const tasks = useMemo(() => {
     if (!user) return [];
@@ -393,8 +414,8 @@ export default function TaskManagementPage() {
             <div>
               <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_CLIENT}</label>
               <select value={form.client} onChange={(e) => setForm((f) => ({ ...f, client: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition bg-white">
-                <option value="">{STATIC_STRINGS.TASK_MGMT_SELECT_CLIENT}</option>
-                {CLIENT_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
+                <option value="">{isFetchingClients ? 'Loading clients...' : STATIC_STRINGS.TASK_MGMT_SELECT_CLIENT}</option>
+                {clientsList.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
               </select>
             </div>
             <div>

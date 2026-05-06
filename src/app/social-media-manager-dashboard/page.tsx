@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { reelService } from '@/lib/services/reelService';
 import { reelAgent } from '@/lib/agent/reelAgent';
 import ReelsSchedule from './components/ReelsSchedule';
+import { clientService } from '@/api/services/client.service';
 import { STATIC_STRINGS, ROLES, PAGE_ROLES } from '@/utils/constants';
 import { UserRole } from '@/types';
 
@@ -27,6 +28,8 @@ export default function SocialMediaManagerDashboardPage() {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newReelForm, setNewReelForm] = useState({ title: '', campaignId: '', scheduledDate: '' });
+  const [clientsList, setClientsList] = useState<{ id: string; name: string }[]>([]);
+  const [isFetchingClients, setIsFetchingClients] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -38,7 +41,23 @@ export default function SocialMediaManagerDashboardPage() {
         setIsLoading(false);
       }
     };
+    const fetchClients = async () => {
+      setIsFetchingClients(true);
+      try {
+        const response = await clientService.getClients({ page: 1, limit: 100 });
+        if (response?.results?.data) {
+          setClientsList(response.results.data.map((c: any) => ({
+            id: c.id,
+            name: c.clientName
+          })));
+        }
+      } catch (error) {
+      } finally {
+        setIsFetchingClients(false);
+      }
+    };
     fetchReels();
+    fetchClients();
   }, [user]);
 
   const transformedTasks = useMemo(() => {
@@ -229,10 +248,8 @@ export default function SocialMediaManagerDashboardPage() {
                   value={newReelForm.campaignId}
                   onChange={(e) => setNewReelForm(f => ({ ...f, campaignId: e.target.value }))}
                 >
-                  <option value="">{STATIC_STRINGS.SMM_PLACEHOLDER_CLIENT}</option>
-                  <option value="c_spring">Luma Apparel</option>
-                  <option value="c_cyber">TechWorld</option>
-                  <option value="c_gt">Velocity Motors</option>
+                  <option value="">{isFetchingClients ? 'Loading clients...' : STATIC_STRINGS.SMM_PLACEHOLDER_CLIENT}</option>
+                  {clientsList.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
                 </select>
               </div>
               <div>

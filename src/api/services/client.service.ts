@@ -1,0 +1,77 @@
+import AxiosRequest from '@/utils/axiosHelper';
+import { API_ENDPOINTS } from '@/lib/endpoints';
+
+export interface CreateClientPayload {
+  client_name: string;
+  brand_name: string;
+  email: string;
+  service_required: string[];
+  package_amount: number;
+  per_day_spend_amount: number;
+  plan_type: string;
+  reels_per_month: number;
+  platform_type: 'online' | 'offline';
+  weblink?: string;
+  file_location?: string;
+}
+
+export interface CreateClientResponse {
+  success: boolean;
+  code: number;
+  message: string;
+  results?: any;
+}
+
+export interface GetClientsParams {
+  page: number;
+  limit: number;
+}
+
+export interface ClientData {
+  id: string;
+  ownerId: string;
+  clientName: string;
+  brandName: string;
+  email: string;
+  serviceRequired: string[];
+  packageAmount: string | number;
+  perDaySpendAmount: string | number;
+  planType: string;
+  reelsPerMonth: number;
+  platformType: string;
+  weblink: string | null;
+  fileLocation: string | null;
+  isActive: boolean;
+  isDeleted: boolean;
+  deletedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GetClientsResponse {
+  success: boolean;
+  code: number;
+  message: string;
+  results: {
+    data: ClientData[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalItem: number;
+      itemsPerPage: number;
+      hasNextPage: boolean;
+      hasPrevPage: boolean;
+    };
+  };
+}
+
+export const clientService = {
+  createClient: async (payload: CreateClientPayload): Promise<CreateClientResponse> => {
+    const response = await AxiosRequest.post(API_ENDPOINTS.CLIENT.CREATE, payload);
+    return response;
+  },
+  getClients: async (params: GetClientsParams): Promise<GetClientsResponse> => {
+    const response = await AxiosRequest.get(API_ENDPOINTS.CLIENT.LIST, params);
+    return response;
+  },
+};

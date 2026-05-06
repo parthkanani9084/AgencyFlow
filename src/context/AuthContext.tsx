@@ -67,7 +67,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     // 1. Handle authenticated users on public pages
     if (user && isPublic) {
-      console.log('[AuthGuard] Authenticated user on public page:', { role: user.role, pathname });
       
       // Super Admin specifically handles /superadmin/login
       if (user.role === ROLES.SUPER_ADMIN) {
@@ -84,7 +83,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // 2. Handle unauthenticated users on protected pages
     if (!user && !isPublic) {
-      console.log('[AuthGuard] Unauthenticated user on protected page:', pathname);
       if (pathname.startsWith('/superadmin')) {
         router.replace(ROUTES.SUPER_ADMIN_LOGIN);
       } else {
@@ -94,7 +92,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     // 3. Handle unauthorized access to super-admin routes
     else if (user && pathname.startsWith('/superadmin') && user.role !== ROLES.SUPER_ADMIN && !isPublic) {
-      console.log('[AuthGuard] Unauthorized access attempt:', { role: user.role, pathname });
       router.replace(ROLE_HOME[user.role] || ROUTES.OWNER_DASHBOARD);
     }
   }, [user, isLoading, pathname, router]);

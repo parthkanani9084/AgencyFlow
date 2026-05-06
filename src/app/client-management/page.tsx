@@ -14,6 +14,8 @@ import { useAdsData } from '@/context/AdsDataContext';
 import { toast } from 'sonner';
 import { STATIC_STRINGS, PAGE_ROLES, ROLES } from '@/utils/constants';
 import { UserRole } from '@/types';
+import { useCreateClient } from '@/api/hooks/useClient';
+import { clientService } from '@/api/services/client.service';
 
 interface Payment {
   amount: number;
@@ -24,6 +26,7 @@ interface Payment {
 interface Client {
   id: string;
   name: string;
+  email: string;
   brand: string;
   packageAmount: number; 
   perDaySpend: number;   
@@ -40,6 +43,7 @@ interface Client {
 
 interface FormState {
   name: string; 
+  email: string;
   brand: string; 
   packageAmount: string; 
   perDaySpend: string; 
@@ -52,14 +56,11 @@ interface FormState {
   services: string[];
 }
 
-// --- Constants ---
-const INITIAL_CLIENTS: Client[] = [
-  { id: 'c1', name: 'Jordan Lee', brand: 'NovaBrew Coffee', packageAmount: 120000, perDaySpend: 1500, planType: 'monthly', services: [], payments: [], createdAt: '2026-01-10' },
-  { id: 'c2', name: 'Samantha Cruz', brand: 'PulseWear Apparel', packageAmount: 8500, perDaySpend: 50, planType: 'weekly', services: [], payments: [], createdAt: '2026-02-03' },
-];
+
 
 const EMPTY_FORM: FormState = { 
   name: '', 
+  email: '',
   brand: '', 
   packageAmount: '', 
   perDaySpend: '', 
@@ -86,13 +87,12 @@ export default function ClientManagementPage() {
   const { adsMetrics, updateAdsMetrics } = useAdsData();
   const isOwner = user?.role === ROLES.OWNER;
 
-  const [clients, setClients] = useState<Client[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('agencyflow_clients');
-      return saved ? JSON.parse(saved) : INITIAL_CLIENTS;
-    }
-    return INITIAL_CLIENTS;
-  });
+  const [clients, setClients] = useState<Client[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
@@ -114,10 +114,77 @@ export default function ClientManagementPage() {
 
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(12);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const [isFetching, setIsFetching] = useState(false);
+  const { mutateAsync: createClient, isPending: isCreating } = useCreateClient();
+
+  const fetchClients = useCallback(async () => {
+    setIsFetching(true);
+    try {
+      const response = await clientService.getClients({ page, limit: perPage });
+      const apiClients = response?.results?.data;
+      if (apiClients) {
+        const mapped: Client[] = apiClients.map((c: any) => ({
+          id: c.id,
+          name: c.clientName,
+          email: c.email || '',
+          brand: c.brandName,
+          packageAmount: Number(c.packageAmount) || 0,
+          perDaySpend: Number(c.perDaySpendAmount) || 0,
+          planType: c.planType as 'monthly' | 'weekly' | 'yearly',
+          adType: c.adType || '',
+          platformType: (c.platformType === 'online' ? 'Website' : 'Offline') as 'Website' | 'Offline',
+          location: c.fileLocation || '',
+          websiteLink: c.weblink || '',
+          reelsPerMonth: Number(c.reelsPerMonth) || 0,
+          services: c.serviceRequired || [],
+          payments: c.payments || [],
+          createdAt: c.createdAt
+        }));
+        setClients(mapped);
+        
+        // Update pagination states from API response
+        if (response.results?.pagination) {
+          setTotalItems(response.results.pagination.totalItem || mapped.length);
+          setTotalPages(response.results.pagination.totalPages || 1);
+        } else {
+          setTotalItems(mapped.length);
+          setTotalPages(1);
+        }
+      }
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to fetch clients');
+    } finally {
+      setIsFetching(false);
+    }
+  }, [page, perPage]);
 
   useEffect(() => {
-    localStorage.setItem('agencyflow_clients', JSON.stringify(clients));
-  }, [clients]);
+    if (isMounted) {
+      fetchClients();
+    }
+  }, [fetchClients, isMounted]);
+
+
+  const filteredClients = useMemo(() => {
+    const safeClients = clients || [];
+    const query = search.toLowerCase().trim();
+    if (!query) return safeClients;
+
+    return safeClients.filter(c => 
+      c.name.toLowerCase().includes(query) || 
+      c.brand.toLowerCase().includes(query)
+    );
+  }, [clients, search]);
+
+  const finalTotalEntries = search.trim() ? filteredClients.length : totalItems;
+  const finalTotalPages = search.trim() ? Math.ceil(filteredClients.length / perPage) : totalPages;
+
+  const paginatedClients = useMemo(() => {
+    return filteredClients;
+  }, [filteredClients]);
 
   const getClientTotalPaid = useCallback((client: Client) => {
     return client.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
@@ -136,23 +203,6 @@ export default function ClientManagementPage() {
     });
   }, [adsMetrics, updateAdsMetrics, getClientTotalPaid]);
 
-  const filteredClients = useMemo(() => {
-    const query = search.toLowerCase().trim();
-    let result = clients;
-    if (query) {
-      result = clients.filter(c => 
-        c.name.toLowerCase().includes(query) || 
-        c.brand.toLowerCase().includes(query)
-      );
-    }
-    return result;
-  }, [clients, search]);
-
-  const totalPages = Math.ceil(filteredClients.length / perPage);
-  const paginatedClients = useMemo(() => {
-    const start = (page - 1) * perPage;
-    return filteredClients.slice(start, start + perPage);
-  }, [filteredClients, page, perPage]);
 
   // Reset page on search
   useEffect(() => {
@@ -171,6 +221,7 @@ export default function ClientManagementPage() {
     setEditingClient(client);
     setForm({ 
       name: client.name, 
+      email: client.email || '',
       brand: client.brand, 
       packageAmount: String(client.packageAmount), 
       perDaySpend: String(client.perDaySpend || ''),
@@ -192,13 +243,14 @@ export default function ClientManagementPage() {
     const e: Partial<FormState> = {};
     if (!form.name.trim()) e.name = STATIC_STRINGS.CLIENT_MGMT_NAME_REQUIRED;
     if (!form.brand.trim()) e.brand = STATIC_STRINGS.CLIENT_MGMT_BRAND_REQUIRED;
+    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = STATIC_STRINGS.FORM_EMAIL_REQUIRED;
     if (!form.packageAmount || isNaN(Number(form.packageAmount)) || Number(form.packageAmount) <= 0) {
       e.packageAmount = STATIC_STRINGS.CLIENT_MGMT_PACKAGE_REQUIRED;
     }
     return e;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const e = validate();
     if (Object.keys(e).length > 0) {
       setErrors(e);
@@ -207,6 +259,7 @@ export default function ClientManagementPage() {
 
     const submissionData = {
       name: form.name.trim(),
+      email: form.email.trim(),
       brand: form.brand.trim(),
       packageAmount: Number(form.packageAmount),
       perDaySpend: Number(form.perDaySpend) || 0,
@@ -222,17 +275,36 @@ export default function ClientManagementPage() {
     if (editingClient) {
       setClients(prev => prev.map(c => c.id === editingClient.id ? { ...c, ...submissionData } : c));
       toast.success(`${STATIC_STRINGS.CLIENT_MGMT_TOAST_UPDATED_PREFIX}${submissionData.name}${STATIC_STRINGS.CLIENT_MGMT_TOAST_UPDATED_SUFFIX}`);
+      setModalOpen(false);
     } else {
-      const newClient: Client = {
-        id: `c${Date.now()}`,
-        ...submissionData,
-        payments: [],
-        createdAt: new Date().toISOString().split('T')[0],
-      };
-      setClients(prev => [newClient, ...prev]);
-      toast.success(`${STATIC_STRINGS.CLIENT_MGMT_TOAST_ADDED_PREFIX}${submissionData.name}${STATIC_STRINGS.CLIENT_MGMT_TOAST_ADDED_SUFFIX}`);
+      try {
+        const data = await createClient({
+          client_name: submissionData.name,
+          brand_name: submissionData.brand,
+          email: submissionData.email,
+          service_required: submissionData.services,
+          package_amount: submissionData.packageAmount,
+          per_day_spend_amount: submissionData.perDaySpend,
+          plan_type: submissionData.planType,
+          reels_per_month: submissionData.reelsPerMonth,
+          platform_type: submissionData.platformType === 'Website' ? 'online' : 'offline',
+          weblink: submissionData.websiteLink,
+          file_location: submissionData.location,
+        });
+
+        const newClient: Client = {
+          id: data.results?.id || `c${Date.now()}`,
+          ...submissionData,
+          payments: [],
+          createdAt: new Date().toISOString().split('T')[0],
+        };
+        setClients(prev => [newClient, ...prev]);
+        toast.success(`${STATIC_STRINGS.CLIENT_MGMT_TOAST_ADDED_PREFIX}${submissionData.name}${STATIC_STRINGS.CLIENT_MGMT_TOAST_ADDED_SUFFIX}`);
+        setModalOpen(false);
+      } catch (error: any) {
+        toast.error(error?.message || 'Failed to create client');
+      }
     }
-    setModalOpen(false);
   };
 
   const handleDelete = () => {
@@ -306,6 +378,8 @@ export default function ClientManagementPage() {
     toast.info(STATIC_STRINGS.CLIENT_MGMT_TOAST_PAYMENT_REMOVED);
   };
 
+  if (!isMounted) return null;
+
   return (
     <AppLayout>
       <div className="p-6 max-w-6xl mx-auto">
@@ -313,7 +387,7 @@ export default function ClientManagementPage() {
         <header className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">{STATIC_STRINGS.CLIENT_MGMT_TITLE || 'Client Management'}</h1>
-            <p className="text-[13px] text-slate-500 mt-0.5">{clients.length} {STATIC_STRINGS.CAMPAIGN_MGMT_TOTAL} clients</p>
+            <p className="text-[13px] text-slate-500 mt-0.5">{(clients ? totalItems : 0)} {STATIC_STRINGS.CAMPAIGN_MGMT_TOTAL} clients</p>
           </div>
           {isOwner && (
             <button
@@ -456,11 +530,11 @@ export default function ClientManagementPage() {
 
           <Pagination
             currentPage={page}
-            totalPages={totalPages}
+            totalPages={finalTotalPages}
             onPageChange={setPage}
             perPage={perPage}
             onPerPageChange={setPerPage}
-            totalEntries={filteredClients.length}
+            totalEntries={finalTotalEntries}
             labels={{
               show: STATIC_STRINGS.CAMPAIGN_MGMT_PAGINATION_SHOW,
               of: STATIC_STRINGS.CAMPAIGN_MGMT_PAGINATION_OF,
@@ -647,6 +721,17 @@ export default function ClientManagementPage() {
               />
               {errors.brand && <p className="mt-1 text-[11.5px] text-red-500">{errors.brand}</p>}
             </div>
+            <div>
+              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.FORM_EMAIL_ADDRESS} <span className="text-red-500">*</span></label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => { setForm(f => ({ ...f, email: e.target.value })); setErrors(er => ({ ...er, email: '' })); }}
+                placeholder="e.g. client@test.com"
+                className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 transition ${errors.email ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-white focus:border-violet-400'}`}
+              />
+              {errors.email && <p className="mt-1 text-[11.5px] text-red-500">{errors.email}</p>}
+            </div>
           </div>
 
           <div>
@@ -791,8 +876,12 @@ export default function ClientManagementPage() {
 
           <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
             <button onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">{STATIC_STRINGS.CAMPAIGN_MGMT_CANCEL}</button>
-            <button onClick={handleSave} className="px-5 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[13px] font-semibold transition-all shadow-sm">
-              {editingClient ? STATIC_STRINGS.CAMPAIGN_MGMT_SAVE_CHANGES : STATIC_STRINGS.CLIENT_MGMT_ADD_CLIENT}
+            <button 
+              onClick={handleSave} 
+              disabled={isCreating}
+              className="px-5 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[13px] font-semibold transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isCreating ? 'Adding...' : (editingClient ? STATIC_STRINGS.CAMPAIGN_MGMT_SAVE_CHANGES : STATIC_STRINGS.CLIENT_MGMT_ADD_CLIENT)}
             </button>
           </div>
         </div>

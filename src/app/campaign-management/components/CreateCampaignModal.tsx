@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import Modal from '@/components/ui/Modal';
-import { STATIC_STRINGS, CLIENT_OPTIONS, TEAM_MEMBERS, OBJECTIVE_OPTIONS, PLATFORM_OPTIONS } from '@/utils/constants';
+import { STATIC_STRINGS, TEAM_MEMBERS, OBJECTIVE_OPTIONS, PLATFORM_OPTIONS } from '@/utils/constants';
+import { clientService } from '@/api/services/client.service';
 import { ROLES } from '@/constants/roles';
 
 interface CampaignFormValues {
@@ -30,6 +31,8 @@ interface Props {
 export default function CreateCampaignModal({ open, onClose, onSuccess }: Props) {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [clientsList, setClientsList] = useState<{ id: string; name: string }[]>([]);
+  const [isFetchingClients, setIsFetchingClients] = useState(false);
 
   const {
     register,
@@ -54,6 +57,25 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
     },
   });
 
+  React.useEffect(() => {
+    const fetchClients = async () => {
+      setIsFetchingClients(true);
+      try {
+        const response = await clientService.getClients({ page: 1, limit: 100 });
+        if (response?.results?.data) {
+          setClientsList(response.results.data.map((c: any) => ({
+            id: c.id,
+            name: c.clientName
+          })));
+        }
+      } catch (error) {
+      } finally {
+        setIsFetchingClients(false);
+      }
+    };
+    if (open) fetchClients();
+  }, [open]);
+
   const handleClose = () => {
     reset();
     setStep(1);
@@ -76,7 +98,6 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
 
   const onSubmit = async (data: CampaignFormValues) => {
     setIsSubmitting(true);
-    // BACKEND INTEGRATION: POST /api/campaigns with data
     await new Promise((r) => setTimeout(r, 1100));
     const idNum = Math.floor(Math.random() * 900) + 100;
     const newCampaign = {
@@ -295,8 +316,8 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
                     className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all bg-white"
                     {...register('client')}
                   >
-                    <option value="">{STATIC_STRINGS.CREATE_CAMPAIGN_SELECT_CLIENT}</option>
-                    {CLIENT_OPTIONS.map((c) => <option key={`client-sel-${c}`} value={c}>{c}</option>)}
+                    <option value="">{isFetchingClients ? 'Loading clients...' : STATIC_STRINGS.CREATE_CAMPAIGN_SELECT_CLIENT}</option>
+                    {clientsList.map((c) => <option key={`client-sel-${c.id}`} value={c.name}>{c.name}</option>)}
                   </select>
                 </div>
               </div>
