@@ -8,6 +8,7 @@ import AppLogo from '@/components/ui/AppLogo';
 import { toast } from 'sonner';
 import { useAuth, ROLE_HOME } from '@/context/AuthContext';
 import { STATIC_STRINGS, ROLES } from '@/utils/constants';
+import { ROUTES } from '@/constants/routes';
 import { UserRole } from '@/types';
 
 interface FormValues {
@@ -76,7 +77,7 @@ export default function LoginForm() {
     }
 
     const matched = demoCredentials.find((c) => c.email === data.email);
-    const home = matched ? ROLE_HOME[matched.role as UserRole] : '/dashboard';
+    const home = matched ? ROLE_HOME[matched.role as UserRole] : ROUTES.OWNER_DASHBOARD;
     toast.success(`${STATIC_STRINGS.LOGIN_AUTH_WELCOME_BACK} ${matched?.role ?? 'user'}…`);
     await new Promise((r) => setTimeout(r, 500));
     router.push(home);

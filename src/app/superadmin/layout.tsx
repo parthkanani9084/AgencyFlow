@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ROLES } from '@/constants/roles';
+import { ROUTES } from '@/constants/routes';
 import { Loader2 } from 'lucide-react';
 
 export default function SuperAdminLayout({ children }: { children: React.ReactNode }) {
@@ -12,7 +13,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
   const router = useRouter();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
-  const isLoginPage = pathname === '/superadmin/login';
+  const isLoginPage = pathname === ROUTES.SUPER_ADMIN_LOGIN;
 
   useEffect(() => {
     setMounted(true);
@@ -22,9 +23,9 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
   useEffect(() => {
     if (mounted && !isLoading) {
       if (!user && !isLoginPage) {
-        router.replace('/superadmin/login');
+        router.replace(ROUTES.SUPER_ADMIN_LOGIN);
       } else if (user && user.role !== ROLES.SUPER_ADMIN && !isLoginPage) {
-        router.replace('/dashboard');
+        router.replace(ROUTES.OWNER_DASHBOARD);
       }
     }
   }, [user, isLoading, router, mounted, isLoginPage]);

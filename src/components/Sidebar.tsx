@@ -25,6 +25,7 @@ import { useAuth } from '@/context/AuthContext';
 import type { UserRole } from '@/types';
 import { useTasks } from '@/context/TaskContext';
 import { ROLES } from '@/constants/roles';
+import { ROUTES } from '@/constants/routes';
 import { STATIC_STRINGS } from '@/utils/constants';
 interface NavItem {
   id: string;
@@ -52,32 +53,32 @@ export default function Sidebar() {
 
   const navItems: NavItem[] = [
     // Workspace
-    { id: 'nav-dashboard',     label: 'Dashboard',     icon: LayoutDashboard, href: '/dashboard',             group: 'main',      allowedRoles: [ROLES.OWNER] },
-    { id: 'nav-client-profile', label: 'My Profile',    icon: Users,           href: '/client/profile',       group: 'main',      allowedRoles: [ROLES.CLIENT] },
-    { id: 'nav-client-campaigns', label: 'My Campaigns', icon: Megaphone,      href: '/client/campaigns',     group: 'main',      allowedRoles: [ROLES.CLIENT] },
-    { id: 'nav-client-reels',     label: 'My Reels',        icon: Film,            href: '/client/reels',         group: 'main',      allowedRoles: [ROLES.CLIENT] },
-    { id: 'nav-campaigns',     label: 'Campaigns',     icon: Megaphone,       href: '/campaign-management',   badge: 3, group: 'main', allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
-    { id: 'nav-clients',       label: 'Clients',       icon: Briefcase,       href: '/client-management',     group: 'main',      allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
-    { id: 'nav-tasks',         label: 'Tasks',         icon: CheckSquare,     href: '/task-management',       badge: tasks.length, group: 'main', allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
-    { id: 'nav-sa-dashboard',  label: 'Dashboard',      icon: LayoutDashboard, href: '/superadmin/dashboard',  group: 'main',      allowedRoles: [ROLES.SUPER_ADMIN] },
-    { id: 'nav-sa-agencies',   label: 'Business Agency', icon: Briefcase,       href: '/superadmin/business-agency', group: 'main',      allowedRoles: [ROLES.SUPER_ADMIN] },
-    { id: 'nav-sa-subs',       label: 'Subscription',    icon: Megaphone,       href: '/superadmin/subscription', group: 'main',      allowedRoles: [ROLES.SUPER_ADMIN] },
+    { id: 'nav-dashboard',     label: 'Dashboard',     icon: LayoutDashboard, href: ROUTES.OWNER_DASHBOARD,             group: 'main',      allowedRoles: [ROLES.OWNER] },
+    { id: 'nav-client-profile', label: 'My Profile',    icon: Users,           href: ROUTES.CLIENT_PROFILE,       group: 'main',      allowedRoles: [ROLES.CLIENT] },
+    { id: 'nav-client-campaigns', label: 'My Campaigns', icon: Megaphone,      href: ROUTES.CLIENT_CAMPAIGNS,     group: 'main',      allowedRoles: [ROLES.CLIENT] },
+    { id: 'nav-client-reels',     label: 'My Reels',        icon: Film,            href: ROUTES.CLIENT_REELS,         group: 'main',      allowedRoles: [ROLES.CLIENT] },
+    { id: 'nav-campaigns',     label: 'Campaigns',     icon: Megaphone,       href: ROUTES.CAMPAIGN_MANAGEMENT,   badge: 3, group: 'main', allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
+    { id: 'nav-clients',       label: 'Clients',       icon: Briefcase,       href: ROUTES.CLIENT_MANAGEMENT,     group: 'main',      allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
+    { id: 'nav-tasks',         label: 'Tasks',         icon: CheckSquare,     href: ROUTES.TASK_MANAGEMENT,       badge: tasks.length, group: 'main', allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
+    { id: 'nav-sa-dashboard',  label: 'Dashboard',      icon: LayoutDashboard, href: ROUTES.SUPER_ADMIN_DASHBOARD,  group: 'main',      allowedRoles: [ROLES.SUPER_ADMIN] },
+    { id: 'nav-sa-agencies',   label: 'Business Agency', icon: Briefcase,       href: ROUTES.SUPER_ADMIN_AGENCIES, group: 'main',      allowedRoles: [ROLES.SUPER_ADMIN] },
+    { id: 'nav-sa-subs',       label: 'Subscription',    icon: Megaphone,       href: ROUTES.SUPER_ADMIN_SUBSCRIPTIONS, group: 'main',      allowedRoles: [ROLES.SUPER_ADMIN] },
 
     // Role Dashboards
-    { id: 'nav-manager',       label: 'Manager',       icon: UserCheck,       href: '/manager-dashboard',     group: 'roles',     allowedRoles: [ROLES.OWNER, ROLES.MANAGER] },
-    { id: 'nav-shooter',       label: 'Shooter',       icon: Camera,          href: '/shooter-dashboard',     group: 'roles',     allowedRoles: [ROLES.OWNER, ROLES.SHOOTER, ROLES.MANAGER] },
-    { id: 'nav-editor',        label: 'Editor',        icon: Film,            href: '/editor-dashboard',      group: 'roles',     allowedRoles: [ROLES.OWNER, ROLES.EDITOR, ROLES.MANAGER] },
-    { id: 'nav-ads-mgr',       label: 'Ads Manager',   icon: Megaphone,       href: '/ads-manager-dashboard', group: 'roles',     allowedRoles: [ROLES.OWNER, ROLES.ADS_MANAGER, ROLES.MANAGER] },
-    { id: 'nav-social-mgr',    label: 'Social Media',  icon: TrendingUp,      href: '/social-media-manager-dashboard', group: 'roles', allowedRoles: [ROLES.OWNER, ROLES.SOCIAL_MEDIA_MANAGER, ROLES.MANAGER] },
+    { id: 'nav-manager',       label: 'Manager',       icon: UserCheck,       href: ROUTES.MANAGER_DASHBOARD,     group: 'roles',     allowedRoles: [ROLES.OWNER, ROLES.MANAGER] },
+    { id: 'nav-shooter',       label: 'Shooter',       icon: Camera,          href: ROUTES.SHOOTER_DASHBOARD,     group: 'roles',     allowedRoles: [ROLES.OWNER, ROLES.SHOOTER, ROLES.MANAGER] },
+    { id: 'nav-editor',        label: 'Editor',        icon: Film,            href: ROUTES.EDITOR_DASHBOARD,      group: 'roles',     allowedRoles: [ROLES.OWNER, ROLES.EDITOR, ROLES.MANAGER] },
+    { id: 'nav-ads-mgr',       label: 'Ads Manager',   icon: Megaphone,       href: ROUTES.ADS_MANAGER_DASHBOARD, group: 'roles',     allowedRoles: [ROLES.OWNER, ROLES.ADS_MANAGER, ROLES.MANAGER] },
+    { id: 'nav-social-mgr',    label: 'Social Media',  icon: TrendingUp,      href: ROUTES.SOCIAL_MEDIA_MANAGER_DASHBOARD, group: 'roles', allowedRoles: [ROLES.OWNER, ROLES.SOCIAL_MEDIA_MANAGER, ROLES.MANAGER] },
 
     // Analytics
-    { id: 'nav-ads',           label: 'Ads Tracking',  icon: TrendingUp,      href: '/ads-tracking',          group: 'analytics', allowedRoles: [ROLES.OWNER, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER, ROLES.MANAGER] },
-    { id: 'nav-reports',       label: 'Reports',       icon: BarChart3,       href: '/reports',               group: 'analytics', allowedRoles: [ROLES.OWNER, ROLES.MANAGER] },
+    { id: 'nav-ads',           label: 'Ads Tracking',  icon: TrendingUp,      href: ROUTES.ADS_TRACKING,          group: 'analytics', allowedRoles: [ROLES.OWNER, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER, ROLES.MANAGER] },
+    { id: 'nav-reports',       label: 'Reports',       icon: BarChart3,       href: ROUTES.REPORTS,               group: 'analytics', allowedRoles: [ROLES.OWNER, ROLES.MANAGER] },
 
     // Account
-    { id: 'nav-team',          label: 'Team',          icon: Users,           href: '/team',                  group: 'settings',  allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
-    { id: 'nav-notifications', label: 'Notifications', icon: Bell,            href: '/notifications',         badge: unreadCount > 0 ? unreadCount : undefined, group: 'settings', allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
-    { id: 'nav-settings',      label: 'Settings',      icon: Settings,        href: '/settings',              group: 'settings',  allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
+    { id: 'nav-team',          label: 'Team',          icon: Users,           href: ROUTES.TEAM,                  group: 'settings',  allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
+    { id: 'nav-notifications', label: 'Notifications', icon: Bell,            href: ROUTES.NOTIFICATIONS,         badge: unreadCount > 0 ? unreadCount : undefined, group: 'settings', allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
+    { id: 'nav-settings',      label: 'Settings',      icon: Settings,        href: ROUTES.SETTINGS,              group: 'settings',  allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
     // Super Admin - Settings (Removed as per request)
   ];
 
@@ -118,7 +119,7 @@ export default function Sidebar() {
                 const NavIcon = item.icon;
                 const active =
                   item.id === 'nav-dashboard'
-                    ? pathname === '/dashboard'
+                    ? pathname === ROUTES.OWNER_DASHBOARD
                     : pathname.startsWith(item.href);
 
                 return (

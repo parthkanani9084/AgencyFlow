@@ -6,24 +6,13 @@ import { Megaphone, CheckCircle2, Timer, Circle, Calendar, ChevronRight, AlertCi
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/context/AuthContext';
 import { useTasks } from '@/context/TaskContext';
-import { Task, TaskStatus, TaskPriority, Campaign } from '@/types';
+import { Task, TaskStatus, Campaign } from '@/types';
 import TodayReportingCard from './components/TodayReportingCard';
 import TaskCompletionModal from '@/components/TaskCompletionModal';
 import { STATIC_STRINGS, PAGE_ROLES, STORAGE_KEY_CAMPAIGNS, TEAM_MEMBERS, ROLES } from '@/utils/constants';
+import { PRIORITY_STYLES, STATUS_CONFIG as STATUS_STYLES } from '@/utils/ui-configs';
 import { UserRole } from '@/types';
 
-const PRIORITY_STYLES: Record<TaskPriority, string> = {
-  low: 'bg-slate-400',
-  medium: 'bg-amber-400',
-  high: 'bg-red-500',
-};
-
-
-const STATUS_STYLES: Record<TaskStatus, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  pending: { label: STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_PENDING, color: 'text-slate-600', bg: 'bg-slate-100', icon: Circle },
-  in_progress: { label: STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_IN_PROGRESS, color: 'text-amber-700', bg: 'bg-amber-100', icon: Timer },
-  completed: { label: STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_COMPLETED, color: 'text-emerald-700', bg: 'bg-emerald-100', icon: CheckCircle2 },
-};
 
 
 export default function AdsManagerDashboardPage() {

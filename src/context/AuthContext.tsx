@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useRouter, usePathname } from 'next/navigation';
 import type { AuthUser, UserRole } from '@/types';
 import { ROLES } from '@/constants/roles';
+import { ROUTES } from '@/constants/routes';
 
 // ─── Demo credentials (mirrors LoginForm) ─────────────────────────────────────
 const DEMO_USERS: (AuthUser & { password: string })[] = [
@@ -18,18 +19,18 @@ const DEMO_USERS: (AuthUser & { password: string })[] = [
 
 // Role → default landing page
 export const ROLE_HOME: Record<UserRole, string> = {
-  [ROLES.SUPER_ADMIN]: '/superadmin/dashboard',
-  [ROLES.OWNER]:       '/dashboard',
-  [ROLES.MANAGER]:     '/manager-dashboard',
-  [ROLES.SHOOTER]:     '/shooter-dashboard',
-  [ROLES.EDITOR]:      '/editor-dashboard',
-  [ROLES.ADS_MANAGER]: '/ads-manager-dashboard',
-  [ROLES.SOCIAL_MEDIA_MANAGER]: '/social-media-manager-dashboard',
-  [ROLES.CLIENT]:      '/client/campaigns',
+  [ROLES.SUPER_ADMIN]: ROUTES.SUPER_ADMIN_DASHBOARD,
+  [ROLES.OWNER]:       ROUTES.OWNER_DASHBOARD,
+  [ROLES.MANAGER]:     ROUTES.MANAGER_DASHBOARD,
+  [ROLES.SHOOTER]:     ROUTES.SHOOTER_DASHBOARD,
+  [ROLES.EDITOR]:      ROUTES.EDITOR_DASHBOARD,
+  [ROLES.ADS_MANAGER]: ROUTES.ADS_MANAGER_DASHBOARD,
+  [ROLES.SOCIAL_MEDIA_MANAGER]: ROUTES.SOCIAL_MEDIA_MANAGER_DASHBOARD,
+  [ROLES.CLIENT]:      ROUTES.CLIENT_CAMPAIGNS,
 };
 
 // Pages accessible without login
-const PUBLIC_PATHS = ['/sign-up-login-screen', '/superadmin/login', '/superadmin/verify'];
+const PUBLIC_PATHS = [ROUTES.LOGIN, ROUTES.SUPER_ADMIN_LOGIN, ROUTES.SUPER_ADMIN_VERIFY];
 
 // ─── Context shape ────────────────────────────────────────────────────────────
 interface AuthContextValue {
@@ -77,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Regular users handle other public pages
       if (!pathname.startsWith('/superadmin')) {
-        router.replace(ROLE_HOME[user.role] || '/dashboard');
+        router.replace(ROLE_HOME[user.role] || ROUTES.OWNER_DASHBOARD);
         return;
       }
     }
@@ -86,16 +87,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user && !isPublic) {
       console.log('[AuthGuard] Unauthenticated user on protected page:', pathname);
       if (pathname.startsWith('/superadmin')) {
-        router.replace('/superadmin/login');
+        router.replace(ROUTES.SUPER_ADMIN_LOGIN);
       } else {
-        router.replace('/sign-up-login-screen');
+        router.replace(ROUTES.LOGIN);
       }
     } 
     
     // 3. Handle unauthorized access to super-admin routes
     else if (user && pathname.startsWith('/superadmin') && user.role !== ROLES.SUPER_ADMIN && !isPublic) {
       console.log('[AuthGuard] Unauthorized access attempt:', { role: user.role, pathname });
-      router.replace(ROLE_HOME[user.role] || '/dashboard');
+      router.replace(ROLE_HOME[user.role] || ROUTES.OWNER_DASHBOARD);
     }
   }, [user, isLoading, pathname, router]);
 
@@ -119,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const isSuperAdmin = user?.role === ROLES.SUPER_ADMIN;
     setUser(null);
     sessionStorage.removeItem('af_user');
-    router.push(isSuperAdmin ? '/superadmin/login' : '/sign-up-login-screen');
+    router.push(isSuperAdmin ? ROUTES.SUPER_ADMIN_LOGIN : ROUTES.LOGIN);
   }, [router, user]);
 
   return (
