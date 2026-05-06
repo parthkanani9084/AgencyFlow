@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { BarChart3, TrendingUp, DollarSign, Users, Target, Download, ChevronDown } from 'lucide-react';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, Legend, PieChart, Pie, Cell 
@@ -75,8 +75,6 @@ export default function ReportsPage() {
 
   return (
     <AppLayout>
-      <Toaster position="bottom-right" richColors />
-      
       <main className="px-6 lg:px-8 xl:px-10 py-6 max-w-screen-2xl mx-auto">
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>

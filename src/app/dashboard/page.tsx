@@ -13,7 +13,7 @@ import DashboardCharts from './components/DashboardCharts';
 import ActivityFeed from './components/ActivityFeed';
 import TopCampaignsTable from './components/TopCampaignsTable';
 import DashboardHeader from './components/DashboardHeader';
-import { Toaster } from 'sonner';
+
 import { useAdsData } from '@/context/AdsDataContext';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { STATIC_STRINGS, STORAGE_KEYS, PAGE_ROLES } from '@/utils/constants';
@@ -82,8 +82,6 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
-      <Toaster position="bottom-right" richColors />
-      
       <main className="px-6 lg:px-8 xl:px-10 py-6 max-w-screen-2xl mx-auto">
         <DashboardHeader />
         

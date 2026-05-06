@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Bell, CheckCheck, Trash2, CheckCircle2, AlertCircle, Megaphone, ArrowRight, Settings } from 'lucide-react';
-import { Toaster } from 'sonner';
+
 import { NotificationType } from '@/types';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useTasks } from '@/context/TaskContext';
@@ -70,8 +70,6 @@ export default function NotificationsPage() {
 
   return (
     <AppLayout>
-      <Toaster position="bottom-right" richColors />
-      
       <main className="px-6 lg:px-8 xl:px-10 py-6 max-w-screen-2xl mx-auto">
         {/* Viewport Header */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">

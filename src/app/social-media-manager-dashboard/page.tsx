@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Task, TaskStatus, Reel } from '@/types';
 import TaskCompletionModal from '@/components/TaskCompletionModal';
 import Modal from '@/components/ui/Modal';
-import { toast, Toaster } from 'sonner';
+import { toast } from 'sonner';
 import { reelService } from '@/lib/services/reelService';
 import { reelAgent } from '@/lib/agent/reelAgent';
 import ReelsSchedule from './components/ReelsSchedule';
@@ -111,7 +111,6 @@ export default function SocialMediaManagerDashboardPage() {
 
   return (
     <AppLayout>
-      <Toaster position="bottom-right" richColors />
       <div className="p-6 max-w-5xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">

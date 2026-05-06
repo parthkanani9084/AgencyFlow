@@ -30,6 +30,10 @@ export const STATIC_STRINGS = {
   TABLE_JOINED: 'Joined',
   TABLE_DATE: 'Date',
   TABLE_ACTIONS: 'Actions',
+  TABLE_CLIENT: 'Client',
+  TABLE_BRAND: 'Brand',
+  TABLE_PACKAGE: 'Package',
+  TABLE_PLAN: 'Plan',
 
   // Form labels / messages
   FORM_FULL_NAME: 'Full Name',
@@ -807,6 +811,42 @@ export const STATIC_STRINGS = {
   SUB_TOAST_SAVING: 'Saving changes...',
   SUB_TOAST_SAVED_PREFIX: 'Account settings for',
   SUB_TOAST_SAVED_SUFFIX: 'saved.',
+
+  CLIENT_MGMT_NAME_REQUIRED: 'Client name is required',
+  CLIENT_MGMT_BRAND_REQUIRED: 'Brand name is required',
+  CLIENT_MGMT_PACKAGE_REQUIRED: 'Enter a valid package amount',
+  CLIENT_MGMT_INVALID_AMOUNT: 'Please enter a valid amount',
+  CLIENT_MGMT_SELECT_PLATFORM: 'Select Platform',
+  CLIENT_MGMT_PLATFORM_WEBSITE: 'Website',
+  CLIENT_MGMT_PLATFORM_OFFLINE: 'Offline',
+  CLIENT_MGMT_RECORD_PAYMENT_TOOLTIP: 'Record Payment',
+  CLIENT_MGMT_VIEW_PAYMENTS_TOOLTIP: 'View Payments',
+  CLIENT_MGMT_EDIT_CLIENT_TOOLTIP: 'Edit client',
+  CLIENT_MGMT_DELETE_CLIENT_TOOLTIP: 'Delete client',
+  CLIENT_MGMT_PAYMENT_NOTES_PLACEHOLDER: 'Payment method, invoice #, etc.',
+  CLIENT_MGMT_CLOSE: 'Close',
+
+  CLIENT_MGMT_TOAST_UPDATED_PREFIX: 'Client "',
+  CLIENT_MGMT_TOAST_UPDATED_SUFFIX: '" updated',
+  CLIENT_MGMT_TOAST_ADDED_PREFIX: 'Client "',
+  CLIENT_MGMT_TOAST_ADDED_SUFFIX: '" added',
+  CLIENT_MGMT_TOAST_REMOVED_PREFIX: 'Client "',
+  CLIENT_MGMT_TOAST_REMOVED_SUFFIX: '" removed',
+  CLIENT_MGMT_TOAST_PAYMENT_PREFIX: 'Payment of ',
+  CLIENT_MGMT_TOAST_PAYMENT_MID: ' recorded for ',
+
+  CLIENT_MGMT_MODAL_EDIT_SUBTITLE: 'Update client details below',
+  CLIENT_MGMT_MODAL_ADD_SUBTITLE: 'Fill in the details to add a new client',
+  CLIENT_MGMT_TOAST_PAYMENT_REMOVED: 'Payment entry removed',
+
+  CLIENT_MGMT_SERVICE_REELS: 'Reels',
+  CLIENT_MGMT_SERVICE_CAMPAIGN: 'Campaign',
+  CLIENT_MGMT_SERVICE_META: 'Meta',
+  CLIENT_MGMT_SERVICE_SOCIAL: 'Social Media',
+
+  CLIENT_MGMT_PLAN_WEEKLY: 'Weekly',
+  CLIENT_MGMT_PLAN_MONTHLY: 'Monthly',
+  CLIENT_MGMT_PLAN_YEARLY: 'Yearly',
 } as const;
 
 export const SUPER_ADMIN_ACTIONS = {

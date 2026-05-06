@@ -4,7 +4,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import Modal from '@/components/ui/Modal';
 import { Users, Plus, Pencil, Trash2, Search, X, Mail, Camera, Film, Megaphone, UserCheck, Crown, CheckCircle2, XCircle, TrendingUp } from 'lucide-react';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import type { UserRole } from '@/types';
 import { STATIC_STRINGS, ROLES, PAGE_ROLES } from '@/utils/constants';
@@ -151,7 +151,6 @@ export default function TeamPage() {
 
   return (
     <AppLayout>
-      <Toaster position="bottom-right" richColors />
       <div className="px-6 lg:px-8 xl:px-10 py-6 max-w-screen-xl mx-auto">
 
         {/* Header */}

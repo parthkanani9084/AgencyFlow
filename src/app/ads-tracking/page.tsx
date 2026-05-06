@@ -6,7 +6,7 @@ import {
   TrendingUp, IndianRupee, Users, Target, ChevronDown,
   ArrowUpRight, ArrowDownRight, BarChart3, X
 } from 'lucide-react';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend, LineChart, Line,
@@ -110,7 +110,6 @@ export default function AdsTrackingPage() {
 
   return (
     <AppLayout>
-      <Toaster position="bottom-right" richColors />
       <div className="px-6 lg:px-8 xl:px-10 py-6 max-w-screen-2xl mx-auto">
 
         {/* Page Header */}

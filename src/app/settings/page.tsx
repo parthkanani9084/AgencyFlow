@@ -6,7 +6,7 @@ import {
   Settings, User, Bell, Shield, Palette, Save, Camera,
   Mail, Lock, Eye, EyeOff, CheckCircle2,
 } from 'lucide-react';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { STATIC_STRINGS, ROLES } from '@/utils/constants';
@@ -99,8 +99,6 @@ export default function SettingsPage() {
 
   return (
     <AppLayout>
-      <Toaster position="bottom-right" richColors />
-      
       <main className="px-6 lg:px-8 xl:px-10 py-6 max-w-screen-lg mx-auto">
         {/* Page Header */}
         <header className="mb-6">

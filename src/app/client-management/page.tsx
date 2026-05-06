@@ -11,7 +11,7 @@ import {
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/context/AuthContext';
 import { useAdsData } from '@/context/AdsDataContext';
-import { toast, Toaster } from 'sonner';
+import { toast } from 'sonner';
 import { STATIC_STRINGS, PAGE_ROLES, ROLES } from '@/utils/constants';
 import { UserRole } from '@/types';
 
@@ -72,7 +72,12 @@ const EMPTY_FORM: FormState = {
   services: []
 };
 
-const SERVICE_OPTIONS = ['Reels', 'Campaign', 'Meta', 'Social Media'];
+const SERVICE_OPTIONS = [
+  { label: STATIC_STRINGS.CLIENT_MGMT_SERVICE_REELS, value: 'reels' },
+  { label: STATIC_STRINGS.CLIENT_MGMT_SERVICE_CAMPAIGN, value: 'campaign' },
+  { label: STATIC_STRINGS.CLIENT_MGMT_SERVICE_META, value: 'meta' },
+  { label: STATIC_STRINGS.CLIENT_MGMT_SERVICE_SOCIAL, value: 'social media' },
+];
 
 export default function ClientManagementPage() {
   useRoleGuard(PAGE_ROLES.CAMPAIGN_MANAGEMENT as unknown as UserRole[]);
@@ -185,10 +190,10 @@ export default function ClientManagementPage() {
 
   const validate = () => {
     const e: Partial<FormState> = {};
-    if (!form.name.trim()) e.name = 'Client name is required';
-    if (!form.brand.trim()) e.brand = 'Brand name is required';
+    if (!form.name.trim()) e.name = STATIC_STRINGS.CLIENT_MGMT_NAME_REQUIRED;
+    if (!form.brand.trim()) e.brand = STATIC_STRINGS.CLIENT_MGMT_BRAND_REQUIRED;
     if (!form.packageAmount || isNaN(Number(form.packageAmount)) || Number(form.packageAmount) <= 0) {
-      e.packageAmount = 'Enter a valid package amount';
+      e.packageAmount = STATIC_STRINGS.CLIENT_MGMT_PACKAGE_REQUIRED;
     }
     return e;
   };
@@ -216,7 +221,7 @@ export default function ClientManagementPage() {
 
     if (editingClient) {
       setClients(prev => prev.map(c => c.id === editingClient.id ? { ...c, ...submissionData } : c));
-      toast.success(`Client "${submissionData.name}" updated`);
+      toast.success(`${STATIC_STRINGS.CLIENT_MGMT_TOAST_UPDATED_PREFIX}${submissionData.name}${STATIC_STRINGS.CLIENT_MGMT_TOAST_UPDATED_SUFFIX}`);
     } else {
       const newClient: Client = {
         id: `c${Date.now()}`,
@@ -225,7 +230,7 @@ export default function ClientManagementPage() {
         createdAt: new Date().toISOString().split('T')[0],
       };
       setClients(prev => [newClient, ...prev]);
-      toast.success(`Client "${submissionData.name}" added`);
+      toast.success(`${STATIC_STRINGS.CLIENT_MGMT_TOAST_ADDED_PREFIX}${submissionData.name}${STATIC_STRINGS.CLIENT_MGMT_TOAST_ADDED_SUFFIX}`);
     }
     setModalOpen(false);
   };
@@ -233,7 +238,7 @@ export default function ClientManagementPage() {
   const handleDelete = () => {
     if (deleteModal.client) {
       setClients(prev => prev.filter(c => c.id !== deleteModal.client!.id));
-      toast.info(`Client "${deleteModal.client.name}" removed`);
+      toast.info(`${STATIC_STRINGS.CLIENT_MGMT_TOAST_REMOVED_PREFIX}${deleteModal.client.name}${STATIC_STRINGS.CLIENT_MGMT_TOAST_REMOVED_SUFFIX}`);
     }
     setDeleteModal({ open: false, client: null });
   };
@@ -249,7 +254,7 @@ export default function ClientManagementPage() {
 
   const handleRecordPayment = () => {
     if (!activeClient || !paymentForm.amount || isNaN(Number(paymentForm.amount))) {
-      toast.error('Please enter a valid amount');
+      toast.error(STATIC_STRINGS.CLIENT_MGMT_INVALID_AMOUNT);
       return;
     }
 
@@ -278,7 +283,7 @@ export default function ClientManagementPage() {
     setClients(updatedClients);
     updateGlobalRevenue(updatedClients);
     setPaymentModalOpen(false);
-    toast.success(`Payment of ${STATIC_STRINGS.CURRENCY_SYMBOL}${newAmount.toLocaleString()} recorded for ${activeClient.name}`);
+    toast.success(`${STATIC_STRINGS.CLIENT_MGMT_TOAST_PAYMENT_PREFIX}${STATIC_STRINGS.CURRENCY_SYMBOL}${newAmount.toLocaleString()}${STATIC_STRINGS.CLIENT_MGMT_TOAST_PAYMENT_MID}${activeClient.name}`);
   };
 
   const handleDeletePayment = (paymentIndex: number) => {
@@ -298,13 +303,11 @@ export default function ClientManagementPage() {
     
     const updatedActiveClient = updatedClients.find(c => c.id === activeClient.id);
     if (updatedActiveClient) setActiveClient(updatedActiveClient);
-    toast.info('Payment entry removed');
+    toast.info(STATIC_STRINGS.CLIENT_MGMT_TOAST_PAYMENT_REMOVED);
   };
 
   return (
     <AppLayout>
-      <Toaster position="bottom-right" richColors />
-      
       <div className="p-6 max-w-6xl mx-auto">
         {/* Page Header */}
         <header className="flex items-center justify-between mb-6">
@@ -346,13 +349,13 @@ export default function ClientManagementPage() {
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50">
-                  <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{STATIC_STRINGS.CLIENT_MGMT_LABEL_CLIENT_NAME.split(' ')[0]}</th>
-                  <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{STATIC_STRINGS.CLIENT_MGMT_LABEL_BRAND_NAME.split(' ')[0]}</th>
+                  <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{STATIC_STRINGS.TABLE_CLIENT}</th>
+                  <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{STATIC_STRINGS.TABLE_BRAND}</th>
                   {isOwner && (
                     <>
-                      <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 text-right">{STATIC_STRINGS.CLIENT_MGMT_LABEL_PACKAGE.split(' ')[0]}</th>
+                      <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 text-right">{STATIC_STRINGS.TABLE_PACKAGE}</th>
                       <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 text-right">{STATIC_STRINGS.CLIENT_MGMT_TOTAL_PAID}</th>
-                      <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{STATIC_STRINGS.CLIENT_MGMT_LABEL_PLAN_TYPE.split(' ')[0]}</th>
+                      <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{STATIC_STRINGS.TABLE_PLAN}</th>
                       <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 text-right">{STATIC_STRINGS.ADS_TABLE_COL_ACTIONS}</th>
                     </>
                   )}
@@ -411,7 +414,7 @@ export default function ClientManagementPage() {
                                 <button
                                   onClick={() => openPayment(client)}
                                   className="p-1.5 rounded-lg hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 transition-colors"
-                                  title="Record Payment"
+                                  title={STATIC_STRINGS.CLIENT_MGMT_RECORD_PAYMENT_TOOLTIP}
                                 >
                                   <IndianRupee size={14} />
                                 </button>
@@ -421,21 +424,21 @@ export default function ClientManagementPage() {
                                     setViewPaymentsOpen(true);
                                   }}
                                   className="p-1.5 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-colors"
-                                  title="View Payments"
+                                  title={STATIC_STRINGS.CLIENT_MGMT_VIEW_PAYMENTS_TOOLTIP}
                                 >
                                   <History size={14} />
                                 </button>
                                 <button
                                   onClick={() => openEdit(client)}
                                   className="p-1.5 rounded-lg hover:bg-violet-50 text-slate-400 hover:text-violet-600 transition-colors"
-                                  title="Edit client"
+                                  title={STATIC_STRINGS.CLIENT_MGMT_EDIT_CLIENT_TOOLTIP}
                                 >
                                   <Pencil size={14} />
                                 </button>
                                 <button
                                   onClick={() => openDelete(client)}
                                   className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
-                                  title="Delete client"
+                                  title={STATIC_STRINGS.CLIENT_MGMT_DELETE_CLIENT_TOOLTIP}
                                 >
                                   <Trash2 size={14} />
                                 </button>
@@ -511,7 +514,7 @@ export default function ClientManagementPage() {
             <textarea
               value={paymentForm.notes}
               onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })}
-              placeholder="Payment method, invoice #, etc."
+              placeholder={STATIC_STRINGS.CLIENT_MGMT_PAYMENT_NOTES_PLACEHOLDER}
               rows={3}
               className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition resize-none"
             />
@@ -606,7 +609,7 @@ export default function ClientManagementPage() {
               onClick={() => setViewPaymentsOpen(false)}
               className="px-5 py-2 rounded-lg bg-violet-900 text-white text-[13px] font-semibold hover:bg-violet-800 transition-colors"
             >
-              Close
+              {STATIC_STRINGS.CLIENT_MGMT_CLOSE}
             </button>
           </div>
         </div>
@@ -617,7 +620,7 @@ export default function ClientManagementPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         title={editingClient ? STATIC_STRINGS.CLIENT_MGMT_EDIT_CLIENT : STATIC_STRINGS.CLIENT_MGMT_ADD_CLIENT}
-        subtitle={editingClient ? 'Update client details below' : 'Fill in the details to add a new client'}
+        subtitle={editingClient ? STATIC_STRINGS.CLIENT_MGMT_MODAL_EDIT_SUBTITLE : STATIC_STRINGS.CLIENT_MGMT_MODAL_ADD_SUBTITLE}
         size="lg"
       >
         <div className="px-6 py-5 space-y-4 max-h-[75vh] overflow-y-auto">
@@ -650,12 +653,12 @@ export default function ClientManagementPage() {
             <label className="block text-[12.5px] font-semibold text-slate-700 mb-2.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_SERVICES}</label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {SERVICE_OPTIONS.map((service) => (
-                <label key={service} className="flex items-center gap-2.5 cursor-pointer group">
+                <label key={service.value} className="flex items-center gap-2.5 cursor-pointer group">
                   <input
                     type="checkbox"
-                    checked={form.services.includes(service.toLowerCase())}
+                    checked={form.services.includes(service.value)}
                     onChange={(e) => {
-                      const val = service.toLowerCase();
+                      const val = service.value;
                       setForm(f => ({
                         ...f,
                         services: e.target.checked ? [...f.services, val] : f.services.filter(s => s !== val)
@@ -663,7 +666,7 @@ export default function ClientManagementPage() {
                     }}
                     className="w-4 h-4 rounded border-slate-300 text-violet-600 accent-violet-600 cursor-pointer"
                   />
-                  <span className="text-[13px] text-slate-600 group-hover:text-slate-900 transition-colors font-medium">{service}</span>
+                  <span className="text-[13px] text-slate-600 group-hover:text-slate-900 transition-colors font-medium">{service.label}</span>
                 </label>
               ))}
             </div>
@@ -702,23 +705,27 @@ export default function ClientManagementPage() {
           <div>
             <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_PLAN_TYPE} <span className="text-red-500">*</span></label>
             <div className="flex gap-2">
-              {(['weekly', 'monthly', 'yearly'] as const).map((plan) => (
+              {[
+                { label: STATIC_STRINGS.CLIENT_MGMT_PLAN_WEEKLY, value: 'weekly' },
+                { label: STATIC_STRINGS.CLIENT_MGMT_PLAN_MONTHLY, value: 'monthly' },
+                { label: STATIC_STRINGS.CLIENT_MGMT_PLAN_YEARLY, value: 'yearly' },
+              ].map((plan) => (
                 <button
-                  key={plan}
+                  key={plan.value}
                   type="button"
-                  onClick={() => setForm(f => ({ ...f, planType: plan }))}
+                  onClick={() => setForm(f => ({ ...f, planType: plan.value as any }))}
                   className={`flex-1 py-2.5 rounded-lg border text-[13px] font-semibold transition-all ${
-                    form.planType === plan ? 'border-violet-500 bg-violet-50 text-violet-700' : 'border-slate-200 bg-white text-slate-500'
+                    form.planType === plan.value ? 'border-violet-500 bg-violet-50 text-violet-700' : 'border-slate-200 bg-white text-slate-500'
                   }`}
                 >
-                  {plan.charAt(0).toUpperCase() + plan.slice(1)}
+                  {plan.label}
                 </button>
               ))}
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+            {/* <div>
               <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_AD_RUN}</label>
               <input
                 type="text"
@@ -727,7 +734,7 @@ export default function ClientManagementPage() {
                 placeholder={STATIC_STRINGS.CLIENT_MGMT_PLACEHOLDER_AD_RUN}
                 className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition"
               />
-            </div>
+            </div> */}
             <div>
               <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_REELS_PER_MONTH}</label>
               <input
@@ -738,9 +745,6 @@ export default function ClientManagementPage() {
                 className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition"
               />
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_PLATFORM_TYPE}</label>
               <select
@@ -748,15 +752,19 @@ export default function ClientManagementPage() {
                 onChange={(e) => setForm(f => ({ ...f, platformType: e.target.value as any }))}
                 className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition"
               >
-                <option value="">Select Platform</option>
-                <option value="Website">Website</option>
-                <option value="Offline">Offline</option>
+                <option value="">{STATIC_STRINGS.CLIENT_MGMT_SELECT_PLATFORM}</option>
+                <option value="Website">{STATIC_STRINGS.CLIENT_MGMT_PLATFORM_WEBSITE}</option>
+                <option value="Offline">{STATIC_STRINGS.CLIENT_MGMT_PLATFORM_OFFLINE}</option>
               </select>
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    
             <div className="flex flex-col justify-end">
               {form.platformType === 'Website' && (
                 <>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5 animate-in slide-in-from-top-1">Website Link</label>
+                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5 animate-in slide-in-from-top-1">{STATIC_STRINGS.CLIENT_MGMT_LABEL_WEBSITE_LINK}</label>
                   <input
                     type="url"
                     value={form.websiteLink}
@@ -768,7 +776,7 @@ export default function ClientManagementPage() {
               )}
               {form.platformType === 'Offline' && (
                 <>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5 animate-in slide-in-from-top-1">Location</label>
+                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5 animate-in slide-in-from-top-1">{STATIC_STRINGS.CLIENT_MGMT_LABEL_LOCATION}</label>
                   <input
                     type="text"
                     value={form.location}
