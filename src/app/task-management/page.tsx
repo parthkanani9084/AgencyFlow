@@ -9,8 +9,12 @@ import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useTasks } from '@/context/TaskContext';
 import { useAuth } from '@/context/AuthContext';
 import { Task, TaskStatus, TaskPriority, TaskRole, UserRole } from '@/types';
-import { STATIC_STRINGS, ROLES, PAGE_ROLES, TEAM_MEMBERS as CONST_TEAM_MEMBERS, CLIENT_OPTIONS } from '@/utils/constants';
+import { STATIC_STRINGS, ROLES, PAGE_ROLES, TEAM_MEMBERS as CONST_TEAM_MEMBERS } from '@/utils/constants';
 import { ROLE_CONFIG, STATUS_CONFIG } from '@/utils/ui-configs';
+import { useCreateTask } from '@/api/hooks/useTask';
+import { useTeams, useTeamRole } from '@/api/hooks/useTeam';
+import { clientService } from '@/api/services/client.service';
+import { toast } from 'sonner';
 
 
 const ROLE_FILTERS: { label: string; value: TaskRole | 'all' }[] = [
@@ -67,7 +71,16 @@ export default function TaskManagementPage() {
   const [form, setForm] = useState<TaskForm>(EMPTY_FORM);
   const [errors, setErrors] = useState<Partial<Record<keyof TaskForm, string>>>({});
   const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(8);
+  const [isFetchingClients, setIsFetchingClients] = useState(false);
+  const [clientsList, setClientsList] = useState<{ id: string; name: string }[]>([]);
+
+  const { data: teamResponse, isLoading: isFetchingTeam } = useTeams();
+  const teamList = useMemo(() => teamResponse?.results?.data || [], [teamResponse]);
+
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const { data: roleResponse, isFetching: isFetchingRole } = useTeamRole(selectedMemberId);
+
+  const createTaskMutation = useCreateTask();
 
   const isRestricted = useMemo(() => 
     user?.role && [ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER].includes(user.role as any)
@@ -78,7 +91,32 @@ export default function TaskManagementPage() {
     if (isRestricted && user?.role) {
       setRoleFilter(user.role as TaskRole);
     }
+    const fetchClients = async () => {
+      setIsFetchingClients(true);
+      try {
+        const res = await clientService.getClients({ page: 1, limit: 100 });
+        if (res?.results?.data) {
+          setClientsList(res.results.data.map((c: any) => ({ id: c.id, name: c.clientName })));
+        }
+      } catch (error) {} finally { setIsFetchingClients(false); }
+    };
+    fetchClients();
   }, [isRestricted, user?.role]);
+
+  useEffect(() => {
+    if (form.assignedTo) {
+      const member = teamList.find(m => m.fullName === form.assignedTo);
+      if (member) setSelectedMemberId(member.id);
+    } else {
+      setSelectedMemberId(null);
+    }
+  }, [form.assignedTo, teamList]);
+
+  useEffect(() => {
+    if (roleResponse?.results?.role) {
+      setForm(f => ({ ...f, role: roleResponse.results.role as TaskRole }));
+    }
+  }, [roleResponse]);
 
   const tasks = useMemo(() => {
     if (!user) return [];
@@ -136,7 +174,7 @@ export default function TaskManagementPage() {
     setModalOpen(true);
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.title.trim()) { setErrors({ title: STATIC_STRINGS.TASK_MGMT_REQUIRED }); return; }
     if (!form.assignedTo.trim()) { setErrors({ assignedTo: STATIC_STRINGS.TASK_MGMT_REQUIRED }); return; }
 
@@ -148,10 +186,32 @@ export default function TaskManagementPage() {
 
     if (editingTask) {
       updateTask(editingTask.id, payload);
+      setModalOpen(false);
     } else {
-      addTask(payload);
+      const teammate = teamList.find(m => m.fullName === form.assignedTo);
+      const client = clientsList.find(c => c.name === form.client);
+
+      const apiPayload = {
+        task_title: form.title,
+        description: form.description,
+        assigned_to: teammate?.id || '',
+        client_id: client?.id || '',
+        deadline_date: form.deadline,
+      };
+
+      try {
+        const res = await createTaskMutation.mutateAsync(apiPayload);
+        if (res.success) {
+          addTask(payload);
+          setModalOpen(false);
+          toast.success(STATIC_STRINGS.FORM_ACCOUNT_CREATED);
+        } else {
+          toast.error(res.message || 'Failed to create task');
+        }
+      } catch (error: any) {
+        toast.error(error?.response?.data?.message || 'Something went wrong');
+      }
     }
-    setModalOpen(false);
   };
 
   const handleDelete = () => {
@@ -375,17 +435,19 @@ export default function TaskManagementPage() {
             <div>
               <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_ASSIGNED_TO}</label>
               <select value={form.assignedTo} onChange={(e) => setForm((f) => ({ ...f, assignedTo: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition bg-white">
-                <option value="">{STATIC_STRINGS.TASK_MGMT_SELECT_TEAMMATE}</option>
-                {TEAM_MEMBERS.map((m) => <option key={m.id} value={m.name}>{m.name}</option>)}
+                <option value="">{isFetchingTeam ? 'Loading members...' : STATIC_STRINGS.TASK_MGMT_SELECT_TEAMMATE}</option>
+                {teamList.map((m) => <option key={m.id} value={m.fullName}>{m.fullName}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_ROLE}</label>
-              <select value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as TaskRole }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition bg-white">
+              <select value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as TaskRole }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition bg-white disabled:bg-slate-50 disabled:text-slate-500" disabled={isFetchingRole}>
+                <option value="">{isFetchingRole ? 'Updating role...' : 'Select Role'}</option>
                 <option value={ROLES.MANAGER}>{ROLES.MANAGER}</option>
                 <option value={ROLES.SHOOTER}>{ROLES.SHOOTER}</option>
                 <option value={ROLES.EDITOR}>{ROLES.EDITOR}</option>
                 <option value={ROLES.ADS_MANAGER}>{ROLES.ADS_MANAGER}</option>
+                <option value={ROLES.SOCIAL_MEDIA_MANAGER}>{ROLES.SOCIAL_MEDIA_MANAGER}</option>
               </select>
             </div>
           </div>
@@ -393,8 +455,8 @@ export default function TaskManagementPage() {
             <div>
               <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_CLIENT}</label>
               <select value={form.client} onChange={(e) => setForm((f) => ({ ...f, client: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition bg-white">
-                <option value="">{STATIC_STRINGS.TASK_MGMT_SELECT_CLIENT}</option>
-                {CLIENT_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
+                <option value="">{isFetchingClients ? 'Loading clients...' : STATIC_STRINGS.TASK_MGMT_SELECT_CLIENT}</option>
+                {clientsList.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
               </select>
             </div>
             <div>
@@ -404,7 +466,13 @@ export default function TaskManagementPage() {
           </div>
           <div className="flex justify-end gap-2.5 pt-4 border-t">
             <button onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">{STATIC_STRINGS.FORM_CANCEL}</button>
-            <button onClick={handleSave} className="px-5 py-2 rounded-lg bg-violet-600 text-white text-[13px] font-semibold">{STATIC_STRINGS.FORM_SAVE_CHANGES}</button>
+            <button 
+              onClick={handleSave} 
+              disabled={createTaskMutation.isPending}
+              className="px-5 py-2 rounded-lg bg-violet-600 text-white text-[13px] font-semibold disabled:opacity-60"
+            >
+              {createTaskMutation.isPending ? 'Saving...' : STATIC_STRINGS.FORM_SAVE_CHANGES}
+            </button>
           </div>
         </div>
       </Modal>
