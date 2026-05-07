@@ -11,10 +11,9 @@ import {
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/context/AuthContext';
 import { useAdsData } from '@/context/AdsDataContext';
-import { toast } from 'sonner';
 import { STATIC_STRINGS, PAGE_ROLES, ROLES } from '@/utils/constants';
 import { UserRole } from '@/types';
-import { useCreateClient } from '@/api/hooks/useClient';
+import { useCreateClient, useUpdateClient, useDeleteClient } from '@/api/hooks/useClient';
 import { clientService } from '@/api/services/client.service';
 
 interface Payment {
@@ -110,7 +109,7 @@ export default function ClientManagementPage() {
   });
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
-  const [errors, setErrors] = useState<Partial<FormState>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
 
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(12);
@@ -119,6 +118,8 @@ export default function ClientManagementPage() {
 
   const [isFetching, setIsFetching] = useState(false);
   const { mutateAsync: createClient, isPending: isCreating } = useCreateClient();
+  const { mutateAsync: updateClient, isPending: isUpdating } = useUpdateClient();
+  const { mutateAsync: deleteClientAsync } = useDeleteClient();
 
   const fetchClients = useCallback(async () => {
     setIsFetching(true);
@@ -145,7 +146,7 @@ export default function ClientManagementPage() {
         }));
         setClients(mapped);
         
-        // Update pagination states from API response
+
         if (response.results?.pagination) {
           setTotalItems(response.results.pagination.totalItem || mapped.length);
           setTotalPages(response.results.pagination.totalPages || 1);
@@ -155,7 +156,6 @@ export default function ClientManagementPage() {
         }
       }
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to fetch clients');
     } finally {
       setIsFetching(false);
     }
@@ -204,7 +204,6 @@ export default function ClientManagementPage() {
   }, [adsMetrics, updateAdsMetrics, getClientTotalPaid]);
 
 
-  // Reset page on search
   useEffect(() => {
     setPage(1);
   }, [search]);
@@ -240,12 +239,22 @@ export default function ClientManagementPage() {
   const openDelete = (client: Client) => setDeleteModal({ open: true, client });
 
   const validate = () => {
-    const e: Partial<FormState> = {};
+    const e: Partial<Record<keyof FormState, string>> = {};
     if (!form.name.trim()) e.name = STATIC_STRINGS.CLIENT_MGMT_NAME_REQUIRED;
     if (!form.brand.trim()) e.brand = STATIC_STRINGS.CLIENT_MGMT_BRAND_REQUIRED;
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = STATIC_STRINGS.FORM_EMAIL_REQUIRED;
     if (!form.packageAmount || isNaN(Number(form.packageAmount)) || Number(form.packageAmount) <= 0) {
       e.packageAmount = STATIC_STRINGS.CLIENT_MGMT_PACKAGE_REQUIRED;
+    }
+    if (!form.perDaySpend || isNaN(Number(form.perDaySpend)) || Number(form.perDaySpend) < 0) {
+      e.perDaySpend = STATIC_STRINGS.CLIENT_MGMT_ERR_PER_DAY_SPEND;
+    }
+    if (!form.platformType) e.platformType = STATIC_STRINGS.CLIENT_MGMT_ERR_PLATFORM_TYPE;
+    if (form.platformType === 'Website' && !form.websiteLink.trim()) e.websiteLink = STATIC_STRINGS.CLIENT_MGMT_ERR_WEBSITE_LINK;
+    if (form.platformType === 'Offline' && !form.location.trim()) e.location = STATIC_STRINGS.CLIENT_MGMT_ERR_LOCATION;
+    if (form.services.length === 0) e.services = STATIC_STRINGS.CLIENT_MGMT_ERR_SERVICES;
+    if (form.services.includes('reels') && (!form.reelsPerMonth || Number(form.reelsPerMonth) <= 0)) {
+      e.reelsPerMonth = STATIC_STRINGS.CLIENT_MGMT_ERR_REELS_PER_MONTH;
     }
     return e;
   };
@@ -273,9 +282,38 @@ export default function ClientManagementPage() {
     };
 
     if (editingClient) {
-      setClients(prev => prev.map(c => c.id === editingClient.id ? { ...c, ...submissionData } : c));
-      toast.success(`${STATIC_STRINGS.CLIENT_MGMT_TOAST_UPDATED_PREFIX}${submissionData.name}${STATIC_STRINGS.CLIENT_MGMT_TOAST_UPDATED_SUFFIX}`);
-      setModalOpen(false);
+      try {
+        const payload: any = {};
+        if (submissionData.name !== editingClient.name) payload.client_name = submissionData.name;
+        if (submissionData.brand !== editingClient.brand) payload.brand_name = submissionData.brand;
+        if (submissionData.email !== editingClient.email) payload.email = submissionData.email;
+        if (JSON.stringify(submissionData.services.sort()) !== JSON.stringify([...editingClient.services].sort())) payload.service_required = submissionData.services;
+        if (submissionData.packageAmount !== editingClient.packageAmount) payload.package_amount = submissionData.packageAmount;
+        if (submissionData.perDaySpend !== editingClient.perDaySpend) payload.per_day_spend_amount = submissionData.perDaySpend;
+        if (submissionData.planType !== editingClient.planType) payload.plan_type = submissionData.planType;
+        if (submissionData.reelsPerMonth !== editingClient.reelsPerMonth) payload.reels_per_month = submissionData.reelsPerMonth;
+        
+        const platformValue = submissionData.platformType === 'Website' ? 'online' : 'offline';
+        const oldPlatformValue = editingClient.platformType === 'Website' ? 'online' : 'offline';
+        if (platformValue !== oldPlatformValue) payload.platform_type = platformValue;
+        
+        if (submissionData.websiteLink !== editingClient.websiteLink) payload.weblink = submissionData.websiteLink;
+        if (submissionData.location !== editingClient.location) payload.file_location = submissionData.location;
+
+        if (Object.keys(payload).length === 0) {
+          setModalOpen(false);
+          return;
+        }
+
+        await updateClient({
+          clientId: editingClient.id,
+          payload
+        });
+
+        setModalOpen(false);
+        fetchClients(); 
+      } catch (error: any) {
+      }
     } else {
       try {
         const data = await createClient({
@@ -299,18 +337,19 @@ export default function ClientManagementPage() {
           createdAt: new Date().toISOString().split('T')[0],
         };
         setClients(prev => [newClient, ...prev]);
-        toast.success(`${STATIC_STRINGS.CLIENT_MGMT_TOAST_ADDED_PREFIX}${submissionData.name}${STATIC_STRINGS.CLIENT_MGMT_TOAST_ADDED_SUFFIX}`);
         setModalOpen(false);
       } catch (error: any) {
-        toast.error(error?.message || 'Failed to create client');
       }
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deleteModal.client) {
-      setClients(prev => prev.filter(c => c.id !== deleteModal.client!.id));
-      toast.info(`${STATIC_STRINGS.CLIENT_MGMT_TOAST_REMOVED_PREFIX}${deleteModal.client.name}${STATIC_STRINGS.CLIENT_MGMT_TOAST_REMOVED_SUFFIX}`);
+      try {
+        await deleteClientAsync(deleteModal.client.id);
+        fetchClients(); // Refresh list
+      } catch (error: any) {
+      }
     }
     setDeleteModal({ open: false, client: null });
   };
@@ -326,7 +365,6 @@ export default function ClientManagementPage() {
 
   const handleRecordPayment = () => {
     if (!activeClient || !paymentForm.amount || isNaN(Number(paymentForm.amount))) {
-      toast.error(STATIC_STRINGS.CLIENT_MGMT_INVALID_AMOUNT);
       return;
     }
 
@@ -335,7 +373,6 @@ export default function ClientManagementPage() {
 
     if (currentTotalPaid + newAmount > activeClient.packageAmount) {
       const remaining = activeClient.packageAmount - currentTotalPaid;
-      toast.error(`${STATIC_STRINGS.CLIENT_MGMT_ERR_PAYMENT_EXCEEDS} (${STATIC_STRINGS.CURRENCY_SYMBOL}${activeClient.packageAmount.toLocaleString()}). Remaining: ${STATIC_STRINGS.CURRENCY_SYMBOL}${remaining.toLocaleString()}`);
       return;
     }
 
@@ -355,7 +392,6 @@ export default function ClientManagementPage() {
     setClients(updatedClients);
     updateGlobalRevenue(updatedClients);
     setPaymentModalOpen(false);
-    toast.success(`${STATIC_STRINGS.CLIENT_MGMT_TOAST_PAYMENT_PREFIX}${STATIC_STRINGS.CURRENCY_SYMBOL}${newAmount.toLocaleString()}${STATIC_STRINGS.CLIENT_MGMT_TOAST_PAYMENT_MID}${activeClient.name}`);
   };
 
   const handleDeletePayment = (paymentIndex: number) => {
@@ -375,7 +411,6 @@ export default function ClientManagementPage() {
     
     const updatedActiveClient = updatedClients.find(c => c.id === activeClient.id);
     if (updatedActiveClient) setActiveClient(updatedActiveClient);
-    toast.info(STATIC_STRINGS.CLIENT_MGMT_TOAST_PAYMENT_REMOVED);
   };
 
   if (!isMounted) return null;
@@ -706,7 +741,7 @@ export default function ClientManagementPage() {
                 value={form.name}
                 onChange={(e) => { setForm(f => ({ ...f, name: e.target.value })); setErrors(er => ({ ...er, name: '' })); }}
                 placeholder={STATIC_STRINGS.CLIENT_MGMT_PLACEHOLDER_NAME}
-                className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 transition ${errors.name ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-white focus:border-violet-400'}`}
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition"
               />
               {errors.name && <p className="mt-1 text-[11.5px] text-red-500">{errors.name}</p>}
             </div>
@@ -717,7 +752,7 @@ export default function ClientManagementPage() {
                 value={form.brand}
                 onChange={(e) => { setForm(f => ({ ...f, brand: e.target.value })); setErrors(er => ({ ...er, brand: '' })); }}
                 placeholder={STATIC_STRINGS.CLIENT_MGMT_PLACEHOLDER_BRAND}
-                className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 transition ${errors.brand ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-white focus:border-violet-400'}`}
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition"
               />
               {errors.brand && <p className="mt-1 text-[11.5px] text-red-500">{errors.brand}</p>}
             </div>
@@ -728,7 +763,7 @@ export default function ClientManagementPage() {
                 value={form.email}
                 onChange={(e) => { setForm(f => ({ ...f, email: e.target.value })); setErrors(er => ({ ...er, email: '' })); }}
                 placeholder="e.g. client@test.com"
-                className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 transition ${errors.email ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-white focus:border-violet-400'}`}
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition"
               />
               {errors.email && <p className="mt-1 text-[11.5px] text-red-500">{errors.email}</p>}
             </div>
@@ -748,6 +783,7 @@ export default function ClientManagementPage() {
                         ...f,
                         services: e.target.checked ? [...f.services, val] : f.services.filter(s => s !== val)
                       }));
+                      setErrors(er => ({ ...er, services: '' }));
                     }}
                     className="w-4 h-4 rounded border-slate-300 text-violet-600 accent-violet-600 cursor-pointer"
                   />
@@ -755,6 +791,7 @@ export default function ClientManagementPage() {
                 </label>
               ))}
             </div>
+            {errors.services && <p className="mt-1 text-[11.5px] text-red-500">{errors.services}</p>}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -767,7 +804,7 @@ export default function ClientManagementPage() {
                   value={form.packageAmount}
                   onChange={(e) => { setForm(f => ({ ...f, packageAmount: e.target.value })); setErrors(er => ({ ...er, packageAmount: '' })); }}
                   placeholder={STATIC_STRINGS.CLIENT_MGMT_PLACEHOLDER_PACKAGE}
-                  className={`w-full pl-8 pr-3.5 py-2.5 rounded-lg border text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 transition ${errors.packageAmount ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-white focus:border-violet-400'}`}
+                  className="w-full pl-8 pr-3.5 py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition"
                 />
               </div>
               {errors.packageAmount && <p className="mt-1 text-[11.5px] text-red-500">{errors.packageAmount}</p>}
@@ -779,11 +816,12 @@ export default function ClientManagementPage() {
                 <input
                   type="number"
                   value={form.perDaySpend}
-                  onChange={(e) => setForm(f => ({ ...f, perDaySpend: e.target.value }))}
+                  onChange={(e) => { setForm(f => ({ ...f, perDaySpend: e.target.value })); setErrors(er => ({ ...er, perDaySpend: '' })); }}
                   placeholder={STATIC_STRINGS.CLIENT_MGMT_PLACEHOLDER_SPEND}
                   className="w-full pl-8 pr-3.5 py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition"
                 />
               </div>
+              {errors.perDaySpend && <p className="mt-1 text-[11.5px] text-red-500">{errors.perDaySpend}</p>}
             </div>
           </div>
 
@@ -810,53 +848,46 @@ export default function ClientManagementPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_AD_RUN}</label>
-              <input
-                type="text"
-                value={form.adType}
-                onChange={(e) => setForm(f => ({ ...f, adType: e.target.value }))}
-                placeholder={STATIC_STRINGS.CLIENT_MGMT_PLACEHOLDER_AD_RUN}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition"
-              />
-            </div> */}
             <div>
               <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_REELS_PER_MONTH}</label>
               <input
                 type="number"
                 value={form.reelsPerMonth}
-                onChange={(e) => setForm(f => ({ ...f, reelsPerMonth: e.target.value }))}
+                onChange={(e) => { setForm(f => ({ ...f, reelsPerMonth: e.target.value })); setErrors(er => ({ ...er, reelsPerMonth: '' })); }}
                 placeholder={STATIC_STRINGS.CLIENT_MGMT_PLACEHOLDER_REELS}
                 className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition"
               />
+              {errors.reelsPerMonth && <p className="mt-1 text-[11.5px] text-red-500">{errors.reelsPerMonth}</p>}
             </div>
             <div>
               <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_PLATFORM_TYPE}</label>
               <select
                 value={form.platformType}
-                onChange={(e) => setForm(f => ({ ...f, platformType: e.target.value as any }))}
+                onChange={(e) => { setForm(f => ({ ...f, platformType: e.target.value as any })); setErrors(er => ({ ...er, platformType: '' })); }}
                 className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition"
               >
                 <option value="">{STATIC_STRINGS.CLIENT_MGMT_SELECT_PLATFORM}</option>
                 <option value="Website">{STATIC_STRINGS.CLIENT_MGMT_PLATFORM_WEBSITE}</option>
                 <option value="Offline">{STATIC_STRINGS.CLIENT_MGMT_PLATFORM_OFFLINE}</option>
               </select>
+              {errors.platformType && <p className="mt-1 text-[11.5px] text-red-500">{errors.platformType}</p>}
             </div>
           </div>
 
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    
-            <div className="flex flex-col justify-end">
+            <div>
               {form.platformType === 'Website' && (
                 <>
                   <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5 animate-in slide-in-from-top-1">{STATIC_STRINGS.CLIENT_MGMT_LABEL_WEBSITE_LINK}</label>
                   <input
                     type="url"
                     value={form.websiteLink}
-                    onChange={(e) => setForm(f => ({ ...f, websiteLink: e.target.value }))}
+                    onChange={(e) => { setForm(f => ({ ...f, websiteLink: e.target.value })); setErrors(er => ({ ...er, websiteLink: '' })); }}
                     placeholder={STATIC_STRINGS.CLIENT_MGMT_PLACEHOLDER_WEBSITE}
                     className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 animate-in slide-in-from-top-1"
                   />
+                  {errors.websiteLink && <p className="mt-1 text-[11.5px] text-red-500">{errors.websiteLink}</p>}
                 </>
               )}
               {form.platformType === 'Offline' && (
@@ -865,10 +896,11 @@ export default function ClientManagementPage() {
                   <input
                     type="text"
                     value={form.location}
-                    onChange={(e) => setForm(f => ({ ...f, location: e.target.value }))}
+                    onChange={(e) => { setForm(f => ({ ...f, location: e.target.value })); setErrors(er => ({ ...er, location: '' })); }}
                     placeholder={STATIC_STRINGS.CLIENT_MGMT_PLACEHOLDER_LOCATION}
                     className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 animate-in slide-in-from-top-1"
                   />
+                  {errors.location && <p className="mt-1 text-[11.5px] text-red-500">{errors.location}</p>}
                 </>
               )}
             </div>
@@ -878,10 +910,10 @@ export default function ClientManagementPage() {
             <button onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">{STATIC_STRINGS.CAMPAIGN_MGMT_CANCEL}</button>
             <button 
               onClick={handleSave} 
-              disabled={isCreating}
+              disabled={isCreating || isUpdating}
               className="px-5 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[13px] font-semibold transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isCreating ? 'Adding...' : (editingClient ? STATIC_STRINGS.CAMPAIGN_MGMT_SAVE_CHANGES : STATIC_STRINGS.CLIENT_MGMT_ADD_CLIENT)}
+              {isCreating || isUpdating ? STATIC_STRINGS.FORM_SAVING : (editingClient ? STATIC_STRINGS.CAMPAIGN_MGMT_SAVE_CHANGES : STATIC_STRINGS.CLIENT_MGMT_ADD_CLIENT)}
             </button>
           </div>
         </div>
@@ -898,7 +930,6 @@ export default function ClientManagementPage() {
               <p className="text-[13.5px] text-slate-700 leading-relaxed">
                 {STATIC_STRINGS.CLIENT_MGMT_DELETE_CONFIRM} <span className="font-semibold text-slate-900">&quot;{deleteModal.client?.name}&quot;</span>? {STATIC_STRINGS.CLIENT_MGMT_DELETE_DESC}
               </p>
-              <p className="mt-2 text-[12px] text-red-600 font-medium">{STATIC_STRINGS.CLIENT_MGMT_DELETE_UNDONE}</p>
             </div>
           </div>
           <div className="flex items-center justify-end gap-2 mt-6">

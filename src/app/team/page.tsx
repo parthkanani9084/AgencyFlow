@@ -8,7 +8,8 @@ import { toast } from 'sonner';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import type { UserRole } from '@/types';
 import { STATIC_STRINGS, ROLES, PAGE_ROLES } from '@/utils/constants';
-import { useCreateTeam } from '@/api/hooks/useCreateTeam';
+import { useGetTeams, useCreateTeam, useUpdateTeam, useDeleteTeamMember } from '@/api/hooks/useTeam';
+import Pagination from '@/components/ui/Pagination';
 
 interface TeamMember {
   id: string;
@@ -45,48 +46,71 @@ const avatarColors: Record<UserRole, string> = {
 
 const ALL_ROLES: UserRole[] = [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] as UserRole[];
 
-const initialMembers: TeamMember[] = [
-  { id: 'm1', name: 'Alex Owens',    email: 'alex@agencyflow.io',   role: ROLES.OWNER as UserRole,        status: 'active',   joinedAt: '2025-11-01', tasksCompleted: 42, tasksActive: 3 },
-  { id: 'm2', name: 'Priya Sharma',  email: 'priya@agencyflow.io',  role: ROLES.MANAGER as UserRole,      status: 'active',   joinedAt: '2025-11-15', tasksCompleted: 28, tasksActive: 5 },
-  { id: 'm3', name: 'Marco Reyes',   email: 'marco@agencyflow.io',  role: ROLES.SHOOTER as UserRole,      status: 'active',   joinedAt: '2025-12-01', tasksCompleted: 19, tasksActive: 2 },
-  { id: 'm4', name: 'Jin Park',      email: 'jin@agencyflow.io',    role: ROLES.EDITOR as UserRole,       status: 'active',   joinedAt: '2025-12-10', tasksCompleted: 15, tasksActive: 3 },
-  { id: 'm5', name: 'Sofia Nguyen',  email: 'sofia@agencyflow.io',  role: ROLES.ADS_MANAGER as UserRole,  status: 'active',   joinedAt: '2026-01-05', tasksCompleted: 11, tasksActive: 2 },
-  { id: 'm7', name: 'Sam Rivera',    email: 'sam@agencyflow.io',    role: ROLES.SOCIAL_MEDIA_MANAGER as UserRole, status: 'active', joinedAt: '2026-03-10', tasksCompleted: 8, tasksActive: 4 },
-  { id: 'm6', name: 'Daniel Kim',    email: 'daniel@agencyflow.io', role: ROLES.SHOOTER as UserRole,      status: 'inactive', joinedAt: '2026-02-01', tasksCompleted: 4,  tasksActive: 0 },
-];
 
 const emptyForm = { name: '', email: '', role: ROLES.SHOOTER as UserRole };
 
 export default function TeamPage() {
   useRoleGuard(PAGE_ROLES.TEAM as unknown as UserRole[]);
 
-  const [members, setMembers] = useState<TeamMember[]>(initialMembers);
+
+  const [members, setMembers] = useState<TeamMember[]>([]);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
   const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; member: TeamMember | null }>({ open: false, member: null });
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState<Partial<typeof emptyForm>>({});
 
-  const { mutate: createTeam, isPending: isCreating } = useCreateTeam();
+  React.useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 500);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const { data: apiResponse, isLoading } = useGetTeams({
+    page,
+    limit: perPage,
+    search: debouncedSearch || undefined
+  });
+
+  const { mutateAsync: createTeamAsync, isPending: isCreating } = useCreateTeam();
+  const { mutateAsync: updateTeamAsync, isPending: isUpdating } = useUpdateTeam();
+  const { mutateAsync: deleteTeamAsync } = useDeleteTeamMember();
+
+  React.useEffect(() => {
+    if (apiResponse?.results?.data) {
+      const mapped = apiResponse.results.data.map((m: any) => ({
+        id: m.id,
+        name: m.fullName || m.full_name,
+        email: m.email,
+        role: m.role as UserRole,
+        status: m.status as 'active' | 'inactive',
+        joinedAt: m.createdAt?.split('T')[0] || 'N/A',
+        tasksCompleted: 0,
+        tasksActive: 0,
+      }));
+      setMembers(mapped);
+    }
+  }, [apiResponse]);
 
   const filtered = useMemo(() => {
-    const q = search.toLowerCase().trim();
-    return members.filter((m) => {
-      const matchSearch = !q ||
-        m.name.toLowerCase().includes(q) ||
-        m.email.toLowerCase().includes(q);
-      const matchRole = roleFilter === 'all' || m.role === roleFilter;
-      return matchSearch && matchRole;
-    });
-  }, [members, search, roleFilter]);
 
-  const stats = useMemo(() => ({
-    total: members.length,
-    active: members.filter((m) => m.status === 'active').length,
-    byRole: ALL_ROLES.map((r) => ({ role: r, count: members.filter((m) => m.role === r).length })),
-  }), [members]);
+    if (roleFilter === 'all') return members;
+    return members.filter(m => m.role === roleFilter);
+  }, [members, roleFilter]);
+
+  const stats = useMemo(() => {
+    const pagination = apiResponse?.results?.pagination;
+    return {
+      total: pagination?.totalItems || 0,
+      active: members.filter((m) => m.status === 'active').length, // This is only for current page
+      byRole: ALL_ROLES.map((r) => ({ role: r, count: members.filter((m) => m.role === r).length })),
+    };
+  }, [apiResponse, members]);
 
   const openAdd = useCallback(() => {
     setEditingMember(null);
@@ -102,7 +126,7 @@ export default function TeamPage() {
     setModalOpen(true);
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const e: Partial<typeof emptyForm> = {};
     if (!form.name.trim()) e.name = STATIC_STRINGS.FORM_NAME_REQUIRED;
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = STATIC_STRINGS.FORM_EMAIL_REQUIRED;
@@ -113,51 +137,45 @@ export default function TeamPage() {
     }
 
     if (editingMember) {
-      setMembers((prev) =>
-        prev.map((m) =>
-          m.id === editingMember.id ? { ...m, name: form.name.trim(), email: form.email.trim(), role: form.role } : m
-        )
-      );
-      toast.success(STATIC_STRINGS.FORM_ACCOUNT_UPDATED);
-      setModalOpen(false);
+      const payload: any = {};
+      if (form.name.trim() !== editingMember.name) payload.full_name = form.name.trim();
+      if (form.role !== editingMember.role) payload.role = form.role;
+
+      if (Object.keys(payload).length === 0) {
+        setModalOpen(false);
+        return;
+      }
+
+      try {
+        await updateTeamAsync({
+          teamId: editingMember.id,
+          payload,
+        });
+        setModalOpen(false);
+      } catch (error: any) {
+      }
     } else {
-      createTeam(
-        {
+      try {
+        await createTeamAsync({
           full_name: form.name.trim(),
           email: form.email.trim(),
           role: form.role,
-        },
-        {
-          onSuccess: (data) => {
-            const newMember: TeamMember = {
-              id: data.results?.id || `m${Date.now()}`,
-              name: form.name.trim(),
-              email: form.email.trim(),
-              role: form.role,
-              status: 'active',
-              joinedAt: new Date().toISOString().split('T')[0],
-              tasksCompleted: 0,
-              tasksActive: 0,
-            };
-            setMembers((prev) => [newMember, ...prev]);
-            toast.success(STATIC_STRINGS.FORM_ACCOUNT_CREATED);
-            setModalOpen(false);
-          },
-          onError: (error: any) => {
-            toast.error(error?.message || 'Failed to invite team member');
-          },
-        }
-      );
+        });
+        setModalOpen(false);
+      } catch (error: any) {
+      }
     }
   };
 
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback(async () => {
     if (deleteModal.member) {
-      setMembers((prev) => prev.filter((m) => m.id !== deleteModal.member!.id));
-      toast.success(STATIC_STRINGS.DASHBOARD_OWNER_REMOVED);
+      try {
+        await deleteTeamAsync(deleteModal.member.id);
+      } catch (error: any) {
+      }
     }
     setDeleteModal({ open: false, member: null });
-  }, [deleteModal.member]);
+  }, [deleteModal.member, deleteTeamAsync]);
 
   const toggleStatus = useCallback((id: string) => {
     setMembers((prev) =>
@@ -248,7 +266,12 @@ export default function TeamPage() {
 
         {/* Members Table */}
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-          {filtered.length === 0 ? (
+          {isLoading ? (
+            <div className="py-20 text-center">
+              <div className="animate-spin w-6 h-6 border-2 border-violet-600 border-t-transparent rounded-full mx-auto mb-3"></div>
+              <p className="text-[13px] text-slate-400">Fetching team members...</p>
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="py-16 text-center text-slate-400">
               <Users size={32} className="mx-auto mb-3 opacity-30" />
               <p className="text-[14px] font-medium">{STATIC_STRINGS.CLIENT_MGMT_NO_CLIENTS}</p>
@@ -345,6 +368,17 @@ export default function TeamPage() {
               </table>
             </div>
           )}
+          
+          {!isLoading && apiResponse?.results?.pagination && (
+            <Pagination
+              currentPage={page}
+              totalPages={apiResponse.results.pagination.totalPages}
+              onPageChange={setPage}
+              perPage={perPage}
+              onPerPageChange={setPerPage}
+              totalEntries={apiResponse.results.pagination.totalItems}
+            />
+          )}
         </div>
       </div>
 
@@ -419,10 +453,10 @@ export default function TeamPage() {
             </button>
             <button
               onClick={handleSave}
-              disabled={isCreating}
+              disabled={isCreating || isUpdating}
               className="flex-1 px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[13px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isCreating ? 'Sending...' : (editingMember ? STATIC_STRINGS.FORM_SAVE_CHANGES : STATIC_STRINGS.TEAM_PAGE_BTN_SEND_INVITE)}
+              {isCreating || isUpdating ? 'Sending...' : (editingMember ? STATIC_STRINGS.FORM_SAVE_CHANGES : STATIC_STRINGS.TEAM_PAGE_BTN_SEND_INVITE)}
             </button>
           </div>
         </div>

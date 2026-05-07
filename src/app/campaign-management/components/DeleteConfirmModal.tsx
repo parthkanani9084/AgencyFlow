@@ -26,7 +26,6 @@ export default function DeleteConfirmModal({ open, campaignName, onClose, onConf
               <span className="font-semibold text-slate-900">&quot;{campaignName}&quot;</span>?
               {STATIC_STRINGS.DELETE_MODAL_DESC}
             </p>
-            <p className="mt-2 text-[12px] text-red-600 font-medium">{STATIC_STRINGS.DELETE_MODAL_UNDONE}</p>
           </div>
         </div>
 

@@ -22,6 +22,22 @@ export interface CreateClientResponse {
   results?: any;
 }
 
+export interface UpdateClientPayload {
+  client_name?: string;
+  brand_name?: string;
+  email?: string;
+  service_required?: string[];
+  package_amount?: number;
+  per_day_spend_amount?: number;
+}
+
+export interface UpdateClientResponse {
+  success: boolean;
+  code: number;
+  message: string;
+  results?: any;
+}
+
 export interface GetClientsParams {
   page: number;
   limit: number;
