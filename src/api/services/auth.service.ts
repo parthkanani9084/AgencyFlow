@@ -1,9 +1,9 @@
 import AxiosRequest from '@/utils/axiosHelper';
-import { API_ENDPOINTS } from '@/lib/endpoints';
+import { LOGIN_URL } from '@/lib/endpoints';
 
 export interface LoginPayload {
   email: string;
-  password?: string;
+  password: string;
 }
 
 export interface LoginResponse {
@@ -24,7 +24,7 @@ export interface LoginResponse {
 
 export const authService = {
   login: async (payload: LoginPayload): Promise<LoginResponse> => {
-    const response = await AxiosRequest.post(API_ENDPOINTS.AUTH.LOGIN, payload);
+    const response = await AxiosRequest.post(LOGIN_URL, payload);
     return response;
   },
 };

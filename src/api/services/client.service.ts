@@ -1,5 +1,5 @@
 import AxiosRequest from '@/utils/axiosHelper';
-import { API_ENDPOINTS } from '@/lib/endpoints';
+import { CREATE_CLIENT_URL, GET_CLIENTS_URL } from '@/lib/endpoints';
 
 export interface CreateClientPayload {
   client_name: string;
@@ -67,11 +67,11 @@ export interface GetClientsResponse {
 
 export const clientService = {
   createClient: async (payload: CreateClientPayload): Promise<CreateClientResponse> => {
-    const response = await AxiosRequest.post(API_ENDPOINTS.CLIENT.CREATE, payload);
+    const response = await AxiosRequest.post(CREATE_CLIENT_URL, payload);
     return response;
   },
   getClients: async (params: GetClientsParams): Promise<GetClientsResponse> => {
-    const response = await AxiosRequest.get(API_ENDPOINTS.CLIENT.LIST, params);
+    const response = await AxiosRequest.get(GET_CLIENTS_URL, params);
     return response;
   },
 };

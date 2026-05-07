@@ -1,17 +1,20 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import AppLayout from '@/components/AppLayout';
 import Modal from '@/components/ui/Modal';
 import Pagination from '@/components/ui/Pagination';
 import { Plus, Search, CheckSquare, AlertCircle, ChevronDown, Pencil, Trash2, CheckCircle2, Timer } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
-import { useTasks } from '@/context/TaskContext';
 import { useAuth } from '@/context/AuthContext';
 import { Task, TaskStatus, TaskPriority, TaskRole, UserRole } from '@/types';
-import { STATIC_STRINGS, ROLES, PAGE_ROLES, TEAM_MEMBERS as CONST_TEAM_MEMBERS } from '@/utils/constants';
+import { STATIC_STRINGS, ROLES, PAGE_ROLES } from '@/utils/constants';
 import { ROLE_CONFIG, STATUS_CONFIG } from '@/utils/ui-configs';
 import { clientService } from '@/api/services/client.service';
+import { teamService } from '@/api/services/team.service';
+import { useCreateTask, useGetTasks, useUpdateTask, useDeleteTask } from '@/api/hooks/useTask';
+import { toast } from 'sonner';
 
 
 const ROLE_FILTERS: { label: string; value: TaskRole | 'all' }[] = [
@@ -26,10 +29,8 @@ interface TaskForm {
   assignedTo: string;
   role: TaskRole;
   client: string;
-  campaign: string;
   deadline: string;
   status: TaskStatus;
-  priority: TaskPriority;
   description: string;
 }
 
@@ -38,14 +39,11 @@ const EMPTY_FORM: TaskForm = {
   assignedTo: '',
   role: ROLES.SHOOTER as TaskRole,
   client: '',
-  campaign: STATIC_STRINGS.TASK_MGMT_DEFAULT_CAMPAIGN,
   deadline: '',
   status: 'pending' as TaskStatus,
-  priority: 'medium' as TaskPriority,
   description: '',
 };
 
-const TEAM_MEMBERS = CONST_TEAM_MEMBERS;
 
 const checkIsOverdue = (deadline: string, status: TaskStatus) => {
   if (!deadline || status === 'completed') return false;
@@ -55,23 +53,51 @@ const checkIsOverdue = (deadline: string, status: TaskStatus) => {
 export default function TaskManagementPage() {
   useRoleGuard(PAGE_ROLES.TASK_MANAGEMENT as unknown as UserRole[]);
   
+  const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { tasks: rawTasks, addTask, updateTask, deleteTask } = useTasks();
+  const { mutateAsync: createTaskMutation, isPending: isCreatingTask } = useCreateTask();
+  const { mutateAsync: updateTaskMutation } = useUpdateTask();
+  const { mutateAsync: deleteTaskMutation } = useDeleteTask();
+  
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(8);
+  const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
+  const [search, setSearch] = useState<string>('');
+  const [debouncedSearch, setDebouncedSearch] = useState<string>('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const { data: apiResponse, isLoading: isTasksLoading, isError, error } = useGetTasks({
+    page,
+    limit: perPage,
+    status: statusFilter === 'all' ? undefined : statusFilter,
+    search: debouncedSearch.trim() || undefined,
+  });
+
+  useEffect(() => {
+    if (isError && error) {
+      toast.error((error as any)?.message || 'Failed to fetch tasks');
+    }
+  }, [isError, error]);
   
   const [mounted, setMounted] = useState(false);
-  const [search, setSearch] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
   const [roleFilter, setRoleFilter] = useState<TaskRole | 'all'>('all');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; task: Task | null }>({ open: false, task: null });
   const [form, setForm] = useState<TaskForm>(EMPTY_FORM);
   const [errors, setErrors] = useState<Partial<Record<keyof TaskForm, string>>>({});
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(8);
 
   const [clientsList, setClientsList] = useState<{ id: string; name: string }[]>([]);
   const [isFetchingClients, setIsFetchingClients] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<{ id: string; name: string }[]>([]);
+  const [isFetchingTeam, setIsFetchingTeam] = useState(false);
+  const [isFetchingRole, setIsFetchingRole] = useState(false);
 
   const isRestricted = useMemo(() => 
     user?.role && [ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER].includes(user.role as any)
@@ -93,45 +119,82 @@ export default function TaskManagementPage() {
     }
   }, []);
 
+  const fetchTeamMembers = useCallback(async () => {
+    setIsFetchingTeam(true);
+    try {
+      const response = await teamService.getTeamMembers();
+      if (response?.results?.data) {
+        setTeamMembers(response.results.data.map((m: any) => ({
+          id: m.id,
+          name: m.fullName || m.name
+        })));
+      }
+    } catch (error) {
+      console.error('Failed to fetch team members:', error);
+    } finally {
+      setIsFetchingTeam(false);
+    }
+  }, []);
+
+  const handleMemberChange = async (memberId: string) => {
+    const selectedMember = teamMembers.find(m => m.id === memberId);
+    if (!selectedMember) return;
+
+    setForm(f => ({ ...f, assignedTo: selectedMember.name }));
+    
+    setIsFetchingRole(true);
+    try {
+      const response = await teamService.getMemberRole(memberId);
+      if (response?.results?.role) {
+        setForm(f => ({ ...f, role: response.results.role as TaskRole }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch member role:', error);
+    } finally {
+      setIsFetchingRole(false);
+    }
+  };
+
   useEffect(() => {
     setMounted(true);
     fetchClientsForDropdown();
+    fetchTeamMembers();
     if (isRestricted && user?.role) {
       setRoleFilter(user.role as TaskRole);
     }
   }, [isRestricted, user?.role, fetchClientsForDropdown]);
 
-  const tasks = useMemo(() => {
-    if (!user) return [];
-    if (user.role === ROLES.OWNER || user.role === ROLES.MANAGER || user.role === ROLES.SOCIAL_MEDIA_MANAGER) return rawTasks;
-    return rawTasks.filter(t => t.assignedTo === user.name || t.role === user.role);
-  }, [rawTasks, user]);
-
-  const filteredTasks = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return tasks.filter((t) => {
-      const matchSearch = !q ||
-        t.title.toLowerCase().includes(q) ||
-        t.assignedTo.toLowerCase().includes(q) ||
-        (t.client || '').toLowerCase().includes(q);
-      const matchRole = roleFilter === 'all' || t.role === roleFilter;
-      const matchStatus = statusFilter === 'all' || t.status === statusFilter;
-      return matchSearch && matchRole && matchStatus;
-    });
-  }, [tasks, search, roleFilter, statusFilter]);
-
-  const totalPages = Math.ceil(filteredTasks.length / perPage);
   const paginatedTasks = useMemo(() => {
-    return filteredTasks.slice((page - 1) * perPage, page * perPage);
-  }, [filteredTasks, page, perPage]);
+    try {
+      const apiData = apiResponse?.results?.data || [];
+      return apiData.map((t: any) => ({
+        id: t.id,
+        title: t.taskTitle,
+        description: t.description,
+        assignedTo: t.assignee?.fullName || STATIC_STRINGS.COMMON_UNASSIGNED,
+        role: t.assignee?.role || ROLES.SHOOTER,
+        client: t.client?.clientName || 'N/A',
+        deadline: t.deadlineDate ? t.deadlineDate.split('T')[0] : 'N/A',
+        status: t.status,
+      }));
+    } catch (err) {
+      console.error('Mapping error:', err);
+      return [];
+    }
+  }, [apiResponse]);
 
-  const stats = useMemo(() => ({
-    total: tasks.length,
-    pending: tasks.filter((t) => t.status === 'pending').length,
-    inProgress: tasks.filter((t) => t.status === 'in_progress').length,
-    completed: tasks.filter((t) => t.status === 'completed').length,
-    overdue: tasks.filter((t) => checkIsOverdue(t.deadline, t.status as TaskStatus)).length,
-  }), [tasks]);
+
+  const stats = useMemo(() => {
+    const data = apiResponse?.results?.data || [];
+    const pagination = apiResponse?.results?.pagination;
+    return {
+      total: pagination?.totalItems || 0,
+      pending: data.filter((t: any) => t.status === 'pending').length,
+      inProgress: data.filter((t: any) => t.status === 'in_progress').length,
+      completed: data.filter((t: any) => t.status === 'completed').length,
+      overdue: data.filter((t: any) => checkIsOverdue(t.deadlineDate, t.status)).length,
+    };
+  }, [apiResponse]);
 
   const handleOpenAdd = useCallback(() => {
     setEditingTask(null);
@@ -144,49 +207,82 @@ export default function TaskManagementPage() {
     setEditingTask(task);
     setForm({
       title: task.title,
-      assignedTo: task.assignedTo,
+      assignedTo: typeof task.assignedTo === 'object' ? (task.assignedTo as any)?.fullName : task.assignedTo,
       role: task.role,
-      client: task.client,
-      campaign: task.campaign || STATIC_STRINGS.TASK_MGMT_DEFAULT_CAMPAIGN,
+      client: typeof task.client === 'object' ? (task.client as any)?.clientName : task.client,
       deadline: task.deadline,
       status: task.status as TaskStatus,
-      priority: task.priority,
       description: task.description || '',
     });
     setErrors({});
     setModalOpen(true);
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.title.trim()) { setErrors({ title: STATIC_STRINGS.TASK_MGMT_REQUIRED }); return; }
     if (!form.assignedTo.trim()) { setErrors({ assignedTo: STATIC_STRINGS.TASK_MGMT_REQUIRED }); return; }
 
-    const payload = {
-      ...form,
-      campaignId: editingTask?.campaignId || `c_${form.client.toLowerCase().replace(/\s+/g, '_')}`,
-      campaign: editingTask?.campaign || form.campaign || STATIC_STRINGS.TASK_MGMT_DEFAULT_DELIVERY,
-    };
+    const assignedToId = teamMembers.find(m => m.name === form.assignedTo)?.id || '';
+    const clientId = clientsList.find(c => c.name === form.client)?.id || '';
 
-    if (editingTask) {
-      updateTask(editingTask.id, payload);
-    } else {
-      addTask(payload);
+    try {
+      if (editingTask) {
+        const apiPayload: any = {};
+        if (form.title !== editingTask.title) apiPayload.task_title = form.title;
+        if (form.description !== (editingTask.description || '')) apiPayload.description = form.description;
+        if (form.assignedTo !== editingTask.assignedTo) apiPayload.assigned_to = assignedToId;
+        if (form.client !== editingTask.client) apiPayload.client_id = clientId;
+        if (form.deadline !== editingTask.deadline) apiPayload.deadline_date = form.deadline;
+        if (form.status !== editingTask.status) apiPayload.status = form.status;
+        if (Object.keys(apiPayload).length === 0) {
+          setModalOpen(false);
+          return;
+        }
+
+        await updateTaskMutation({ taskId: editingTask.id, payload: apiPayload });
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        toast.success('Task updated successfully');
+      } else {
+        const apiPayload = {
+          task_title: form.title,
+          description: form.description,
+          assigned_to: assignedToId,
+          client_id: clientId,
+          deadline_date: form.deadline
+        };
+
+        await createTaskMutation(apiPayload);
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        toast.success('Task created successfully');
+      }
+      setModalOpen(false);
+    } catch (error: any) {
+      toast.error(error?.message || 'Something went wrong');
     }
-    setModalOpen(false);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deleteModal.task) {
-      deleteTask(deleteModal.task.id);
+      try {
+        await deleteTaskMutation(deleteModal.task.id);
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        toast.success('Task deleted successfully');
+      } catch (error: any) {
+        toast.error(error?.message || 'Failed to delete task');
+      }
     }
     setDeleteModal({ open: false, task: null });
   };
-
-  const handleCycleStatus = (task: Task) => {
-    if (task.status === 'completed') return;
-    const next: TaskStatus = task.status === 'pending' ? 'in_progress' : 'pending';
-    updateTask(task.id, { status: next });
+  
+  const handleStatusChange = async (taskId: string, newStatus: TaskStatus) => {
+    try {
+      await updateTaskMutation({ taskId, payload: { status: newStatus } });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to update status');
+    }
   };
+
 
   if (!mounted) return <div className="min-h-screen bg-slate-50" />;
 
@@ -196,7 +292,7 @@ export default function TaskManagementPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">{STATIC_STRINGS.TASK_MGMT_TITLE}</h1>
-            <p className="text-[13px] text-slate-500 mt-0.5">{tasks.length} {STATIC_STRINGS.TASK_MGMT_TASKS_SUBTITLE}</p>
+            <p className="text-[13px] text-slate-500 mt-0.5">{apiResponse?.results?.pagination?.totalItems || 0} {STATIC_STRINGS.TASK_MGMT_TASKS_SUBTITLE}</p>
           </div>
           <button
             onClick={handleOpenAdd}
@@ -292,14 +388,20 @@ export default function TaskManagementPage() {
               </tr>
             </thead>
             <tbody>
-              {paginatedTasks.length === 0 ? (
+              {isTasksLoading ? (
+                <tr>
+                  <td colSpan={7} className="px-5 py-14 text-center">
+                    <p className="text-[13px] text-slate-400">Loading tasks...</p>
+                  </td>
+                </tr>
+              ) : paginatedTasks.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-5 py-14 text-center">
                     <p className="text-[13px] text-slate-400">{STATIC_STRINGS.TASK_MGMT_NO_TASKS}</p>
                   </td>
                 </tr>
               ) : (
-                paginatedTasks.map((task) => {
+                paginatedTasks.map((task: Task) => {
                   const statusCfg = STATUS_CONFIG[task.status] || STATUS_CONFIG.pending;
                   const StatusIcon = statusCfg.icon;
                   const roleCfg = ROLE_CONFIG[task.role] || ROLE_CONFIG[ROLES.SHOOTER];
@@ -329,13 +431,18 @@ export default function TaskManagementPage() {
                         <span className={`text-[12.5px] ${overdue ? 'text-red-600 font-bold' : 'text-slate-600'}`}>{task.deadline}</span>
                       </td>
                       <td className="px-5 py-3.5">
-                        <button
-                          onClick={() => handleCycleStatus(task)}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${statusCfg.bg} ${statusCfg.color}`}
-                        >
-                          <StatusIcon size={11} />
-                          {statusCfg.label}
-                        </button>
+                        <div className="relative inline-block group">
+                          <select
+                            value={task.status}
+                            onChange={(e) => handleStatusChange(task.id, e.target.value as TaskStatus)}
+                            className={`appearance-none pl-2.5 pr-7 py-1 rounded-full text-[11px] font-semibold cursor-pointer transition-all border-none focus:outline-none focus:ring-2 focus:ring-violet-500/20 ${statusCfg.bg} ${statusCfg.color} hover:brightness-95`}
+                          >
+                            <option value="pending" className="bg-white text-slate-700">{STATIC_STRINGS.TASK_MGMT_PENDING}</option>
+                            <option value="in_progress" className="bg-white text-slate-700">{STATIC_STRINGS.TASK_MGMT_IN_PROGRESS}</option>
+                            <option value="completed" className="bg-white text-slate-700">{STATIC_STRINGS.TASK_MGMT_COMPLETED}</option>
+                          </select>
+                          <ChevronDown size={10} className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-60 ${statusCfg.color}`} />
+                        </div>
                       </td>
                       <td className="px-5 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-1">
@@ -356,11 +463,11 @@ export default function TaskManagementPage() {
           
           <Pagination
             currentPage={page}
-            totalPages={totalPages}
+            totalPages={apiResponse?.results?.pagination?.totalPages || 1}
             onPageChange={setPage}
             perPage={perPage}
             onPerPageChange={setPerPage}
-            totalEntries={filteredTasks.length}
+            totalEntries={apiResponse?.results?.pagination?.totalItems || 0}
             labels={{
               show: STATIC_STRINGS.TASK_MGMT_PAGINATION_SHOW,
               of: STATIC_STRINGS.TASK_MGMT_PAGINATION_OF,
@@ -395,15 +502,24 @@ export default function TaskManagementPage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_ASSIGNED_TO}</label>
-              <select value={form.assignedTo} onChange={(e) => setForm((f) => ({ ...f, assignedTo: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition bg-white">
-                <option value="">{STATIC_STRINGS.TASK_MGMT_SELECT_TEAMMATE}</option>
-                {TEAM_MEMBERS.map((m) => <option key={m.id} value={m.name}>{m.name}</option>)}
+              <select 
+                value={teamMembers.find(m => m.name === form.assignedTo)?.id || ''} 
+                onChange={(e) => handleMemberChange(e.target.value)} 
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition bg-white"
+              >
+                <option value="">{isFetchingTeam ? 'Loading team...' : STATIC_STRINGS.TASK_MGMT_SELECT_TEAMMATE}</option>
+                {teamMembers.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_ROLE}</label>
-              <select value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as TaskRole }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition bg-white">
-                <option value={ROLES.MANAGER}>{ROLES.MANAGER}</option>
+              <select 
+                value={form.role} 
+                onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as TaskRole }))} 
+                disabled={isFetchingRole}
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition bg-white disabled:bg-slate-50 disabled:text-slate-500"
+              >
+                <option value={ROLES.MANAGER}>{isFetchingRole ? 'Fetching role...' : ROLES.MANAGER}</option>
                 <option value={ROLES.SHOOTER}>{ROLES.SHOOTER}</option>
                 <option value={ROLES.EDITOR}>{ROLES.EDITOR}</option>
                 <option value={ROLES.ADS_MANAGER}>{ROLES.ADS_MANAGER}</option>
@@ -423,9 +539,16 @@ export default function TaskManagementPage() {
               <input type="date" value={form.deadline} onChange={(e) => setForm((f) => ({ ...f, deadline: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition" />
             </div>
           </div>
+
           <div className="flex justify-end gap-2.5 pt-4 border-t">
             <button onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">{STATIC_STRINGS.FORM_CANCEL}</button>
-            <button onClick={handleSave} className="px-5 py-2 rounded-lg bg-violet-600 text-white text-[13px] font-semibold">{STATIC_STRINGS.FORM_SAVE_CHANGES}</button>
+            <button 
+              onClick={handleSave} 
+              disabled={isCreatingTask}
+              className="px-5 py-2 rounded-lg bg-violet-600 text-white text-[13px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isCreatingTask ? 'Creating...' : STATIC_STRINGS.FORM_SAVE_CHANGES}
+            </button>
           </div>
         </div>
       </Modal>

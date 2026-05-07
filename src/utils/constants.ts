@@ -6,8 +6,6 @@ export const STATIC_STRINGS = {
   // Task Management Defaults
   TASK_MGMT_ALL_ROLES: 'All Roles',
   TASK_MGMT_LABEL_DESCRIPTION: 'Description',
-  TASK_MGMT_DEFAULT_CAMPAIGN: 'General',
-  TASK_MGMT_DEFAULT_DELIVERY: 'General Delivery',
   TASK_MGMT_REQUIRED: 'Required',
 
   //Super Admin Dashboard
