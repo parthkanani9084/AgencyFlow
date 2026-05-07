@@ -1,5 +1,6 @@
 import AxiosRequest from '@/utils/axiosHelper';
-import { API_ENDPOINTS } from '@/lib/endpoints';
+import { CLIENT_CREATE_URL, CLIENT_LIST_URL } from '@/lib/endpoints';
+const CLIENT_UPDATE_URL = (id: string) => `/owner/client/${id}`;
 
 export interface CreateClientPayload {
   client_name: string;
@@ -16,6 +17,22 @@ export interface CreateClientPayload {
 }
 
 export interface CreateClientResponse {
+  success: boolean;
+  code: number;
+  message: string;
+  results?: any;
+}
+
+export interface UpdateClientPayload {
+  client_name?: string;
+  brand_name?: string;
+  email?: string;
+  service_required?: string[];
+  package_amount?: number;
+  per_day_spend_amount?: number;
+}
+
+export interface UpdateClientResponse {
   success: boolean;
   code: number;
   message: string;
@@ -67,11 +84,19 @@ export interface GetClientsResponse {
 
 export const clientService = {
   createClient: async (payload: CreateClientPayload): Promise<CreateClientResponse> => {
-    const response = await AxiosRequest.post(API_ENDPOINTS.CLIENT.CREATE, payload);
+    const response = await AxiosRequest.post(CLIENT_CREATE_URL, payload);
     return response;
   },
   getClients: async (params: GetClientsParams): Promise<GetClientsResponse> => {
-    const response = await AxiosRequest.get(API_ENDPOINTS.CLIENT.LIST, params);
+    const response = await AxiosRequest.get(CLIENT_LIST_URL, params);
+    return response;
+  },
+  updateClient: async (clientId: string, payload: UpdateClientPayload): Promise<UpdateClientResponse> => {
+    const response = await AxiosRequest.put(CLIENT_UPDATE_URL(clientId), payload);
+    return response;
+  },
+  deleteClient: async (clientId: string): Promise<any> => {
+    const response = await AxiosRequest.delete(CLIENT_UPDATE_URL(clientId));
     return response;
   },
 };

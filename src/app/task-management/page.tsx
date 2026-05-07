@@ -54,10 +54,10 @@ const checkIsOverdue = (deadline: string, status: TaskStatus) => {
 
 export default function TaskManagementPage() {
   useRoleGuard(PAGE_ROLES.TASK_MANAGEMENT as unknown as UserRole[]);
-  
+
   const { user } = useAuth();
   const { tasks: rawTasks, addTask, updateTask, deleteTask } = useTasks();
-  
+
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
@@ -75,7 +75,7 @@ export default function TaskManagementPage() {
 
   const isRestricted = useMemo(() => 
     user?.role && [ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER].includes(user.role as any)
-  , [user?.role]);
+    , [user?.role]);
 
   const fetchClientsForDropdown = useCallback(async () => {
     setIsFetchingClients(true);
@@ -240,9 +240,8 @@ export default function TaskManagementPage() {
                 <button
                   key={rf.value}
                   onClick={() => { setRoleFilter(rf.value); setPage(1); }}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12.5px] font-semibold transition-all border ${
-                    isActive ? 'bg-violet-600 text-white border-violet-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                  }`}
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12.5px] font-semibold transition-all border ${isActive ? 'bg-violet-600 text-white border-violet-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
                 >
                   {RoleIcon && <RoleIcon size={13} />}
                   {rf.label}
@@ -353,7 +352,7 @@ export default function TaskManagementPage() {
               )}
             </tbody>
           </table>
-          
+
           <Pagination
             currentPage={page}
             totalPages={totalPages}
