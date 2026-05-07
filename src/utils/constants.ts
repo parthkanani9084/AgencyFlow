@@ -19,7 +19,6 @@ export const STATIC_STRINGS = {
   DASHBOARD_CREATE_OWNER: 'Create Owner',
   DASHBOARD_NO_OWNERS: 'No owners found.',
   DASHBOARD_CONFIRM_DELETE: 'Are you sure you want to remove this owner?',
-  DASHBOARD_OWNER_REMOVED: 'Owner removed',
   DASHBOARD_CREATE_OWNER_MODAL_TITLE: 'Create Owner Account',
   DASHBOARD_EDIT_OWNER_MODAL_TITLE: 'Edit Owner Account',
 
@@ -48,8 +47,6 @@ export const STATIC_STRINGS = {
   FORM_AGENCY_REQUIRED: 'Agency is required',
   FORM_EMAIL_REQUIRED: 'Email is required',
   FORM_INVALID_FORMAT: 'Invalid format',
-  FORM_ACCOUNT_UPDATED: 'Account updated',
-  FORM_ACCOUNT_CREATED: 'Account created',
   FORM_SYSTEM_ERROR: 'System error',
 
   // Login page
