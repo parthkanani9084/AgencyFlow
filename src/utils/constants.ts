@@ -259,7 +259,6 @@ export const STATIC_STRINGS = {
   DELETE_MODAL_TITLE: 'Delete Campaign',
   DELETE_MODAL_CONFIRM: 'Are you sure you want to delete',
   DELETE_MODAL_DESC: 'This will permanently remove all associated tasks, files, and ad data.',
-  DELETE_MODAL_UNDONE: 'This action cannot be undone.',
   DELETE_MODAL_KEEP: 'Keep Campaign',
   DELETE_MODAL_DELETE: 'Delete Campaign',
 
@@ -540,7 +539,6 @@ export const STATIC_STRINGS = {
   CLIENT_MGMT_DELETE_CLIENT: 'Delete Client',
   CLIENT_MGMT_DELETE_CONFIRM: 'Are you sure you want to delete',
   CLIENT_MGMT_DELETE_DESC: 'All associated data will be permanently removed.',
-  CLIENT_MGMT_DELETE_UNDONE: 'This action cannot be undone.',
   ADS_TABLE_COL_ACTIONS: 'Actions',
   CAMPAIGN_MGMT_CANCEL: 'Cancel',
   CAMPAIGN_MGMT_SAVE_CHANGES: 'Save Changes',
