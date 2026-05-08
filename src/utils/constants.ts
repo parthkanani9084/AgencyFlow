@@ -720,7 +720,7 @@ export const STATIC_STRINGS = {
   BA_COL_SUBSCRIPTION: 'Subscription',
   BA_COL_LAST_ACTIVE: 'Last Active',
   BA_COL_ACTIONS: 'Actions',
-  BA_LOADING: 'Loading agencies...',
+  BA_LOADING: 'Loading...',
   BA_NO_AGENCIES: 'No agencies match your search criteria',
   BA_SUB_FREE: 'Free Trial',
   BA_SUB_PREMIUM: 'Premium',

@@ -15,7 +15,6 @@ export const auditService = {
         auditLogs: [...(original.auditLogs || []), newLog]
       };
     } catch (error) {
-      console.error('[Service] Atomic Update Failed. Rolling back changes.', error);
       return original;
     }
   },

@@ -134,12 +134,9 @@ export default function SuperAdminLoginForm() {
     if (isLoading || !email) return;
     setIsLoading(true);
 
-    console.log('[SuperAdminLogin] Starting verification...', { email, otp: finalOtp });
 
     try {
       const result = await authService.verifyOTP(email, finalOtp);
-
-      console.log('[SuperAdminLogin] Verification response:', result);
 
       if (result.success && result.user) {
         setAuthenticatedUser(result.user);
@@ -147,12 +144,9 @@ export default function SuperAdminLoginForm() {
         
 
       } else {
-        toast.error(result.error ?? STATIC_STRINGS.LOGIN_INVALID_OTP);
         setIsLoading(false);
       }
     } catch (error) {
-      console.error('[SuperAdminLogin] Verification crash:', error);
-      toast.error('System error during verification');
       setIsLoading(false);
     }
   };

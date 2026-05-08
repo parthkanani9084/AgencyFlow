@@ -24,7 +24,6 @@ export const authService = {
     }
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     mockOTPs[email] = otp;
-    console.log(`[MOCK OTP for ${email}]: ${otp}`);
     return { success: true };
   },
 

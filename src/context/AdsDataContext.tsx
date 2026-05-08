@@ -35,7 +35,6 @@ export const AdsDataProvider = ({ children }: { children: ReactNode }) => {
       try {
         setAdsMetrics(JSON.parse(saved));
       } catch (e) {
-        console.error('Failed to parse saved metrics', e);
       }
     }
   }, []);

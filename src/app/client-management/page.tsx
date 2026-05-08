@@ -6,7 +6,7 @@ import Modal from '@/components/ui/Modal';
 import Pagination from '@/components/ui/Pagination';
 import { 
   Plus, Pencil, Trash2, Search, Briefcase, 
-  AlertTriangle, X, IndianRupee, History 
+  AlertTriangle, X, IndianRupee, History, Loader2 
 } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/context/AuthContext';
@@ -119,7 +119,7 @@ export default function ClientManagementPage() {
   const [isFetching, setIsFetching] = useState(false);
   const { mutateAsync: createClient, isPending: isCreating } = useCreateClient();
   const { mutateAsync: updateClient, isPending: isUpdating } = useUpdateClient();
-  const { mutateAsync: deleteClientAsync } = useDeleteClient();
+  const { mutateAsync: deleteClientAsync, isPending: isDeleting } = useDeleteClient();
 
   const fetchClients = useCallback(async () => {
     setIsFetching(true);
@@ -137,7 +137,7 @@ export default function ClientManagementPage() {
           planType: c.planType as 'monthly' | 'weekly' | 'yearly',
           adType: c.adType || '',
           platformType: (c.platformType === 'online' ? 'Website' : 'Offline') as 'Website' | 'Offline',
-          location: c.fileLocation || '',
+          location: c.file_location || '',
           websiteLink: c.weblink || '',
           reelsPerMonth: Number(c.reelsPerMonth) || 0,
           services: c.serviceRequired || [],
@@ -316,7 +316,7 @@ export default function ClientManagementPage() {
       }
     } else {
       try {
-        const data = await createClient({
+        const createPayload: any = {
           client_name: submissionData.name,
           brand_name: submissionData.brand,
           email: submissionData.email,
@@ -326,9 +326,15 @@ export default function ClientManagementPage() {
           plan_type: submissionData.planType,
           reels_per_month: submissionData.reelsPerMonth,
           platform_type: submissionData.platformType === 'Website' ? 'online' : 'offline',
-          weblink: submissionData.websiteLink,
-          file_location: submissionData.location,
-        });
+        };
+
+        if (submissionData.platformType === 'Website') {
+          createPayload.weblink = submissionData.websiteLink;
+        } else {
+          createPayload.file_location = submissionData.location;
+        }
+
+        const data = await createClient(createPayload);
 
         const newClient: Client = {
           id: data.results?.id || `c${Date.now()}`,
@@ -471,7 +477,18 @@ export default function ClientManagementPage() {
                 </tr>
               </thead>
               <tbody>
-                {paginatedClients.length === 0 ? (
+                {isFetching ? (
+                  <tr>
+                    <td colSpan={isOwner ? 6 : 2} className="px-5 py-20 text-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <Loader2 className="w-10 h-10 text-violet-600 animate-spin opacity-80" />
+                        <p className="text-[13px] text-slate-500 font-medium animate-pulse">
+                          {STATIC_STRINGS.BA_LOADING}
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : paginatedClients.length === 0 ? (
                   <tr>
                     <td colSpan={isOwner ? 6 : 2} className="px-5 py-14 text-center">
                       <div className="flex flex-col items-center gap-2 text-slate-400">
@@ -934,7 +951,14 @@ export default function ClientManagementPage() {
           </div>
           <div className="flex items-center justify-end gap-2 mt-6">
             <button onClick={() => setDeleteModal({ open: false, client: null })} className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">{STATIC_STRINGS.CAMPAIGN_MGMT_CANCEL}</button>
-            <button onClick={handleDelete} className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[13px] font-semibold transition-all">{STATIC_STRINGS.CLIENT_MGMT_DELETE_CLIENT}</button>
+            <button 
+              onClick={handleDelete} 
+              disabled={isDeleting}
+              className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[13px] font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+            >
+              {isDeleting && <Loader2 size={14} className="animate-spin" />}
+              {isDeleting ? 'Deleting...' : STATIC_STRINGS.CLIENT_MGMT_DELETE_CLIENT}
+            </button>
           </div>
         </div>
       </Modal>

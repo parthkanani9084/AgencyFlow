@@ -422,7 +422,7 @@ export default function TeamPage() {
           <div>
             <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_ROLE}</label>
             <div className="grid grid-cols-2 gap-2">
-              {ALL_ROLES.map((r) => {
+              {ALL_ROLES.filter(role => role !== ROLES.OWNER).map((r) => {
                 const cfg = roleConfig[r];
                 const Icon = cfg.icon;
                 return (
