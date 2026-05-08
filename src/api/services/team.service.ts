@@ -70,12 +70,36 @@ export const teamService = {
     const response = await AxiosRequest.post(CREATE_TEAM_URL, payload);
     return response;
   },
+  getTeams: async (params: GetTeamsParams): Promise<GetTeamsResponse> => {
+    const response = await AxiosRequest.get(GET_TEAMS_URL, params);
+    return response;
+  },
   getTeamMembers: async (): Promise<any> => {
     const response = await AxiosRequest.get(GET_TEAMS_URL);
     return response;
   },
+  updateTeam: async (teamId: string, payload: UpdateTeamPayload): Promise<UpdateTeamResponse> => {
+    const response = await AxiosRequest.request({
+      url: `${GET_TEAMS_URL}/${teamId}`,
+      method: 'put',
+      data: payload
+    });
+    return response;
+  },
+  deleteTeamMember: async (teamId: string): Promise<any> => {
+    const response = await AxiosRequest.delete(`${GET_TEAMS_URL}/${teamId}`);
+    return response;
+  },
   getMemberRole: async (memberId: string): Promise<any> => {
     const response = await AxiosRequest.get(`${GET_TEAM_ROLE_URL}/${memberId}/role`);
+    return response;
+  },
+  getTeamRole: async (memberId: string): Promise<GetTeamRoleResponse> => {
+    const response = await AxiosRequest.get(`${GET_TEAM_ROLE_URL}/${memberId}/role`);
+    return response;
+  },
+  getTeamsByRole: async (role: string): Promise<any> => {
+    const response = await AxiosRequest.get(`${GET_TEAMS_URL}/role/${role}`);
     return response;
   }
 };

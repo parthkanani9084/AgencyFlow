@@ -21,6 +21,7 @@ export interface GetTasksParams {
   limit: number;
   status?: string;
   search?: string;
+  role?: string;
 }
 
 export interface UpdateTaskPayload {
@@ -42,15 +43,29 @@ export const taskService = {
     return response;
   },
   updateTask: async (taskId: string, payload: UpdateTaskPayload): Promise<any> => {
-    const response = await AxiosRequest.request({
-      url: `${GET_TASKS_URL}/${taskId}`,
-      method: 'put',
-      data: payload
-    });
+    const response = await AxiosRequest.patch(`${GET_TASKS_URL}/${taskId}`, payload);
+    return response;
+  },
+  updateTaskStatus: async (taskId: string, status: 'pending' | 'in_progress' | string): Promise<any> => {
+    const response = await AxiosRequest.patch(`${GET_TASKS_URL}/${taskId}/status`, { status });
     return response;
   },
   deleteTask: async (taskId: string): Promise<any> => {
     const response = await AxiosRequest.delete(`${GET_TASKS_URL}/${taskId}`);
     return response;
   },
+  assignTask: async (taskId: string, assignedTo: string, notes: string): Promise<any> => {
+    const response = await AxiosRequest.post(`${GET_TASKS_URL}/${taskId}/assign`, {
+      assigned_to: assignedTo,
+      completion_notes: notes
+    });
+    return response;
+  },
+  completeTask: async (taskId: string, notes: string, screenshot?: string): Promise<any> => {
+    const response = await AxiosRequest.post(`${GET_TASKS_URL}/${taskId}/complete`, {
+      completion_notes: notes,
+      delivery_screenshot: screenshot
+    });
+    return response;
+  }
 };

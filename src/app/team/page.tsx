@@ -274,7 +274,7 @@ export default function TeamPage() {
           ) : filtered.length === 0 ? (
             <div className="py-16 text-center text-slate-400">
               <Users size={32} className="mx-auto mb-3 opacity-30" />
-              <p className="text-[14px] font-medium">{STATIC_STRINGS.CLIENT_MGMT_NO_CLIENTS}</p>
+              <p className="text-[14px] font-medium">{STATIC_STRINGS.TEAM_PAGE_NO_MEMBERS}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">

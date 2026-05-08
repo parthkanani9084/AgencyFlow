@@ -8,13 +8,12 @@ import Pagination from '@/components/ui/Pagination';
 import { Plus, Search, CheckSquare, AlertCircle, ChevronDown, Pencil, Trash2, CheckCircle2, Timer } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/context/AuthContext';
-import { Task, TaskStatus, TaskPriority, TaskRole, UserRole } from '@/types';
+import { Task, TaskStatus, TaskRole, UserRole } from '@/types';
 import { STATIC_STRINGS, ROLES, PAGE_ROLES } from '@/utils/constants';
 import { ROLE_CONFIG, STATUS_CONFIG } from '@/utils/ui-configs';
 import { clientService } from '@/api/services/client.service';
 import { teamService } from '@/api/services/team.service';
 import { useCreateTask, useGetTasks, useUpdateTask, useDeleteTask } from '@/api/hooks/useTask';
-import { toast } from 'sonner';
 
 
 const ROLE_FILTERS: { label: string; value: TaskRole | 'all' }[] = [
@@ -81,7 +80,6 @@ export default function TaskManagementPage() {
 
   useEffect(() => {
     if (isError && error) {
-      toast.error((error as any)?.message || 'Failed to fetch tasks');
     }
   }, [isError, error]);
   
@@ -219,8 +217,17 @@ export default function TaskManagementPage() {
   }, []);
 
   const handleSave = async () => {
-    if (!form.title.trim()) { setErrors({ title: STATIC_STRINGS.TASK_MGMT_REQUIRED }); return; }
-    if (!form.assignedTo.trim()) { setErrors({ assignedTo: STATIC_STRINGS.TASK_MGMT_REQUIRED }); return; }
+    const newErrors: Partial<Record<keyof TaskForm, string>> = {};
+    if (!form.title.trim()) newErrors.title = STATIC_STRINGS.TASK_MGMT_REQUIRED;
+    if (!form.assignedTo.trim()) newErrors.assignedTo = STATIC_STRINGS.TASK_MGMT_REQUIRED;
+    if (!form.role) newErrors.role = STATIC_STRINGS.TASK_MGMT_REQUIRED;
+    if (!form.client.trim()) newErrors.client = STATIC_STRINGS.TASK_MGMT_REQUIRED;
+    if (!form.deadline.trim()) newErrors.deadline = STATIC_STRINGS.TASK_MGMT_REQUIRED;
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
 
     const assignedToId = teamMembers.find(m => m.name === form.assignedTo)?.id || '';
     const clientId = clientsList.find(c => c.name === form.client)?.id || '';
@@ -241,7 +248,6 @@ export default function TaskManagementPage() {
 
         await updateTaskMutation({ taskId: editingTask.id, payload: apiPayload });
         queryClient.invalidateQueries({ queryKey: ['tasks'] });
-        toast.success('Task updated successfully');
       } else {
         const apiPayload = {
           task_title: form.title,
@@ -253,11 +259,9 @@ export default function TaskManagementPage() {
 
         await createTaskMutation(apiPayload);
         queryClient.invalidateQueries({ queryKey: ['tasks'] });
-        toast.success('Task created successfully');
       }
       setModalOpen(false);
     } catch (error: any) {
-      toast.error(error?.message || 'Something went wrong');
     }
   };
 
@@ -266,9 +270,7 @@ export default function TaskManagementPage() {
       try {
         await deleteTaskMutation(deleteModal.task.id);
         queryClient.invalidateQueries({ queryKey: ['tasks'] });
-        toast.success('Task deleted successfully');
       } catch (error: any) {
-        toast.error(error?.message || 'Failed to delete task');
       }
     }
     setDeleteModal({ open: false, task: null });
@@ -279,7 +281,6 @@ export default function TaskManagementPage() {
       await updateTaskMutation({ taskId, payload: { status: newStatus } });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     } catch (err: any) {
-      toast.error(err?.message || 'Failed to update status');
     }
   };
 
@@ -485,8 +486,9 @@ export default function TaskManagementPage() {
               value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
               placeholder={STATIC_STRINGS.TASK_MGMT_PLACEHOLDER_TITLE}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition"
+              className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 transition ${errors.title ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-white focus:border-violet-400'}`}
             />
+            {errors.title && <p className="mt-1 text-[11.5px] text-red-500">{errors.title}</p>}
           </div>
           <div>
             <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_LABEL_DESCRIPTION}</label>
@@ -500,42 +502,57 @@ export default function TaskManagementPage() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_ASSIGNED_TO}</label>
+              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_ASSIGNED_TO} <span className="text-red-500">*</span></label>
               <select 
                 value={teamMembers.find(m => m.name === form.assignedTo)?.id || ''} 
-                onChange={(e) => handleMemberChange(e.target.value)} 
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition bg-white"
+                onChange={(e) => { handleMemberChange(e.target.value); setErrors(er => ({ ...er, assignedTo: '' })); }} 
+                className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 transition bg-white ${errors.assignedTo ? 'border-red-400 bg-red-50' : 'border-slate-200 focus:border-violet-400'}`}
               >
                 <option value="">{isFetchingTeam ? 'Loading team...' : STATIC_STRINGS.TASK_MGMT_SELECT_TEAMMATE}</option>
                 {teamMembers.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
               </select>
+              {errors.assignedTo && <p className="mt-1 text-[11.5px] text-red-500">{errors.assignedTo}</p>}
             </div>
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_ROLE}</label>
+              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_ROLE} <span className="text-red-500">*</span></label>
               <select 
                 value={form.role} 
-                onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as TaskRole }))} 
-                disabled={isFetchingRole}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition bg-white disabled:bg-slate-50 disabled:text-slate-500"
+                onChange={(e) => { setForm((f) => ({ ...f, role: e.target.value as TaskRole })); setErrors(er => ({ ...er, role: '' })); }} 
+                disabled={true}
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 transition bg-slate-50 text-slate-500 cursor-not-allowed"
               >
-                <option value={ROLES.MANAGER}>{isFetchingRole ? 'Fetching role...' : ROLES.MANAGER}</option>
+                <option value={ROLES.MANAGER}>{ROLES.MANAGER}</option>
                 <option value={ROLES.SHOOTER}>{ROLES.SHOOTER}</option>
                 <option value={ROLES.EDITOR}>{ROLES.EDITOR}</option>
                 <option value={ROLES.ADS_MANAGER}>{ROLES.ADS_MANAGER}</option>
+                <option value={ROLES.SOCIAL_MEDIA_MANAGER}>{ROLES.SOCIAL_MEDIA_MANAGER}</option>
+                <option value={ROLES.OWNER}>{ROLES.OWNER}</option>
               </select>
+              {errors.role && <p className="mt-1 text-[11.5px] text-red-500">{errors.role}</p>}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_CLIENT}</label>
-              <select value={form.client} onChange={(e) => setForm((f) => ({ ...f, client: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition bg-white">
+              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_CLIENT} <span className="text-red-500">*</span></label>
+              <select 
+                value={form.client} 
+                onChange={(e) => { setForm((f) => ({ ...f, client: e.target.value })); setErrors(er => ({ ...er, client: '' })); }} 
+                className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 transition bg-white ${errors.client ? 'border-red-400 bg-red-50' : 'border-slate-200 focus:border-violet-400'}`}
+              >
                 <option value="">{isFetchingClients ? 'Loading clients...' : STATIC_STRINGS.TASK_MGMT_SELECT_CLIENT}</option>
                 {clientsList.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
               </select>
+              {errors.client && <p className="mt-1 text-[11.5px] text-red-500">{errors.client}</p>}
             </div>
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_DEADLINE}</label>
-              <input type="date" value={form.deadline} onChange={(e) => setForm((f) => ({ ...f, deadline: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition" />
+              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_DEADLINE} <span className="text-red-500">*</span></label>
+              <input 
+                type="date" 
+                value={form.deadline} 
+                onChange={(e) => { setForm((f) => ({ ...f, deadline: e.target.value })); setErrors(er => ({ ...er, deadline: '' })); }} 
+                className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 transition ${errors.deadline ? 'border-red-400 bg-red-50' : 'border-slate-200 focus:border-violet-400'}`} 
+              />
+              {errors.deadline && <p className="mt-1 text-[11.5px] text-red-500">{errors.deadline}</p>}
             </div>
           </div>
 

@@ -14,6 +14,13 @@ export const useGetTasks = (params: GetTasksParams) => {
   });
 };
 
+export const useUpdateTaskStatus = () => {
+  return useMutation({
+    mutationFn: ({ taskId, status }: { taskId: string; status: string }) => 
+      taskService.updateTaskStatus(taskId, status),
+  });
+};
+
 export const useUpdateTask = () => {
   return useMutation({
     mutationFn: ({ taskId, payload }: { taskId: string; payload: any }) => 
@@ -24,5 +31,19 @@ export const useUpdateTask = () => {
 export const useDeleteTask = () => {
   return useMutation({
     mutationFn: (taskId: string) => taskService.deleteTask(taskId),
+  });
+};
+
+export const useAssignTask = () => {
+  return useMutation({
+    mutationFn: ({ taskId, assignedTo, notes }: { taskId: string; assignedTo: string; notes: string }) => 
+      taskService.assignTask(taskId, assignedTo, notes),
+  });
+};
+
+export const useCompleteTask = () => {
+  return useMutation({
+    mutationFn: ({ taskId, notes, screenshot }: { taskId: string; notes: string; screenshot?: string }) => 
+      taskService.completeTask(taskId, notes, screenshot),
   });
 };

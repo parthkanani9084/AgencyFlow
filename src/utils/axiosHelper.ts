@@ -7,6 +7,7 @@ interface AxiosHelperReturn {
   get: (url: string, params?: Record<string, any>, config?: AxiosRequestConfig) => Promise<any>;
   post: (url: string, body?: any, options?: AxiosRequestConfig) => Promise<any>;
   put: (url: string, body?: any, options?: AxiosRequestConfig) => Promise<any>;
+  patch: (url: string, body?: any, options?: AxiosRequestConfig) => Promise<any>;
   delete: (url: string, body?: any) => Promise<any>;
 }
 
@@ -40,6 +41,14 @@ export const AxiosHelper = (): AxiosHelperReturn => {
     put: async (url, body, options = {}) => {
       try {
         const response = await _instance.put(url, body, options);
+        return response.data;
+      } catch (error: any) {
+        throw error.response?.data;
+      }
+    },
+    patch: async (url, body, options = {}) => {
+      try {
+        const response = await _instance.patch(url, body, options);
         return response.data;
       } catch (error: any) {
         throw error.response?.data;
