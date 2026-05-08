@@ -96,7 +96,6 @@ export default function CampaignTable() {
       try {
         setCampaigns(JSON.parse(saved));
       } catch (err) {
-        console.error('Failed to restore campaigns', err);
       }
     }
   }, []);

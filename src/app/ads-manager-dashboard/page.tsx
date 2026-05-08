@@ -33,7 +33,6 @@ export default function AdsManagerDashboardPage() {
       try {
         setAllCampaigns(JSON.parse(saved));
       } catch (err) {
-        console.error('Failed to parse campaigns from storage', err);
       }
     }
   }, []);

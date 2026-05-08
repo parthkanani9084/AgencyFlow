@@ -43,7 +43,6 @@ export function SuperAdminProvider({ children }: { children: React.ReactNode }) 
       setRoleWiseUsage(roleData);
       setActivityLogs(logsData);
     } catch (error) {
-      console.error('Failed to fetch super admin data:', error);
     } finally {
       setIsLoading(false);
     }

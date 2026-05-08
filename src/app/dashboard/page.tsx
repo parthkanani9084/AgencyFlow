@@ -49,7 +49,6 @@ export default function DashboardPage() {
       
       setClientStats({ total, sales, collection });
     } catch (error) {
-      console.error('[Dashboard] Failed to hydrate client stats:', error);
     }
   }, []);
   const dynamicClientMetrics = useMemo(() => [

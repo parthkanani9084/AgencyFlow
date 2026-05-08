@@ -79,7 +79,6 @@ export const reelAgent = {
   },
   validateReel: (reel: Partial<Reel>): boolean => {
     if (!reel.title || !reel.scheduledDate || !reel.assignedToUserId) {
-      console.warn('[ReelAgent] Skipping invalid reel entry:', reel.id);
       return false;
     }
     return true;

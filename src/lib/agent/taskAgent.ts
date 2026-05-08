@@ -37,7 +37,6 @@ export const taskAgent = {
     
     const isOwner = task.assignedTo === user.name || (task as any).assignedToUserId === user.id || task.role === user.role;
     if (!isOwner) {
-      console.error(`[Agent] Unauthorized access attempt: User ${user.id} accessing task ${task.id}`);
       return false;
     }
     return true;

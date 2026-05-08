@@ -34,7 +34,6 @@ export default function ClientReelsPage() {
       const clientReels = allReels.filter(r => r.clientName === user.name);
       setReels(clientReels);
     } catch (error) {
-      console.error('[ClientReels] Failed to fetch reels:', error);
     } finally {
       setIsLoading(false);
     }
