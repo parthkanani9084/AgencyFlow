@@ -51,7 +51,7 @@ export default function ReelCard({ task, onStatusChange }: ReelCardProps) {
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <span className={`w-1.5 h-1.5 rounded-full ${priorityDot[task.priority]}`} />
+          <span className={`w-1.5 h-1.5 rounded-full ${priorityDot[task.priority || 'medium']}`} />
           <h4 className="text-[14px] font-bold text-slate-900 truncate">{task.title}</h4>
         </div>
         <p className="text-[12px] text-slate-500 truncate font-medium">

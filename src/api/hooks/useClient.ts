@@ -12,10 +12,11 @@ export const useCreateClient = () => {
   });
 };
 
-export const useClients = (params: GetClientsParams) => {
+export const useClients = (params: GetClientsParams, options?: any) => {
   return useQuery({
-    queryKey: ['clients', params.page, params.limit, params.search],
+    queryKey: ['clients', params],
     queryFn: () => clientService.getClients(params),
+    ...options,
   });
 };
 

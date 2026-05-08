@@ -1,5 +1,3 @@
-import { UserRole } from '@/types';
-
 export const ROLES = {
   SUPER_ADMIN: 'Super Admin',
   OWNER: 'Owner',

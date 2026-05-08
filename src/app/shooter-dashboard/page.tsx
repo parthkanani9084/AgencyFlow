@@ -180,7 +180,7 @@ export default function ShooterDashboardPage() {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <span className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${PRIORITY_DOT[task.priority]}`} style={{ marginTop: 6 }} />
+                        <span className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${PRIORITY_DOT[task.priority || 'medium']}`} style={{ marginTop: 6 }} />
                         <div className="flex-1 min-w-0">
                           <p className="text-[14px] font-semibold text-slate-900 truncate">{task.title}</p>
                           <p className="text-[12px] text-slate-500 mt-0.5">{task.client} · {task.campaign}</p>

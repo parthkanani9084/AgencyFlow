@@ -10,6 +10,7 @@ import type { UserRole } from '@/types';
 import { STATIC_STRINGS, ROLES, PAGE_ROLES } from '@/utils/constants';
 import { useGetTeams, useCreateTeam, useUpdateTeam, useDeleteTeamMember } from '@/api/hooks/useTeam';
 import Pagination from '@/components/ui/Pagination';
+import { useAuth } from '@/context/AuthContext';
 
 interface TeamMember {
   id: string;
@@ -51,6 +52,11 @@ const emptyForm = { name: '', email: '', role: ROLES.SHOOTER as UserRole };
 
 export default function TeamPage() {
   useRoleGuard(PAGE_ROLES.TEAM as unknown as UserRole[]);
+  const { user } = useAuth();
+
+  const isRestricted = useMemo(() => 
+    user?.role && [ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER].includes(user.role as any)
+  , [user?.role]);
 
 
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -200,13 +206,15 @@ export default function TeamPage() {
               {stats.active} {STATIC_STRINGS.TEAM_PAGE_SUBTITLE_PART1} · {stats.total} {STATIC_STRINGS.TEAM_PAGE_SUBTITLE_PART2}
             </p>
           </div>
-          <button
-            onClick={openAdd}
-            className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-[13.5px] font-semibold px-4 py-2.5 rounded-lg transition-colors shadow-sm"
-          >
-            <Plus size={15} />
-            {STATIC_STRINGS.TEAM_PAGE_INVITE_MEMBER}
-          </button>
+          {!isRestricted && (
+            <button
+              onClick={openAdd}
+              className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-[13.5px] font-semibold px-4 py-2.5 rounded-lg transition-colors shadow-sm"
+            >
+              <Plus size={15} />
+              {STATIC_STRINGS.TEAM_PAGE_INVITE_MEMBER}
+            </button>
+          )}
         </div>
 
         {/* Role Stats */}
@@ -274,7 +282,7 @@ export default function TeamPage() {
           ) : filtered.length === 0 ? (
             <div className="py-16 text-center text-slate-400">
               <Users size={32} className="mx-auto mb-3 opacity-30" />
-              <p className="text-[14px] font-medium">{STATIC_STRINGS.TEAM_PAGE_NO_MEMBERS}</p>
+              <p className="text-[14px] font-medium">{STATIC_STRINGS.CLIENT_MGMT_NO_CLIENTS}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -285,8 +293,8 @@ export default function TeamPage() {
                     <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider hidden md:table-cell">{STATIC_STRINGS.TASK_MGMT_COL_ROLE}</th>
                     <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider hidden lg:table-cell">{STATIC_STRINGS.DASHBOARD_ALL_TASKS}</th>
                     <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider hidden sm:table-cell">{STATIC_STRINGS.TEAM_PAGE_COL_JOINED}</th>
-                    <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider">{STATIC_STRINGS.TASK_MGMT_COL_STATUS}</th>
-                    <th className="px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider text-right">{STATIC_STRINGS.TASK_MGMT_COL_ACTIONS}</th>
+                    <th className="px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider">{STATIC_STRINGS.TASK_MGMT_COL_STATUS}</th>
+                    {!isRestricted && <th className="px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider text-right">{STATIC_STRINGS.TASK_MGMT_COL_ACTIONS}</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -333,34 +341,45 @@ export default function TeamPage() {
                         </td>
                         <td className="px-5 py-3.5 text-slate-500 hidden sm:table-cell">{member.joinedAt}</td>
                         <td className="px-5 py-3.5">
-                          <button
-                            onClick={() => toggleStatus(member.id)}
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors ${
-                              member.status === 'active' ?'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' :'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                            }`}
-                          >
-                            {member.status === 'active' ? <CheckCircle2 size={11} /> : <XCircle size={11} />}
-                            {member.status === 'active' ? STATIC_STRINGS.TEAM_PAGE_STATUS_ACTIVE : STATIC_STRINGS.TEAM_PAGE_STATUS_INACTIVE}
-                          </button>
-                        </td>
-                        <td className="px-5 py-3.5 text-right">
-                          <div className="flex items-center justify-end gap-1">
+                          {isRestricted ? (
+                            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+                              member.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
+                            }`}>
+                              {member.status === 'active' ? <CheckCircle2 size={11} /> : <XCircle size={11} />}
+                              {member.status === 'active' ? STATIC_STRINGS.TEAM_PAGE_STATUS_ACTIVE : STATIC_STRINGS.TEAM_PAGE_STATUS_INACTIVE}
+                            </div>
+                          ) : (
                             <button
-                              onClick={() => openEdit(member)}
-                              className="p-1.5 rounded-lg hover:bg-violet-50 text-slate-400 hover:text-violet-600 transition-colors"
-                              title={STATIC_STRINGS.TEAM_PAGE_EDIT_MEMBER_TOOLTIP}
+                              onClick={() => toggleStatus(member.id)}
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors ${
+                                member.status === 'active' ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                              }`}
                             >
-                              <Pencil size={14} />
+                              {member.status === 'active' ? <CheckCircle2 size={11} /> : <XCircle size={11} />}
+                              {member.status === 'active' ? STATIC_STRINGS.TEAM_PAGE_STATUS_ACTIVE : STATIC_STRINGS.TEAM_PAGE_STATUS_INACTIVE}
                             </button>
-                            <button
-                              onClick={() => setDeleteModal({ open: true, member })}
-                              className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
-                              title={STATIC_STRINGS.TEAM_PAGE_REMOVE_MEMBER_TOOLTIP}
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
+                          )}
                         </td>
+                        {!isRestricted && (
+                          <td className="px-5 py-3.5 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                onClick={() => openEdit(member)}
+                                className="p-1.5 rounded-lg hover:bg-violet-50 text-slate-400 hover:text-violet-600 transition-colors"
+                                title={STATIC_STRINGS.TEAM_PAGE_EDIT_MEMBER_TOOLTIP}
+                              >
+                                <Pencil size={14} />
+                              </button>
+                              <button
+                                onClick={() => setDeleteModal({ open: true, member })}
+                                className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
+                                title={STATIC_STRINGS.TEAM_PAGE_REMOVE_MEMBER_TOOLTIP}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        )}
                       </tr>
                     );
                   })}
@@ -422,7 +441,7 @@ export default function TeamPage() {
           <div>
             <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_ROLE}</label>
             <div className="grid grid-cols-2 gap-2">
-              {ALL_ROLES.filter(role => role !== ROLES.OWNER).map((r) => {
+              {ALL_ROLES.map((r) => {
                 const cfg = roleConfig[r];
                 const Icon = cfg.icon;
                 return (

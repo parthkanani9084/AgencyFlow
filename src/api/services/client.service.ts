@@ -41,6 +41,7 @@ export interface UpdateClientResponse {
 export interface GetClientsParams {
   page: number;
   limit: number;
+  search?: string;
 }
 
 export interface ClientData {
@@ -88,6 +89,14 @@ export const clientService = {
   },
   getClients: async (params: GetClientsParams): Promise<GetClientsResponse> => {
     const response = await AxiosRequest.get(GET_CLIENTS_URL, params);
+    return response;
+  },
+  updateClient: async (clientId: string, payload: UpdateClientPayload): Promise<UpdateClientResponse> => {
+    const response = await AxiosRequest.patch(`${GET_CLIENTS_URL}/${clientId}`, payload);
+    return response;
+  },
+  deleteClient: async (clientId: string): Promise<any> => {
+    const response = await AxiosRequest.delete(`${GET_CLIENTS_URL}/${clientId}`);
     return response;
   },
 };

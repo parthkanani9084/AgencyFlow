@@ -41,7 +41,7 @@ export interface Task {
   campaignId?: string;
   deadline: string;
   status: TaskStatus | string; 
-  priority: TaskPriority;
+  priority?: TaskPriority;
   description?: string;
   notes?: string;
   roleNotes?: TaskNote[];

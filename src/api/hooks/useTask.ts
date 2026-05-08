@@ -7,10 +7,11 @@ export const useCreateTask = () => {
   });
 };
 
-export const useGetTasks = (params: GetTasksParams) => {
+export const useGetTasks = (params: GetTasksParams, options?: any) => {
   return useQuery({
     queryKey: ['tasks', params],
     queryFn: () => taskService.getTasks(params),
+    ...options,
   });
 };
 

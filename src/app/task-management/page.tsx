@@ -11,9 +11,11 @@ import { useAuth } from '@/context/AuthContext';
 import { Task, TaskStatus, TaskRole, UserRole } from '@/types';
 import { STATIC_STRINGS, ROLES, PAGE_ROLES } from '@/utils/constants';
 import { ROLE_CONFIG, STATUS_CONFIG } from '@/utils/ui-configs';
-import { clientService } from '@/api/services/client.service';
 import { teamService } from '@/api/services/team.service';
 import { useCreateTask, useGetTasks, useUpdateTask, useDeleteTask } from '@/api/hooks/useTask';
+import { useClients } from '@/api/hooks/useClient';
+import { useGetTeams } from '@/api/hooks/useTeam';
+import { normalizeRole, toApiRole } from '@/utils/roles';
 
 
 const ROLE_FILTERS: { label: string; value: TaskRole | 'all' }[] = [
@@ -53,7 +55,7 @@ export default function TaskManagementPage() {
   useRoleGuard(PAGE_ROLES.TASK_MANAGEMENT as unknown as UserRole[]);
   
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const { mutateAsync: createTaskMutation, isPending: isCreatingTask } = useCreateTask();
   const { mutateAsync: updateTaskMutation } = useUpdateTask();
   const { mutateAsync: deleteTaskMutation } = useDeleteTask();
@@ -61,8 +63,22 @@ export default function TaskManagementPage() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(8);
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
+  const [roleFilter, setRoleFilter] = useState<TaskRole | 'all'>('all');
   const [search, setSearch] = useState<string>('');
   const [debouncedSearch, setDebouncedSearch] = useState<string>('');
+
+  const isRestricted = useMemo(() => {
+    if (!user?.role) return false;
+    const normalizedRole = normalizeRole(user.role);
+    return ([ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER] as string[]).includes(normalizedRole as string);
+  }, [user?.role]);
+
+  const effectiveRole = useMemo(() => {
+    if (isRestricted && user?.role) {
+      return toApiRole(normalizeRole(user.role));
+    }
+    return roleFilter === 'all' ? undefined : toApiRole(roleFilter);
+  }, [isRestricted, user?.role, roleFilter]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -76,7 +92,8 @@ export default function TaskManagementPage() {
     limit: perPage,
     status: statusFilter === 'all' ? undefined : statusFilter,
     search: debouncedSearch.trim() || undefined,
-  });
+    role: effectiveRole,
+  }, { enabled: !isAuthLoading && !!user });
 
   useEffect(() => {
     if (isError && error) {
@@ -84,55 +101,28 @@ export default function TaskManagementPage() {
   }, [isError, error]);
   
   const [mounted, setMounted] = useState(false);
-  const [roleFilter, setRoleFilter] = useState<TaskRole | 'all'>('all');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; task: Task | null }>({ open: false, task: null });
   const [form, setForm] = useState<TaskForm>(EMPTY_FORM);
   const [errors, setErrors] = useState<Partial<Record<keyof TaskForm, string>>>({});
 
-  const [clientsList, setClientsList] = useState<{ id: string; name: string }[]>([]);
-  const [isFetchingClients, setIsFetchingClients] = useState(false);
-  const [teamMembers, setTeamMembers] = useState<{ id: string; name: string }[]>([]);
-  const [isFetchingTeam, setIsFetchingTeam] = useState(false);
   const [isFetchingRole, setIsFetchingRole] = useState(false);
 
-  const isRestricted = useMemo(() => 
-    user?.role && [ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER].includes(user.role as any)
-    , [user?.role]);
+  const { data: clientsResponse, isLoading: isFetchingClients } = useClients({ page: 1, limit: 100 }, { enabled: !!user && !isRestricted });
+  const { data: teamResponse, isLoading: isFetchingTeam } = useGetTeams({ page: 1, limit: 100 }, { enabled: !!user && !isRestricted });
 
-  const fetchClientsForDropdown = useCallback(async () => {
-    setIsFetchingClients(true);
-    try {
-      const response = await clientService.getClients({ page: 1, limit: 100 });
-      if (response?.results?.data) {
-        setClientsList(response.results.data.map((c: any) => ({
-          id: c.id,
-          name: c.clientName
-        })));
-      }
-    } catch (error) {
-    } finally {
-      setIsFetchingClients(false);
-    }
-  }, []);
+  const clientsList = useMemo((): {id: string, name: string}[] => 
+    (clientsResponse as any)?.results?.data?.map((c: any) => ({
+      id: c.id,
+      name: c.clientName
+    })) || [], [clientsResponse]);
 
-  const fetchTeamMembers = useCallback(async () => {
-    setIsFetchingTeam(true);
-    try {
-      const response = await teamService.getTeamMembers();
-      if (response?.results?.data) {
-        setTeamMembers(response.results.data.map((m: any) => ({
-          id: m.id,
-          name: m.fullName || m.name
-        })));
-      }
-    } catch (error) {
-      console.error('Failed to fetch team members:', error);
-    } finally {
-      setIsFetchingTeam(false);
-    }
-  }, []);
+  const teamMembers = useMemo((): {id: string, name: string}[] => 
+    (teamResponse as any)?.results?.data?.map((m: any) => ({
+      id: m.id,
+      name: m.fullName || m.name
+    })) || [], [teamResponse]);
 
   const handleMemberChange = async (memberId: string) => {
     const selectedMember = teamMembers.find(m => m.id === memberId);
@@ -144,7 +134,7 @@ export default function TaskManagementPage() {
     try {
       const response = await teamService.getMemberRole(memberId);
       if (response?.results?.role) {
-        setForm(f => ({ ...f, role: response.results.role as TaskRole }));
+        setForm(f => ({ ...f, role: normalizeRole(response.results.role) as TaskRole }));
       }
     } catch (error) {
       console.error('Failed to fetch member role:', error);
@@ -155,25 +145,28 @@ export default function TaskManagementPage() {
 
   useEffect(() => {
     setMounted(true);
-    fetchClientsForDropdown();
-    fetchTeamMembers();
+  }, []);
+
+  useEffect(() => {
     if (isRestricted && user?.role) {
       setRoleFilter(user.role as TaskRole);
     }
-  }, [isRestricted, user?.role, fetchClientsForDropdown]);
+  }, [isRestricted, user?.role]);
 
-  const paginatedTasks = useMemo(() => {
+  const paginatedTasks = useMemo((): Task[] => {
     try {
-      const apiData = apiResponse?.results?.data || [];
-      return apiData.map((t: any) => ({
+      const apiData = (apiResponse as any)?.results?.data || [];
+      return apiData.map((t: any): Task => ({
         id: t.id,
-        title: t.taskTitle,
-        description: t.description,
+        title: t.taskTitle || 'Untitled',
+        description: t.description || '',
         assignedTo: t.assignee?.fullName || STATIC_STRINGS.COMMON_UNASSIGNED,
-        role: t.assignee?.role || ROLES.SHOOTER,
+        role: normalizeRole(t.assignee?.role || ROLES.SHOOTER) as TaskRole,
         client: t.client?.clientName || 'N/A',
+        campaign: t.campaign?.campaignName || 'N/A',
+        campaignId: t.campaign?.id,
         deadline: t.deadlineDate ? t.deadlineDate.split('T')[0] : 'N/A',
-        status: t.status,
+        status: t.status || 'pending',
       }));
     } catch (err) {
       console.error('Mapping error:', err);
@@ -183,10 +176,10 @@ export default function TaskManagementPage() {
 
 
   const stats = useMemo(() => {
-    const data = apiResponse?.results?.data || [];
-    const pagination = apiResponse?.results?.pagination;
+    const data = (apiResponse as any)?.results?.data || [];
+    const pagination = (apiResponse as any)?.results?.pagination;
     return {
-      total: pagination?.totalItems || 0,
+      total: pagination?.totalItems || pagination?.totalItem || 0,
       pending: data.filter((t: any) => t.status === 'pending').length,
       inProgress: data.filter((t: any) => t.status === 'in_progress').length,
       completed: data.filter((t: any) => t.status === 'completed').length,
@@ -205,10 +198,10 @@ export default function TaskManagementPage() {
     setEditingTask(task);
     setForm({
       title: task.title,
-      assignedTo: typeof task.assignedTo === 'object' ? (task.assignedTo as any)?.fullName : task.assignedTo,
+      assignedTo: task.assignedTo === STATIC_STRINGS.COMMON_UNASSIGNED ? '' : task.assignedTo,
       role: task.role,
-      client: typeof task.client === 'object' ? (task.client as any)?.clientName : task.client,
-      deadline: task.deadline,
+      client: task.client === 'N/A' ? '' : task.client,
+      deadline: task.deadline === 'N/A' ? '' : task.deadline,
       status: task.status as TaskStatus,
       description: task.description || '',
     });
@@ -229,8 +222,10 @@ export default function TaskManagementPage() {
       return;
     }
 
-    const assignedToId = teamMembers.find(m => m.name === form.assignedTo)?.id || '';
-    const clientId = clientsList.find(c => c.name === form.client)?.id || '';
+    const selectedMember = teamMembers.find(m => m.name === form.assignedTo);
+    const assignedToId = selectedMember?.id || '';
+    const selectedClient = clientsList.find(c => c.name === form.client);
+    const clientId = selectedClient?.id || '';
 
     try {
       if (editingTask) {
@@ -262,6 +257,7 @@ export default function TaskManagementPage() {
       }
       setModalOpen(false);
     } catch (error: any) {
+      console.error('Failed to save task:', error);
     }
   };
 
@@ -271,6 +267,7 @@ export default function TaskManagementPage() {
         await deleteTaskMutation(deleteModal.task.id);
         queryClient.invalidateQueries({ queryKey: ['tasks'] });
       } catch (error: any) {
+        console.error('Failed to delete task:', error);
       }
     }
     setDeleteModal({ open: false, task: null });
@@ -281,6 +278,7 @@ export default function TaskManagementPage() {
       await updateTaskMutation({ taskId, payload: { status: newStatus } });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     } catch (err: any) {
+      console.error('Failed to update status:', err);
     }
   };
 
@@ -292,16 +290,19 @@ export default function TaskManagementPage() {
       <div className="p-6 max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">{STATIC_STRINGS.TASK_MGMT_TITLE}</h1>
-            <p className="text-[13px] text-slate-500 mt-0.5">{apiResponse?.results?.pagination?.totalItems || 0} {STATIC_STRINGS.TASK_MGMT_TASKS_SUBTITLE}</p>
+            <h1 id="task-management-title" className="text-[22px] font-bold text-slate-900 tracking-tight">{STATIC_STRINGS.TASK_MGMT_TITLE}</h1>
+            <p className="text-[13px] text-slate-500 mt-0.5">{(apiResponse as any)?.results?.pagination?.totalItems || (apiResponse as any)?.results?.pagination?.totalItem || 0} {STATIC_STRINGS.TASK_MGMT_TASKS_SUBTITLE}</p>
           </div>
-          <button
-            onClick={handleOpenAdd}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-700 active:scale-[0.98] text-white text-[13.5px] font-semibold transition-all shadow-sm"
-          >
-            <Plus size={16} />
-            {STATIC_STRINGS.TASK_MGMT_ADD_TASK}
-          </button>
+          {!isRestricted && (
+            <button
+              id="add-task-button"
+              onClick={handleOpenAdd}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-700 active:scale-[0.98] text-white text-[13.5px] font-semibold transition-all shadow-sm"
+            >
+              <Plus size={16} />
+              {STATIC_STRINGS.TASK_MGMT_ADD_TASK}
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
@@ -326,32 +327,37 @@ export default function TaskManagementPage() {
           })}
         </div>
 
-        <div className="flex items-center gap-2 mb-4 flex-wrap">
-          {ROLE_FILTERS
-            .filter(rf => !isRestricted || rf.value === 'all' || rf.value === user?.role)
-            .map((rf) => {
-              const isActive = roleFilter === rf.value;
-              const cfg = rf.value !== 'all' ? ROLE_CONFIG[rf.value] : null;
-              const RoleIcon = cfg?.icon;
-              return (
-                <button
-                  key={rf.value}
-                  onClick={() => { setRoleFilter(rf.value); setPage(1); }}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12.5px] font-semibold transition-all border ${isActive ? 'bg-violet-600 text-white border-violet-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                    }`}
-                >
-                  {RoleIcon && <RoleIcon size={13} />}
-                  {rf.label}
-                </button>
-              );
-            })}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl w-fit overflow-x-auto no-scrollbar">
+            {ROLE_FILTERS
+              .filter(rf => !isRestricted || rf.value === normalizeRole(user?.role || ''))
+              .map((rf) => {
+                const isActive = roleFilter === rf.value;
+                const cfg = rf.value !== 'all' ? ROLE_CONFIG[rf.value] : null;
+                const RoleIcon = cfg?.icon;
+                return (
+                  <button
+                    key={rf.value}
+                    onClick={() => { setRoleFilter(rf.value); setPage(1); }}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all whitespace-nowrap ${isActive
+                        ? 'bg-white text-violet-600 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                      }`}
+                  >
+                    {RoleIcon && <RoleIcon size={14} />}
+                    {rf.label}
+                  </button>
+                );
+              })}
+          </div>
 
-          <div className="ml-auto flex items-center gap-2">
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <div className="relative w-full sm:w-auto">
               <select
+                id="status-filter"
                 value={statusFilter}
                 onChange={(e) => { setStatusFilter(e.target.value as TaskStatus | 'all'); setPage(1); }}
-                className="appearance-none pl-3 pr-8 py-1.5 rounded-lg border border-slate-200 bg-white text-[12.5px] text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-violet-500/30 cursor-pointer"
+                className="appearance-none w-full sm:w-auto pl-3 pr-8 py-2 rounded-xl border border-slate-200 bg-white text-[13px] text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-violet-500/30 cursor-pointer hover:border-slate-300 transition-all"
               >
                 <option value="all">{STATIC_STRINGS.TASK_MGMT_ALL_STATUSES}</option>
                 <option value="pending">{STATIC_STRINGS.TASK_MGMT_PENDING}</option>
@@ -361,14 +367,15 @@ export default function TaskManagementPage() {
               <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
 
-            <div className="relative">
+            <div className="relative w-full sm:w-auto">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
+                id="task-search"
                 type="text"
                 placeholder={STATIC_STRINGS.TASK_MGMT_SEARCH_PLACEHOLDER}
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                className="pl-8 pr-8 py-1.5 rounded-lg border border-slate-200 bg-white text-[12.5px] text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 w-48"
+                className="pl-9 pr-4 py-2 rounded-xl border border-slate-200 bg-white text-[13px] text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 w-full sm:w-48 lg:w-64 transition-all hover:border-slate-300"
               />
             </div>
           </div>
@@ -384,7 +391,7 @@ export default function TaskManagementPage() {
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{STATIC_STRINGS.TASK_MGMT_COL_CLIENT}</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{STATIC_STRINGS.TASK_MGMT_COL_DEADLINE}</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{STATIC_STRINGS.TASK_MGMT_COL_STATUS}</th>
-                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 text-right">{STATIC_STRINGS.TASK_MGMT_COL_ACTIONS}</th>
+                {!isRestricted && <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 text-right">{STATIC_STRINGS.TASK_MGMT_COL_ACTIONS}</th>}
               </tr>
             </thead>
             <tbody>
@@ -444,16 +451,18 @@ export default function TaskManagementPage() {
                           <ChevronDown size={10} className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-60 ${statusCfg.color}`} />
                         </div>
                       </td>
-                      <td className="px-5 py-3.5 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <button onClick={() => handleOpenEdit(task)} className="p-1.5 rounded-lg hover:bg-violet-50 text-slate-400 hover:text-violet-600 transition-colors">
-                            <Pencil size={14} />
-                          </button>
-                          <button onClick={() => setDeleteModal({ open: true, task })} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors">
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
+                      {!isRestricted && (
+                        <td className="px-5 py-3.5 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <button onClick={() => handleOpenEdit(task)} className="p-1.5 rounded-lg hover:bg-violet-50 text-slate-400 hover:text-violet-600 transition-colors">
+                              <Pencil size={14} />
+                            </button>
+                            <button onClick={() => setDeleteModal({ open: true, task })} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors">
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );
                 })
@@ -463,11 +472,11 @@ export default function TaskManagementPage() {
 
           <Pagination
             currentPage={page}
-            totalPages={apiResponse?.results?.pagination?.totalPages || 1}
+            totalPages={(apiResponse as any)?.results?.pagination?.totalPages || 1}
             onPageChange={setPage}
             perPage={perPage}
             onPerPageChange={setPerPage}
-            totalEntries={apiResponse?.results?.pagination?.totalItems || 0}
+            totalEntries={(apiResponse as any)?.results?.pagination?.totalItems || (apiResponse as any)?.results?.pagination?.totalItem || 0}
             labels={{
               show: STATIC_STRINGS.TASK_MGMT_PAGINATION_SHOW,
               of: STATIC_STRINGS.TASK_MGMT_PAGINATION_OF,
