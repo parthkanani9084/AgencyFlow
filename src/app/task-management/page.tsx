@@ -157,16 +157,16 @@ export default function TaskManagementPage() {
     try {
       const apiData = (apiResponse as any)?.results?.data || [];
       return apiData.map((t: any): Task => ({
-        id: t.id,
-        title: t.taskTitle || 'Untitled',
+        id: t.task_id || t.id,
+        title: t.task_title || t.taskTitle || 'Untitled',
         description: t.description || '',
-        assignedTo: t.assignee?.fullName || STATIC_STRINGS.COMMON_UNASSIGNED,
-        role: normalizeRole(t.assignee?.role || ROLES.SHOOTER) as TaskRole,
-        client: t.client?.clientName || 'N/A',
-        campaign: t.campaign?.campaignName || 'N/A',
+        assignedTo: t.assignee?.fullName || t.assignee?.full_name || STATIC_STRINGS.COMMON_UNASSIGNED,
+        role: normalizeRole(t.assignee?.role || t.workflow_stage || ROLES.SHOOTER) as TaskRole,
+        client: t.client_name || t.client?.clientName || 'N/A',
+        campaign: t.campaign?.campaignName || t.campaign_name || 'N/A',
         campaignId: t.campaign?.id,
-        deadline: t.deadlineDate ? t.deadlineDate.split('T')[0] : 'N/A',
-        status: t.status || 'pending',
+        deadline: (t.deadline_date || t.deadlineDate || '').split('T')[0] || 'N/A',
+        status: t.currentStatus || t.status || 'pending',
       }));
     } catch (err) {
       console.error('Mapping error:', err);

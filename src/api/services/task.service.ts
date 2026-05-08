@@ -1,5 +1,5 @@
 import AxiosRequest from '@/utils/axiosHelper';
-import { CREATE_TASK_URL, GET_TASKS_URL } from '@/lib/endpoints';
+import { CREATE_TASK_URL, GET_TASKS_URL, GET_TASKS_HISTORY_URL } from '@/lib/endpoints';
 
 export interface CreateTaskPayload {
   task_title: string;
@@ -22,6 +22,7 @@ export interface GetTasksParams {
   status?: string;
   search?: string;
   role?: string;
+  isHistory?: boolean;
 }
 
 export interface UpdateTaskPayload {
@@ -39,7 +40,20 @@ export const taskService = {
     return response;
   },
   getTasks: async (params: GetTasksParams): Promise<any> => {
-    const response = await AxiosRequest.get(GET_TASKS_URL, params);
+    let url = GET_TASKS_URL;
+    
+    if (params.isHistory) {
+      url = GET_TASKS_HISTORY_URL;
+      
+      if (params.role) {
+        params.role = params.role
+          .split('-')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(' ');
+      }
+    }
+    
+    const response = await AxiosRequest.get(url, params);
     return response;
   },
   updateTask: async (taskId: string, payload: UpdateTaskPayload): Promise<any> => {

@@ -4,6 +4,10 @@ import { UserRole } from '@/types';
 import { ROLES } from '@/constants/roles';
 
 export const mapRole = (apiRole: string): UserRole | null => {
+  if (!apiRole) return null;
+  
+  const normalizedInput = apiRole.toLowerCase().replace(/[-\s]/g, '_');
+  
   const roleMap: Record<string, UserRole> = {
     owner: ROLES.OWNER,
     manager: ROLES.MANAGER,
@@ -14,7 +18,7 @@ export const mapRole = (apiRole: string): UserRole | null => {
     client: ROLES.CLIENT,
     super_admin: ROLES.SUPER_ADMIN,
   };
-  return roleMap[apiRole?.toLowerCase()] || null;
+  return roleMap[normalizedInput] || null;
 };
 
 export const useLogin = () => {

@@ -4,13 +4,15 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Users, CheckCircle2, Timer, Circle, Calendar, ChevronRight, Camera, Film, Megaphone, AlertCircle } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
-import { useTasks } from '@/context/TaskContext';
-import { Task, TaskStatus, TaskPriority, TaskRole } from '@/types';
-import TaskCompletionModal from '@/components/TaskCompletionModal';
 import { useAuth } from '@/context/AuthContext';
-import { STATIC_STRINGS, PAGE_ROLES, ROLES, TEAM_MEMBERS as CONST_TEAM_MEMBERS } from '@/utils/constants';
-import { UserRole } from '@/types';
- 
+import { STATIC_STRINGS, PAGE_ROLES, ROLES } from '@/utils/constants';
+import { Task, TaskStatus, TaskPriority, TaskRole, UserRole } from '@/types';
+import TaskCompletionModal from '@/components/TaskCompletionModal';
+import { useUpdateTask } from '@/api/hooks/useTask';
+import { useQueryClient } from '@tanstack/react-query';
+import { teamService } from '@/api/services/team.service';
+import { taskService } from '@/api/services/task.service';
+
 interface TeamMember {
   id: string;
   name: string;
@@ -68,21 +70,83 @@ const getDaysLeft = (deadline: string) => {
 
 export default function ManagerDashboardPage() {
   useRoleGuard(PAGE_ROLES.MANAGER_DASHBOARD as unknown as UserRole[]);
+  const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { tasks: allTasks, updateTask } = useTasks();
 
   const [roleFilter, setRoleFilter] = useState<TaskRole | 'all'>('all');
   const [mounted, setMounted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [allTasks, setAllTasks] = useState<Task[]>([]);
+  const [isTasksLoading, setIsTasksLoading] = useState(true);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+
+  const { mutateAsync: updateTaskMutation } = useUpdateTask();
+
+  const fetchTasks = async () => {
+    setIsTasksLoading(true);
+    const getRoleParam = (role: string) => {
+      const map: Record<string, string> = {
+        [ROLES.SHOOTER]: 'shooter',
+        [ROLES.EDITOR]: 'editor',
+        [ROLES.ADS_MANAGER]: 'ads-manager',
+        [ROLES.SOCIAL_MEDIA_MANAGER]: 'social-media-manager',
+        [ROLES.MANAGER]: 'manager',
+        [ROLES.OWNER]: 'owner'
+      };
+      return map[role] || role.toLowerCase().replace(/ /g, '-');
+    };
+
+    try {
+      const resp = await taskService.getTasks({
+        page: 1,
+        limit: 100,
+        role: roleFilter === 'all' ? undefined : getRoleParam(roleFilter),
+        isHistory: roleFilter !== 'all'
+      });
+      if (resp?.results?.data) {
+        const mapped = resp.results.data.map((t: any) => ({
+          id: t.task_id || t.id,
+          title: t.task_title || t.taskTitle || 'Untitled Task',
+          description: t.description || '',
+          assignedTo: t.assignee?.fullName || t.assignee?.full_name || 'Unassigned',
+          role: t.assignee?.role || t.workflow_stage || 'N/A',
+          client: t.client_name || t.client?.clientName || 'N/A',
+          deadline: (t.deadline_date || t.deadlineDate || '').split('T')[0] || 'N/A',
+          status: t.currentStatus || t.status || 'pending',
+          priority: t.priority || 'medium',
+          campaign: t.campaign?.campaignName || t.campaign_name || 'General',
+          roleNotes: t.roleNotes || [],
+        })) as Task[];
+        setAllTasks(mapped);
+      }
+    } catch (err) {
+      console.error("Failed to fetch tasks", err);
+    } finally {
+      setIsTasksLoading(false);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
+    const fetchTeam = async () => {
+      try {
+        const resp = await teamService.getTeamMembers();
+        if (resp?.results?.data) {
+          setTeamMembers(resp.results.data.map((m: any) => ({
+            id: m.id,
+            name: m.fullName || m.name,
+            role: m.role
+          })));
+        }
+      } catch (err) { }
+    };
+    fetchTeam();
   }, []);
 
-  const filteredTasks = useMemo(() => 
-    allTasks.filter(t => roleFilter === 'all' || t.role === roleFilter),
-  [allTasks, roleFilter]);
+  useEffect(() => {
+    fetchTasks();
+  }, [roleFilter]);
 
   const stats = useMemo(() => ({
     total: allTasks.length,
@@ -92,28 +156,39 @@ export default function ManagerDashboardPage() {
   }), [allTasks]);
 
   const teamOverviewData = useMemo<TeamMember[]>(() => {
-    const rawMembers = Array.isArray(CONST_TEAM_MEMBERS) ? (CONST_TEAM_MEMBERS as any[]) : [];
-    return rawMembers.slice(0, 3).map((member) => {
+    return teamMembers.slice(0, 3).map((member) => {
       const mTasks = allTasks.filter(t => t.assignedTo === member.name);
       const done = mTasks.filter(t => t.status === 'completed').length;
       const pct = mTasks.length > 0 ? Math.round((done / mTasks.length) * 100) : 0;
       const color = ROLE_COLORS[member.role] || 'bg-slate-600';
       return { ...member, mTasksCount: mTasks.length, doneCount: done, pct, color };
     });
-  }, [allTasks]);
+  }, [allTasks, teamMembers]);
 
-  const handleStatusChange = (task: Task, newStatus: TaskStatus) => {
+  const handleStatusChange = async (task: any, newStatus: TaskStatus) => {
     if (newStatus === 'completed') {
       if (task.status === 'completed') return;
       setSelectedTask(task);
       setIsModalOpen(true);
     } else {
-      updateTask(task.id, { status: newStatus });
+      try {
+        await updateTaskMutation({ taskId: task.id, payload: { status: newStatus } });
+        fetchTasks();
+      } catch (err) { }
     }
   };
 
-  const onCompleteTask = (taskId: string, notes: string, nextMember?: { name: string; role: string }, screenshot?: string) => {
-    updateTask(taskId, { status: 'completed' }, notes, nextMember, screenshot);
+  const onCompleteTask = async (taskId: string, notes: string, nextMember?: { name: string; role: string }, screenshot?: string) => {
+    try {
+      const payload: any = { status: 'completed', description: notes };
+      if (nextMember) {
+        const member = teamMembers.find(m => m.name === nextMember.name);
+        if (member) payload.assigned_to = member.id;
+      }
+      await updateTaskMutation({ taskId, payload });
+      fetchTasks();
+      setIsModalOpen(false);
+    } catch (err) { }
   };
 
   if (!mounted) return <div className="min-h-screen bg-slate-50" />;
@@ -182,10 +257,9 @@ export default function ManagerDashboardPage() {
                 <button
                   key={f.value}
                   onClick={() => setRoleFilter(f.value)}
-                  className={`px-3 py-1 rounded-lg text-[12px] font-medium transition-all whitespace-nowrap ${
-                    roleFilter === f.value
+                  className={`px-3 py-1 rounded-lg text-[12px] font-medium transition-all whitespace-nowrap ${roleFilter === f.value
                       ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
+                    }`}
                 >
                   {f.label}
                 </button>
@@ -194,12 +268,16 @@ export default function ManagerDashboardPage() {
           </header>
 
           <div className="space-y-2.5">
-            {filteredTasks.length === 0 ? (
+            {isTasksLoading ? (
+              <article className="bg-white rounded-xl border border-dashed border-slate-200 py-12 text-center">
+                <p className="text-[13px] text-slate-400 font-medium">Loading tasks...</p>
+              </article>
+            ) : allTasks.length === 0 ? (
               <article className="bg-white rounded-xl border border-dashed border-slate-200 py-12 text-center">
                 <p className="text-[13px] text-slate-400 font-medium">{STATIC_STRINGS.ADS_DASHBOARD_NO_TASKS}</p>
               </article>
             ) : (
-              filteredTasks.map((task) => {
+              allTasks.map((task) => {
                 const RoleIcon = ROLE_CONFIG[task.role]?.icon || Megaphone;
                 const overdue = isOverdue(task.deadline, task.status as TaskStatus);
                 const daysLeft = getDaysLeft(task.deadline);
@@ -207,17 +285,16 @@ export default function ManagerDashboardPage() {
                 return (
                   <article
                     key={task.id}
-                    className={`rounded-xl border shadow-sm p-4 transition-all ${
-                      task.status === 'completed' 
-                        ? 'bg-emerald-50/30 border-emerald-100' 
-                        : overdue 
-                          ? 'bg-white border-red-200' 
+                    className={`rounded-xl border shadow-sm p-4 transition-all ${task.status === 'completed'
+                        ? 'bg-emerald-50/30 border-emerald-100'
+                        : overdue
+                          ? 'bg-white border-red-200'
                           : 'bg-white border-slate-200'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${PRIORITY_DOT[task.priority || 'medium']}`} style={{ marginTop: 6 }} />
+            
                         <div className="flex-1 min-w-0">
                           <p className="text-[13.5px] font-semibold text-slate-900 truncate">{task.title}</p>
                           <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -226,12 +303,12 @@ export default function ManagerDashboardPage() {
                               {task.assignedTo}
                             </span>
                             <span className="text-[11px] text-slate-400">
-                              {task.client} {task.brand ? `(${task.brand})` : ''} · {task.campaign}
+                              {task.client}
                             </span>
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="relative">
                         {overdue && <AlertCircle size={14} className="text-red-500 absolute -left-5 top-1/2 -translate-y-1/2" />}
                         <select
@@ -246,11 +323,11 @@ export default function ManagerDashboardPage() {
                         <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none text-slate-400" size={12} />
                       </div>
                     </div>
-                    
+
                     {/* Collaborative Context / Role Notes */}
                     {(task.roleNotes && task.roleNotes.length > 0) && (
                       <section className="mt-3 pt-3 border-t border-slate-100 space-y-2">
-                        {task.roleNotes.map((note, idx) => (
+                        {task.roleNotes?.map((note, idx) => (
                           <div key={idx} className="bg-slate-50 rounded-lg p-2 flex gap-2 border border-slate-100/50">
                             <div className="w-5 h-5 rounded bg-teal-100 text-teal-700 flex items-center justify-center flex-shrink-0 mt-0.5">
                               <span className="text-[9px] font-bold">{note.role.charAt(0)}</span>
@@ -291,13 +368,13 @@ export default function ManagerDashboardPage() {
           </div>
         </main>
 
-        <TaskCompletionModal 
+        <TaskCompletionModal
           open={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           task={selectedTask}
           onComplete={onCompleteTask}
           userRole={ROLES.MANAGER}
-          teamMembers={CONST_TEAM_MEMBERS as unknown as any}
+          teamMembers={teamMembers as any}
         />
       </div>
     </AppLayout>

@@ -1,30 +1,73 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Megaphone, CheckCircle2, Timer, Circle, Calendar, ChevronRight, AlertCircle } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/context/AuthContext';
-import { useTasks } from '@/context/TaskContext';
-import { Task, TaskStatus, Campaign } from '@/types';
+import { Task, TaskStatus, Campaign, UserRole } from '@/types';
 import TodayReportingCard from './components/TodayReportingCard';
 import TaskCompletionModal from '@/components/TaskCompletionModal';
-import { STATIC_STRINGS, PAGE_ROLES, STORAGE_KEY_CAMPAIGNS, TEAM_MEMBERS, ROLES } from '@/utils/constants';
+import { STATIC_STRINGS, PAGE_ROLES, STORAGE_KEY_CAMPAIGNS, ROLES } from '@/utils/constants';
 import { PRIORITY_STYLES, STATUS_CONFIG as STATUS_STYLES } from '@/utils/ui-configs';
-import { UserRole } from '@/types';
-
+import { useUpdateTask, useUpdateTaskStatus, useCompleteTask } from '@/api/hooks/useTask';
+import { useQueryClient } from '@tanstack/react-query';
+import { teamService } from '@/api/services/team.service';
+import { taskService } from '@/api/services/task.service';
 
 
 export default function AdsManagerDashboardPage() {
   useRoleGuard(PAGE_ROLES.ADS_TRACKING as unknown as UserRole[]);
-  
+  const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { tasks: allTasks, updateTask } = useTasks();
+
   const [activeTab, setActiveTab] = useState<TaskStatus>('pending');
   const [mounted, setMounted] = useState(false);
   const [allCampaigns, setAllCampaigns] = useState<Campaign[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [adsTasks, setAdsTasks] = useState<Task[]>([]);
+  const [isTasksLoading, setIsTasksLoading] = useState(true);
+  const [teamMembers, setTeamMembers] = useState<{ id: string; name: string; role: string }[]>([]);
+
+  const { mutateAsync: updateTaskMutation } = useUpdateTask();
+  const { mutateAsync: updateTaskStatusMutation } = useUpdateTaskStatus();
+  const { mutateAsync: completeTaskMutation } = useCompleteTask();
+
+  const getEffectiveStatus = useCallback((t: any): TaskStatus => {
+    return (t.currentStatus || t.status) as TaskStatus;
+  }, []);
+
+  const fetchTasks = async (status?: TaskStatus) => {
+    setIsTasksLoading(true);
+    try {
+      const resp = await taskService.getTasks({ 
+        page: 1, 
+        limit: 100, 
+        role: 'ads-manager',
+        status: status || activeTab,
+        isHistory: true
+      });
+      if (resp?.results?.data) {
+        const mapped = resp.results.data.map((t: any) => ({
+          id: t.task_id || t.id,
+          title: t.task_title || t.taskTitle || 'Untitled Task',
+          description: t.description || '',
+          assignedTo: t.assignee?.fullName || t.assignee?.full_name || 'Unassigned',
+          role: t.assignee?.role || t.workflow_stage || ROLES.ADS_MANAGER,
+          client: t.client_name || t.client?.clientName || 'N/A',
+          deadline: (t.deadline_date || t.deadlineDate || '').split('T')[0] || 'N/A',
+          status: t.currentStatus || t.status || 'pending',
+          roleNotes: Array.isArray(t.roleNotes) ? t.roleNotes : [],
+        })) as Task[];
+        setAdsTasks(mapped);
+      }
+    } catch (err) {
+      console.error("Failed to fetch tasks", err);
+    } finally {
+      setIsTasksLoading(false);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -32,51 +75,70 @@ export default function AdsManagerDashboardPage() {
     if (saved) {
       try {
         setAllCampaigns(JSON.parse(saved));
-      } catch (err) {
-      }
+      } catch (err) { }
     }
+
+    const fetchTeam = async () => {
+      try {
+        const resp = await teamService.getTeamMembers();
+        if (resp?.results?.data) {
+          setTeamMembers(resp.results.data.map((m: any) => ({
+            id: m.id,
+            name: m.fullName || m.name,
+            role: m.role
+          })));
+        }
+      } catch (err) { }
+    };
+    fetchTeam();
   }, []);
 
+  useEffect(() => {
+    if (mounted) {
+      fetchTasks();
+    }
+  }, [mounted, activeTab]);
 
-  const getEffectiveStatus = (task: Task): TaskStatus => {
-    const isHandedOffToOthers = task.role !== ROLES.ADS_MANAGER && task.roleNotes?.some(n => n.role === ROLES.ADS_MANAGER);
-    return isHandedOffToOthers ? 'completed' : (task.status as TaskStatus);
-  };
-
-  const { filteredTasks, dashboardStats, relevantTasks } = useMemo(() => {
-    const relevant = allTasks.filter(t => 
-      t.role === ROLES.ADS_MANAGER || t.roleNotes?.some(n => n.role === ROLES.ADS_MANAGER)
-    );
-
+  const { filteredTasks, dashboardStats } = useMemo(() => {
     const stats = { pending: 0, in_progress: 0, completed: 0 };
-    const filtered: Task[] = [];
+    const filtered: any[] = [];
 
-    relevant.forEach(task => {
-      const status = getEffectiveStatus(task);
-      stats[status]++;
-      if (status === activeTab) filtered.push(task);
+    adsTasks.forEach(task => {
+      const status = task.status as TaskStatus;
+      if (stats[status] !== undefined) stats[status]++;
     });
 
-    return { 
-      relevantTasks: relevant,
-      filteredTasks: filtered, 
-      dashboardStats: stats 
+    return {
+      filteredTasks: adsTasks,
+      dashboardStats: stats
     };
-  }, [allTasks, activeTab]);
+  }, [adsTasks, activeTab]);
 
   // Handlers
-  const handleStatusChange = (task: Task, newStatus: TaskStatus) => {
+  const handleStatusChange = async (task: any, newStatus: TaskStatus) => {
     if (newStatus === 'completed') {
       if (task.status === 'completed') return;
       setSelectedTask(task);
       setIsModalOpen(true);
+    } else if (newStatus === 'pending' || newStatus === 'in_progress') {
+      try {
+        await updateTaskStatusMutation({ taskId: task.id, status: newStatus });
+        fetchTasks();
+      } catch (err) { }
     } else {
-      updateTask(task.id, { status: newStatus });
+      try {
+        await updateTaskMutation({ taskId: task.id, payload: { status: newStatus } });
+        fetchTasks();
+      } catch (err) { }
     }
   };
 
-  const onCompleteTask = (taskId: string, notes: string, nextMember?: { name: string; role: string }, screenshot?: string) => {
-    updateTask(taskId, { status: 'completed' }, notes, nextMember, screenshot);
+  const onCompleteTask = async (taskId: string, notes: string, nextMember?: { name: string; role: string }, screenshot?: string) => {
+    try {
+      await completeTaskMutation({ taskId, notes: notes, screenshot });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      setIsModalOpen(false);
+    } catch (err) { }
   };
 
   // View Helpers
@@ -86,10 +148,10 @@ export default function AdsManagerDashboardPage() {
   };
 
   const formatDeadline = (deadline: string) => {
-    return new Date(deadline).toLocaleDateString(undefined, { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
+    return new Date(deadline).toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
     });
   };
 
@@ -146,29 +208,32 @@ export default function AdsManagerDashboardPage() {
             <h2 className="text-[14px] font-semibold text-slate-800">
               {STATIC_STRINGS.ADS_DASHBOARD_ASSIGNED_TASKS}
             </h2>
-            
+
             {/* Tab Navigation */}
             <nav className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
               {(['in_progress', 'pending', 'completed'] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-all ${
-                    activeTab === tab
+                  className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-all ${activeTab === tab
                       ? 'bg-white text-slate-900 shadow-sm'
                       : 'text-slate-500 hover:text-slate-700'
-                  }`}
+                    }`}
                 >
-                  {tab === 'in_progress' ? STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_IN_PROGRESS : 
-                   tab === 'pending' ? STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_PENDING : 
-                   STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_COMPLETED}
+                  {tab === 'in_progress' ? STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_IN_PROGRESS :
+                    tab === 'pending' ? STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_PENDING :
+                      STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_COMPLETED}
                 </button>
               ))}
             </nav>
           </div>
 
           <div className="space-y-3">
-            {filteredTasks.length === 0 ? (
+            {isTasksLoading ? (
+              <div className="bg-white rounded-xl border border-dashed border-slate-200 py-12 text-center">
+                <p className="text-[13px] text-slate-400 font-medium">Loading tasks...</p>
+              </div>
+            ) : filteredTasks.length === 0 ? (
               <div className="bg-white rounded-xl border border-dashed border-slate-200 py-12 text-center">
                 <p className="text-[13px] text-slate-400 font-medium">
                   {STATIC_STRINGS.ADS_DASHBOARD_NO_TASKS} {activeTab}
@@ -181,26 +246,25 @@ export default function AdsManagerDashboardPage() {
                 const daysLeft = task.deadline ? getDaysLeft(task.deadline) : 0;
 
                 return (
-                  <article 
-                    key={task.id} 
-                    className={`rounded-xl border shadow-sm p-4 transition-all hover:shadow-md ${
-                      taskStatus === 'completed' 
-                        ? 'bg-emerald-50/30 border-emerald-100' 
-                        : overdue ? 'bg-white border-red-200 shadow-sm shadow-red-50' 
-                        : 'bg-white border-slate-100'
-                    }`}
+                  <article
+                    key={task.id}
+                    className={`rounded-xl border shadow-sm p-4 transition-all hover:shadow-md ${taskStatus === 'completed'
+                        ? 'bg-emerald-50/30 border-emerald-100'
+                        : overdue ? 'bg-white border-red-200 shadow-sm shadow-red-50'
+                          : 'bg-white border-slate-100'
+                      }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <span className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${PRIORITY_STYLES[task.priority || 'medium']}`} />
+      
                         <div className="flex-1 min-w-0">
                           <p className="text-[14px] font-bold text-slate-900 truncate">{task.title}</p>
                           <p className="text-[12px] text-slate-500 mt-0.5">
-                            {task.client} {task.brand ? `(${task.brand})` : ''} · {task.campaign}
+                            {task.client}
                           </p>
                         </div>
                       </div>
-                      
+
                       <div className="relative">
                         {overdue && <AlertCircle size={14} className="text-red-500 absolute -left-5 top-1/2 -translate-y-1/2" />}
                         <select
@@ -217,12 +281,12 @@ export default function AdsManagerDashboardPage() {
                     </div>
 
 
-                    {task.roleNotes && task.roleNotes.length > 0 && (
+                    {Array.isArray(task.roleNotes) && task.roleNotes.length > 0 && (
                       <div className="mt-4 mb-4 space-y-2 border-t border-slate-100 pt-4">
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                           {STATIC_STRINGS.ADS_DASHBOARD_HISTORY_LOG}
                         </p>
-                        {task.roleNotes.map((note, idx) => (
+                        {task.roleNotes.map((note: any, idx: number) => (
                           <div key={idx} className="bg-slate-50 p-2.5 rounded-lg border border-slate-100/50">
                             <div className="flex items-center justify-between mb-1">
                               <span className="text-[11px] font-bold text-slate-700">{note.role} · {note.author}</span>
@@ -246,12 +310,12 @@ export default function AdsManagerDashboardPage() {
                           </span>
                         )}
                       </div>
-                      
+
                       {taskStatus === 'completed' && (
                         <div className="flex items-center gap-1 text-[12px] text-emerald-600 font-bold">
                           <CheckCircle2 size={12} />
-                          {task.forwardedBy 
-                            ? `${STATIC_STRINGS.ADS_DASHBOARD_FINALIZED_BY} ${task.forwardedBy}` 
+                          {task.forwardedBy
+                            ? `${STATIC_STRINGS.ADS_DASHBOARD_FINALIZED_BY} ${task.forwardedBy}`
                             : STATIC_STRINGS.ADS_DASHBOARD_TASK_FINALIZED}
                         </div>
                       )}
@@ -270,7 +334,7 @@ export default function AdsManagerDashboardPage() {
           task={selectedTask}
           onComplete={onCompleteTask}
           userRole={user?.role || ROLES.ADS_MANAGER}
-          teamMembers={TEAM_MEMBERS}
+          teamMembers={teamMembers as any}
         />
       </div>
     </AppLayout>

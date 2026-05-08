@@ -15,3 +15,4 @@ export const GET_TEAM_ROLE_URL = TEAM_BASE_URL;
 
 export const CREATE_TASK_URL = TASK_BASE_URL;
 export const GET_TASKS_URL = TASK_BASE_URL;
+export const GET_TASKS_HISTORY_URL = `${TASK_BASE_URL}/history`;

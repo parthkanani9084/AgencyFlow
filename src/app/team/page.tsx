@@ -11,6 +11,7 @@ import { STATIC_STRINGS, ROLES, PAGE_ROLES } from '@/utils/constants';
 import { useGetTeams, useCreateTeam, useUpdateTeam, useDeleteTeamMember } from '@/api/hooks/useTeam';
 import Pagination from '@/components/ui/Pagination';
 import { useAuth } from '@/context/AuthContext';
+import { normalizeRole } from '@/utils/roles';
 
 interface TeamMember {
   id: string;
@@ -45,7 +46,7 @@ const avatarColors: Record<UserRole, string> = {
   [ROLES.CLIENT]:      'bg-indigo-600',
 };
 
-const ALL_ROLES: UserRole[] = [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] as UserRole[];
+const ALL_ROLES: UserRole[] = [ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] as UserRole[];
 
 
 const emptyForm = { name: '', email: '', role: ROLES.SHOOTER as UserRole };
@@ -88,12 +89,13 @@ export default function TeamPage() {
   const { mutateAsync: deleteTeamAsync } = useDeleteTeamMember();
 
   React.useEffect(() => {
-    if (apiResponse?.results?.data) {
-      const mapped = apiResponse.results.data.map((m: any) => ({
+    const data = (apiResponse as any)?.results?.data;
+    if (data) {
+      const mapped = data.map((m: any) => ({
         id: m.id,
         name: m.fullName || m.full_name,
         email: m.email,
-        role: m.role as UserRole,
+        role: normalizeRole(m.role),
         status: m.status as 'active' | 'inactive',
         joinedAt: m.createdAt?.split('T')[0] || 'N/A',
         tasksCompleted: 0,
@@ -110,9 +112,9 @@ export default function TeamPage() {
   }, [members, roleFilter]);
 
   const stats = useMemo(() => {
-    const pagination = apiResponse?.results?.pagination;
+    const pagination = (apiResponse as any)?.results?.pagination;
     return {
-      total: pagination?.totalItems || 0,
+      total: pagination?.totalItems || pagination?.totalItem || 0,
       active: members.filter((m) => m.status === 'active').length, // This is only for current page
       byRole: ALL_ROLES.map((r) => ({ role: r, count: members.filter((m) => m.role === r).length })),
     };
@@ -299,7 +301,7 @@ export default function TeamPage() {
                 </thead>
                 <tbody>
                   {filtered.map((member, idx) => {
-                    const cfg = roleConfig[member.role];
+                    const cfg = roleConfig[member.role] || roleConfig[ROLES.SHOOTER];
                     const RoleIcon = cfg.icon;
                     const initials = member.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
                     return (
@@ -388,14 +390,14 @@ export default function TeamPage() {
             </div>
           )}
           
-          {!isLoading && apiResponse?.results?.pagination && (
+          {!isLoading && (apiResponse as any)?.results?.pagination && (
             <Pagination
               currentPage={page}
-              totalPages={apiResponse.results.pagination.totalPages}
+              totalPages={(apiResponse as any).results.pagination.totalPages || 1}
               onPageChange={setPage}
               perPage={perPage}
               onPerPageChange={setPerPage}
-              totalEntries={apiResponse.results.pagination.totalItems}
+              totalEntries={(apiResponse as any).results.pagination.totalItems || (apiResponse as any).results.pagination.totalItem || 0}
             />
           )}
         </div>

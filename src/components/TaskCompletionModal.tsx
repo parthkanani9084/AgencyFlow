@@ -30,23 +30,29 @@ export default function TaskCompletionModal({
 
   const eligibleRoles = useMemo(() => {
     if (!task) return [];
-    
+
     const taskRole = (task as Task)?.role || ROLES.SOCIAL_MEDIA_MANAGER;
     const roleToCheck = userRole === ROLES.MANAGER || userRole === ROLES.OWNER ? taskRole : userRole;
-    
+
     const roles = (() => {
-      switch (roleToCheck) {
-        case ROLES.SHOOTER: return [ROLES.EDITOR];
-        case ROLES.EDITOR: return [ROLES.ADS_MANAGER];
-        case ROLES.ADS_MANAGER: return [ROLES.MANAGER, ROLES.OWNER];
-        case ROLES.SOCIAL_MEDIA_MANAGER: return [ROLES.MANAGER, ROLES.OWNER];
-        default: return [];
-      }
+      const r = roleToCheck?.toLowerCase();
+      if (r === ROLES.SHOOTER.toLowerCase()) return [ROLES.EDITOR];
+      if (r === ROLES.EDITOR.toLowerCase()) return [ROLES.ADS_MANAGER];
+      if (r === ROLES.ADS_MANAGER.toLowerCase()) return [];
+      if (r === ROLES.SOCIAL_MEDIA_MANAGER.toLowerCase()) return [];
+      return [];
     })();
 
-    if (roleToCheck === ROLES.EDITOR || roleToCheck === ROLES.SHOOTER) return roles;
-    
-    // Default fallback for admin roles or non-editor handoffs
+    const r = roleToCheck?.toLowerCase();
+    const isSpecialized =
+      r === ROLES.EDITOR.toLowerCase() ||
+      r === ROLES.SHOOTER.toLowerCase() ||
+      r === ROLES.ADS_MANAGER.toLowerCase() ||
+      r === ROLES.SOCIAL_MEDIA_MANAGER.toLowerCase();
+
+    if (isSpecialized) return roles;
+
+    // Default fallback for admin roles or non-specialized handoffs
     return Array.from(new Set([...roles, ROLES.MANAGER, ROLES.OWNER]));
   }, [userRole, task]);
 
@@ -54,11 +60,16 @@ export default function TaskCompletionModal({
     const isManagerOrOwner = userRole === ROLES.MANAGER || userRole === ROLES.OWNER;
     const taskRole = (task as Task)?.role;
     const isAdsTask = taskRole === ROLES.ADS_MANAGER || taskRole === ROLES.SOCIAL_MEDIA_MANAGER;
+
+    const normalizedUserRole = userRole?.toLowerCase();
+    const isSpecializedAdsRole = normalizedUserRole === ROLES.ADS_MANAGER.toLowerCase() || normalizedUserRole === ROLES.SOCIAL_MEDIA_MANAGER.toLowerCase();
+    const isEditorOrShooter = normalizedUserRole === ROLES.EDITOR.toLowerCase() || normalizedUserRole === ROLES.SHOOTER.toLowerCase();
+
     return {
-      showHandoff: eligibleRoles.length > 0,
+      showHandoff: eligibleRoles.length > 0 || isEditorOrShooter,
       isManagerOrOwner,
       isAdsTask,
-      needsScreenshot: isAdsTask
+      needsScreenshot: isAdsTask || isSpecializedAdsRole
     };
   }, [userRole, task?.role, eligibleRoles.length]);
 
@@ -70,7 +81,9 @@ export default function TaskCompletionModal({
     if (!notes.trim() || notes.length < 5) {
       errors.notes = STATIC_STRINGS.TASK_MODAL_ERR_NOTES;
     }
-    if (flags.showHandoff && !sendTo && !flags.isManagerOrOwner) {
+    if (flags.showHandoff && !sendTo) {
+      // Required for Shooter and Editor, optional for Manager/Owner if we want, 
+      // but user says "Hand Off To field must be required" for Shooter/Editor.
       errors.sendTo = STATIC_STRINGS.TASK_MODAL_ERR_HANDOFF;
     }
     if (flags.isAdsTask && !screenshot.trim()) {
@@ -84,12 +97,12 @@ export default function TaskCompletionModal({
 
     const selectedMember = teamMembers.find(m => m.id === sendTo);
     onComplete(
-      task.id, 
-      notes, 
+      task.id,
+      notes,
       selectedMember ? { name: selectedMember.name, role: selectedMember.role } : undefined,
       flags.needsScreenshot ? screenshot : undefined
     );
-    
+
     // State Reset
     setNotes('');
     setScreenshot('');
@@ -125,9 +138,8 @@ export default function TaskCompletionModal({
             <textarea
               rows={4}
               placeholder={STATIC_STRINGS.TASK_MODAL_PLACEHOLDER_NOTES}
-              className={`w-full px-4 py-3 rounded-xl border text-[13.5px] outline-none transition-all resize-none ${
-                formErrors.notes ? 'border-red-300 bg-red-50 focus:ring-red-100' : 'border-slate-200 focus:ring-4 focus:ring-violet-50 focus:border-violet-300'
-              }`}
+              className={`w-full px-4 py-3 rounded-xl border text-[13.5px] outline-none transition-all resize-none ${formErrors.notes ? 'border-red-300 bg-red-50 focus:ring-red-100' : 'border-slate-200 focus:ring-4 focus:ring-violet-50 focus:border-violet-300'
+                }`}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
@@ -144,17 +156,16 @@ export default function TaskCompletionModal({
               <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">
                 {flags.isAdsTask ? STATIC_STRINGS.TASK_MODAL_LABEL_DELIVERY_SS : STATIC_STRINGS.TASK_MODAL_LABEL_EXPORT_SS} {!flags.isAdsTask && <span className="text-slate-400 font-normal ml-1">({STATIC_STRINGS.COMMON_OPTIONAL})</span>} {flags.isAdsTask && <span className="text-red-500">*</span>}
               </label>
-              <input 
-                type="file" 
-                id="screenshot-upload" 
-                className="hidden" 
+              <input
+                type="file"
+                id="screenshot-upload"
+                className="hidden"
                 accept="image/*"
                 onChange={handleScreenshotUpload}
               />
-              <div 
-                className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
-                  screenshot ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200 hover:border-violet-300 hover:bg-violet-50/30'
-                }`}
+              <div
+                className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${screenshot ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200 hover:border-violet-300 hover:bg-violet-50/30'
+                  }`}
                 onClick={() => document.getElementById('screenshot-upload')?.click()}
               >
                 {screenshot ? (
@@ -164,8 +175,8 @@ export default function TaskCompletionModal({
                       <div className="absolute inset-0 bg-emerald-500/10" />
                     </div>
                     <p className="text-[12px] font-bold text-emerald-700">{STATIC_STRINGS.TASK_MODAL_SS_ATTACHED}</p>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={(e) => { e.stopPropagation(); setScreenshot(''); }}
                       className="text-[11px] text-red-500 font-medium hover:underline"
                     >
@@ -195,23 +206,31 @@ export default function TaskCompletionModal({
           {flags.showHandoff && (
             <div>
               <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">
-                {STATIC_STRINGS.TASK_MODAL_LABEL_HANDOFF} {flags.isManagerOrOwner && <span className="text-slate-400 font-normal ml-1">({STATIC_STRINGS.COMMON_OPTIONAL})</span>} {!flags.isManagerOrOwner && <span className="text-red-500">*</span>}
+                {STATIC_STRINGS.TASK_MODAL_LABEL_HANDOFF} <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <UserPlus size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <select
-                  className={`w-full pl-10 pr-4 py-3 rounded-xl border text-[13.5px] outline-none transition-all appearance-none bg-white ${
-                    formErrors.sendTo ? 'border-red-300 bg-red-50 focus:ring-red-100' : 'border-slate-200 focus:ring-4 focus:ring-violet-50 focus:border-violet-300'
-                  }`}
+                  className={`w-full pl-10 pr-4 py-3 rounded-xl border text-[13.5px] outline-none transition-all appearance-none bg-white ${formErrors.sendTo ? 'border-red-300 bg-red-50 focus:ring-red-100' : 'border-slate-200 focus:ring-4 focus:ring-violet-50 focus:border-violet-300'
+                    }`}
                   value={sendTo}
                   onChange={(e) => setSendTo(e.target.value)}
                 >
                   <option value="">{STATIC_STRINGS.TASK_MODAL_SELECT_RECIPIENT}</option>
-                  {teamMembers.filter(m => (eligibleRoles as string[]).includes(m.role as string)).map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name} ({m.role})
-                    </option>
-                  ))}
+                  {teamMembers
+                    .filter(m => {
+                      if (!m.role) return true;
+                      const mRole = m.role.toLowerCase().replace(/[\s_-]/g, '');
+                      const eligible = (eligibleRoles as string[]).map(role =>
+                        role.toLowerCase().replace(/[\s_-]/g, '')
+                      );
+                      return eligible.includes(mRole);
+                    })
+                    .map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name} ({m.role})
+                      </option>
+                    ))}
                 </select>
                 <ChevronRight className="absolute right-3.5 top-1/2 -translate-y-1/2 rotate-90 text-slate-400 pointer-events-none" size={14} />
               </div>
