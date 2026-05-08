@@ -57,10 +57,16 @@ export default function AdsManagerDashboardPage() {
           role: t.assignee?.role || t.workflow_stage || ROLES.ADS_MANAGER,
           client: t.client_name || t.client?.clientName || 'N/A',
           deadline: (t.deadline_date || t.deadlineDate || '').split('T')[0] || 'N/A',
+          deadlineStatus: t.deadline_status,
           status: t.currentStatus || t.status || 'pending',
-          roleNotes: Array.isArray(t.roleNotes) ? t.roleNotes : [],
+          roleNotes: Array.isArray(t.notes) ? t.notes : (Array.isArray(t.roleNotes) ? t.roleNotes : []),
         })) as Task[];
-        setAdsTasks(mapped);
+
+        const uniqueTasks = mapped.filter((task, index, self) =>
+          index === self.findIndex((t) => t.id === task.id)
+        );
+
+        setAdsTasks(uniqueTasks);
       }
     } catch (err) {
       console.error("Failed to fetch tasks", err);
@@ -283,16 +289,29 @@ export default function AdsManagerDashboardPage() {
 
                     {Array.isArray(task.roleNotes) && task.roleNotes.length > 0 && (
                       <div className="mt-4 mb-4 space-y-2 border-t border-slate-100 pt-4">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
                           {STATIC_STRINGS.ADS_DASHBOARD_HISTORY_LOG}
                         </p>
-                        {task.roleNotes.map((note: any, idx: number) => (
-                          <div key={idx} className="bg-slate-50 p-2.5 rounded-lg border border-slate-100/50">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-[11px] font-bold text-slate-700">{note.role} · {note.author}</span>
-                              <span className="text-[10px] text-slate-400">{new Date(note.timestamp).toLocaleDateString()}</span>
+                        {task.roleNotes.map((note, idx) => (
+                          <div key={idx} className="bg-slate-50/50 p-3 rounded-lg border border-slate-100/50">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 rounded bg-orange-50 text-orange-600 flex items-center justify-center flex-shrink-0">
+                                  <span className="text-[10px] font-bold">{(note.role || 'A').charAt(0)}</span>
+                                </div>
+                                <span className="text-[11px] font-bold text-slate-700">{note.name}</span>
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium">{note.role}</span>
+                              </div>
+                              <time className="text-[10px] text-slate-400 font-medium">{new Date(note.created_at || note.timestamp || '').toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</time>
                             </div>
-                            <p className="text-[12px] text-slate-600 italic leading-relaxed">"{note.message}"</p>
+                            <p className="text-[12px] text-slate-600 leading-relaxed">
+                              {note.note || note.message}
+                            </p>
+                            {note.screenshot && (
+                              <div className="mt-2 rounded-lg overflow-hidden border border-slate-200">
+                                <img src={note.screenshot} alt="Task Proof" className="w-full h-auto max-h-48 object-cover hover:scale-105 transition-transform duration-300 cursor-zoom-in" />
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -306,8 +325,11 @@ export default function AdsManagerDashboardPage() {
                         {task.deadline ? formatDeadline(task.deadline) : STATIC_STRINGS.ADS_DASHBOARD_NO_DEADLINE}
                         {!overdue && taskStatus !== 'completed' && task.deadline && (
                           <span className={`ml-1 ${daysLeft <= 3 ? 'text-red-500 font-bold' : 'text-slate-400'}`}>
-                            ({daysLeft > 0 ? `${daysLeft}${STATIC_STRINGS.ADS_DASHBOARD_DAYS_LEFT}` : STATIC_STRINGS.ADS_DASHBOARD_TODAY})
+                            ({task.deadlineStatus || (daysLeft > 0 ? `${daysLeft}${STATIC_STRINGS.ADS_DASHBOARD_DAYS_LEFT}` : STATIC_STRINGS.ADS_DASHBOARD_TODAY)})
                           </span>
+                        )}
+                        {taskStatus === 'completed' && task.deadlineStatus && (
+                          <span className="ml-1 text-slate-400 font-medium">({task.deadlineStatus})</span>
                         )}
                       </div>
 

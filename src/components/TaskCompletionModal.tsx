@@ -86,7 +86,8 @@ export default function TaskCompletionModal({
       // but user says "Hand Off To field must be required" for Shooter/Editor.
       errors.sendTo = STATIC_STRINGS.TASK_MODAL_ERR_HANDOFF;
     }
-    if (flags.isAdsTask && !screenshot.trim()) {
+    const isDev = process.env.NODE_ENV === 'development';
+    if (flags.isAdsTask && !screenshot.trim() && !isDev) {
       errors.screenshot = STATIC_STRINGS.TASK_MODAL_ERR_SCREENSHOT;
     }
 
@@ -154,7 +155,9 @@ export default function TaskCompletionModal({
           {flags.needsScreenshot && (
             <div>
               <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">
-                {flags.isAdsTask ? STATIC_STRINGS.TASK_MODAL_LABEL_DELIVERY_SS : STATIC_STRINGS.TASK_MODAL_LABEL_EXPORT_SS} {!flags.isAdsTask && <span className="text-slate-400 font-normal ml-1">({STATIC_STRINGS.COMMON_OPTIONAL})</span>} {flags.isAdsTask && <span className="text-red-500">*</span>}
+                {flags.isAdsTask ? STATIC_STRINGS.TASK_MODAL_LABEL_DELIVERY_SS : STATIC_STRINGS.TASK_MODAL_LABEL_EXPORT_SS} 
+                {(process.env.NODE_ENV === 'development' || !flags.isAdsTask) && <span className="text-slate-400 font-normal ml-1">({STATIC_STRINGS.COMMON_OPTIONAL})</span>} 
+                {flags.isAdsTask && process.env.NODE_ENV !== 'development' && <span className="text-red-500">*</span>}
               </label>
               <input
                 type="file"

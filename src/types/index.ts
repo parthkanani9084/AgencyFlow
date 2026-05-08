@@ -24,10 +24,14 @@ export type TaskPriority = "low" | "medium" | "high";
 export type TaskRole = "Shooter" | "Editor" | "Ads Manager" | "Social Media Manager" | "Owner" | "Manager";
 
 export interface TaskNote {
-  role: TaskRole;
-  message: string;
-  timestamp: string;
-  author?: string;
+  role: TaskRole | string;
+  name?: string;
+  note: string;
+  screenshot?: string | null;
+  created_at: string;
+  // For backward compatibility if needed
+  message?: string;
+  timestamp?: string;
 }
 
 export interface Task {
@@ -40,6 +44,7 @@ export interface Task {
   campaign: string;
   campaignId?: string;
   deadline: string;
+  deadlineStatus?: string;
   status: TaskStatus | string; 
   priority?: TaskPriority;
   description?: string;

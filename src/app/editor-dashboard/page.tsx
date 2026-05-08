@@ -72,12 +72,18 @@ export default function EditorDashboardPage() {
           role: t.assignee?.role || t.workflow_stage || ROLES.EDITOR,
           client: t.client_name || t.client?.clientName || 'N/A',
           deadline: (t.deadline_date || t.deadlineDate || '').split('T')[0] || 'N/A',
+          deadlineStatus: t.deadline_status,
           status: t.currentStatus || t.status || 'pending',
           priority: t.priority || 'medium',
-
-          roleNotes: Array.isArray(t.roleNotes) ? t.roleNotes : [],
+          roleNotes: Array.isArray(t.notes) ? t.notes : (Array.isArray(t.roleNotes) ? t.roleNotes : []),
         })) as Task[];
-        setEditorTasks(mapped);
+
+        // Deduplicate tasks by id to prevent React key errors
+        const uniqueTasks = mapped.filter((task, index, self) =>
+          index === self.findIndex((t) => t.id === task.id)
+        );
+
+        setEditorTasks(uniqueTasks);
       }
     } catch (err) {
       console.error("Failed to fetch tasks", err);
@@ -286,19 +292,27 @@ export default function EditorDashboardPage() {
                     {/* Collaborative Context / Role Notes */}
                     {Array.isArray(task.roleNotes) && task.roleNotes.length > 0 && (
                       <section className="mt-3 pt-3 border-t border-slate-100 space-y-2">
-                        {task.roleNotes.map((note: any, idx: number) => (
-                          <div key={idx} className="bg-slate-50 rounded-lg p-2.5 flex gap-2.5 border border-slate-100">
-                            <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 mt-0.5 ${note.role === ROLES.SHOOTER ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
-                              }`}>
-                              <span className="text-[10px] font-bold">{(note.role || 'E').charAt(0)}</span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <header className="flex items-center justify-between mb-0.5">
-                                <p className="text-[11px] font-bold text-slate-700">{note.role} {STATIC_STRINGS.DASHBOARD_TEAM_NOTES}</p>
-                                <time className="text-[10px] text-slate-400">{new Date(note.timestamp).toLocaleDateString()}</time>
-                              </header>
-                              <p className="text-[12px] text-slate-600 italic">"{note.message}"</p>
-                            </div>
+                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{STATIC_STRINGS.DASHBOARD_TEAM_NOTES}</p>
+                        {task.roleNotes.map((note, idx) => (
+                          <div key={idx} className="bg-slate-50/50 rounded-lg p-3 border border-slate-100/50">
+                            <header className="flex items-center justify-between mb-1.5">
+                              <div className="flex items-center gap-2">
+                                <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${note.role === ROLES.SHOOTER ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}>
+                                  <span className="text-[10px] font-bold">{(note.role || 'E').charAt(0)}</span>
+                                </div>
+                                <span className="text-[11px] font-bold text-slate-700">{note.name}</span>
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium">{note.role}</span>
+                              </div>
+                              <time className="text-[10px] text-slate-400 font-medium">{new Date(note.created_at || note.timestamp || '').toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</time>
+                            </header>
+                            <p className="text-[12px] text-slate-600 leading-relaxed">
+                              {note.note || note.message}
+                            </p>
+                            {note.screenshot && (
+                              <div className="mt-2 rounded-lg overflow-hidden border border-slate-200">
+                                <img src={note.screenshot} alt="Task Proof" className="w-full h-auto max-h-48 object-cover hover:scale-105 transition-transform duration-300 cursor-zoom-in" />
+                              </div>
+                            )}
                           </div>
                         ))}
                       </section>
@@ -310,8 +324,11 @@ export default function EditorDashboardPage() {
                         {overdue ? STATIC_STRINGS.DASHBOARD_OVERDUE_LABEL : ''}{formatDeadline(task.deadline)}
                         {!overdue && task.status !== 'completed' && (
                           <span className={`ml-1 ${daysLeft <= 3 ? 'text-red-500 font-semibold' : 'text-slate-400'}`}>
-                            ({daysLeft > 0 ? `${daysLeft}${STATIC_STRINGS.DASHBOARD_DAYS_LEFT}` : STATIC_STRINGS.DASHBOARD_TODAY})
+                            ({task.deadlineStatus || (daysLeft > 0 ? `${daysLeft}${STATIC_STRINGS.DASHBOARD_DAYS_LEFT}` : STATIC_STRINGS.DASHBOARD_TODAY)})
                           </span>
+                        )}
+                        {task.status === 'completed' && task.deadlineStatus && (
+                          <span className="ml-1 text-slate-400 font-medium">({task.deadlineStatus})</span>
                         )}
                       </div>
                       <div className="flex items-center gap-1 text-[12px] text-slate-400">
