@@ -102,14 +102,14 @@ export default function ManagerDashboardPage() {
         page: 1,
         limit: 100,
         role: roleFilter === 'all' ? undefined : getRoleParam(roleFilter),
-        isHistory: roleFilter !== 'all'
+        isHistory: true
       });
       if (resp?.results?.data) {
         const mapped = resp.results.data.map((t: any) => ({
           id: t.task_id || t.id,
           title: t.task_title || t.taskTitle || 'Untitled Task',
           description: t.description || '',
-          assignedTo: t.assignee?.fullName || t.assignee?.full_name || 'Unassigned',
+          assignedTo: t.assign_to?.name || t.notes?.[0]?.assign_to?.name || t.assignee?.fullName || t.assignee?.full_name || 'Unassigned',
           role: t.assignee?.role || t.workflow_stage || 'N/A',
           client: t.client_name || t.client?.clientName || 'N/A',
           deadline: (t.deadline_date || t.deadlineDate || '').split('T')[0] || 'N/A',
@@ -118,7 +118,10 @@ export default function ManagerDashboardPage() {
           campaign: t.campaign?.campaignName || t.campaign_name || 'General',
           roleNotes: t.roleNotes || [],
         })) as Task[];
-        setAllTasks(mapped);
+        const uniqueTasks = mapped.filter((task, index, self) =>
+          index === self.findIndex((t) => t.id === task.id)
+        );
+        setAllTasks(uniqueTasks);
       }
     } catch (err) {
       console.error("Failed to fetch tasks", err);
@@ -325,23 +328,36 @@ export default function ManagerDashboardPage() {
                     </div>
 
                     {/* Collaborative Context / Role Notes */}
-                    {(task.roleNotes && task.roleNotes.length > 0) && (
-                      <section className="mt-3 pt-3 border-t border-slate-100 space-y-2">
-                        {task.roleNotes?.map((note, idx) => (
-                          <div key={idx} className="bg-slate-50 rounded-lg p-2 flex gap-2 border border-slate-100/50">
-                            <div className="w-5 h-5 rounded bg-teal-100 text-teal-700 flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <span className="text-[9px] font-bold">{note.role.charAt(0)}</span>
+                    {Array.isArray(task.roleNotes) && task.roleNotes.length > 0 && (
+                      <div className="mt-4 mb-4 space-y-2 border-t border-slate-100 pt-4">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                          {STATIC_STRINGS.ADS_DASHBOARD_HISTORY_LOG}
+                        </p>
+                        {task.roleNotes.map((note: any, idx: number) => (
+                          <div key={idx} className="bg-slate-50/50 p-3 rounded-lg border border-slate-100/50">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <div className="flex items-center gap-2">
+                                <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${ROLE_CONFIG[note.role]?.bg || 'bg-slate-100'} ${ROLE_CONFIG[note.role]?.color || 'text-slate-600'}`}>
+                                  <span className="text-[10px] font-bold">{(note.role || 'U').charAt(0)}</span>
+                                </div>
+                                <span className="text-[11px] font-bold text-slate-700">{note.name || 'Unknown'}</span>
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium">{note.role}</span>
+                              </div>
+                              <time className="text-[10px] text-slate-400 font-medium">
+                                {new Date(note.created_at || note.timestamp || '').toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </time>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <header className="flex items-center justify-between mb-0.5">
-                                <p className="text-[11px] font-bold text-slate-700">{note.role} {STATIC_STRINGS.DASHBOARD_TEAM_NOTES}</p>
-                                <time className="text-[10px] text-slate-400">{new Date(note.timestamp).toLocaleDateString()}</time>
-                              </header>
-                              <p className="text-[12px] text-slate-600 italic">"{note.message}"</p>
-                            </div>
+                            <p className="text-[12px] text-slate-600 leading-relaxed">
+                              {note.note || note.message}
+                            </p>
+                            {note.screenshot && (
+                              <div className="mt-2 rounded-lg overflow-hidden border border-slate-200">
+                                <img src={note.screenshot} alt="Task Proof" className="w-full h-auto max-h-48 object-cover hover:scale-105 transition-transform duration-300 cursor-zoom-in" />
+                              </div>
+                            )}
                           </div>
                         ))}
-                      </section>
+                      </div>
                     )}
 
                     <footer className="flex flex-wrap items-center gap-4 mt-3 pt-3 border-t border-slate-100">
@@ -354,10 +370,10 @@ export default function ManagerDashboardPage() {
                           </span>
                         )}
                       </div>
-                      {task.status === 'completed' && (
-                        <div className="flex items-center gap-1 text-[12px] text-emerald-600 font-medium ml-auto">
-                          <CheckCircle2 size={12} />
-                          {task.forwardedBy ? `${STATIC_STRINGS.DASHBOARD_PASSED_TO} ${task.assignedTo} (${task.role})` : STATIC_STRINGS.DASHBOARD_TASK_FINALIZED}
+                      {task.status === 'completed' && task.role !== ROLES.ADS_MANAGER && (
+                        <div className="flex items-center gap-1 text-[12px] text-emerald-600 font-bold ml-auto">
+                          <Users size={14} />
+                          <span>Assigned To: {task.assignedTo}</span>
                         </div>
                       )}
                     </footer>

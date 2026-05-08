@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { Film, CheckCircle2, Calendar, ChevronRight, AlertCircle } from 'lucide-react';
+import { Film, CheckCircle2, Calendar, ChevronRight, AlertCircle, Users } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/context/AuthContext';
 import { Task, TaskStatus, UserRole } from '@/types';
@@ -68,7 +68,7 @@ export default function EditorDashboardPage() {
           id: t.task_id || t.id,
           title: t.task_title || t.taskTitle || 'Untitled Task',
           description: t.description || '',
-          assignedTo: t.assignee?.fullName || t.assignee?.full_name || 'Unassigned',
+          assignedTo: t.assign_to?.name || t.notes?.[0]?.assign_to?.name || t.assignee?.fullName || t.assignee?.full_name || 'Unassigned',
           role: t.assignee?.role || t.workflow_stage || ROLES.EDITOR,
           client: t.client_name || t.client?.clientName || 'N/A',
           deadline: (t.deadline_date || t.deadlineDate || '').split('T')[0] || 'N/A',
@@ -160,7 +160,7 @@ export default function EditorDashboardPage() {
           await assignTaskMutation({ taskId, assignedTo: member.id, notes: notes });
         }
       }
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      await fetchTasks();
       setIsModalOpen(false);
     } catch (err) { }
   };
@@ -331,17 +331,14 @@ export default function EditorDashboardPage() {
                           <span className="ml-1 text-slate-400 font-medium">({task.deadlineStatus})</span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 text-[12px] text-slate-400">
-                        <Film size={12} />
-                        {STATIC_STRINGS.DASHBOARD_FROM} {task.fromShooter || ROLES.SHOOTER}
-                      </div>
+               
                       <div className="flex items-center gap-1 text-[12px] font-medium ml-auto">
-                        {(task.status === 'completed' || (task.role !== ROLES.EDITOR && task.roleNotes?.some(n => n.role === ROLES.EDITOR))) && (
-                          <div className="flex items-center gap-1 text-emerald-600 font-medium">
-                            <CheckCircle2 size={12} />
-                            {task.role !== ROLES.EDITOR ? `${STATIC_STRINGS.DASHBOARD_PASSED_TO} ${task.assignedTo} (${task.role})` : STATIC_STRINGS.DASHBOARD_TASK_FINALIZED}
-                          </div>
-                        )}
+                      {task.status === 'completed' && (
+                        <div className="flex items-center gap-1 text-[12px] text-emerald-600 font-bold ml-auto">
+                          <Users size={14} />
+                          <span>Assigned To: {task.assignedTo}</span>
+                        </div>
+                      )}
                       </div>
                     </footer>
                   </article>

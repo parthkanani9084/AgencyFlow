@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { Megaphone, CheckCircle2, Timer, Circle, Calendar, ChevronRight, AlertCircle } from 'lucide-react';
+import { Megaphone, CheckCircle2, Timer, Circle, Calendar, ChevronRight, AlertCircle, Users } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/context/AuthContext';
 import { Task, TaskStatus, Campaign, UserRole } from '@/types';
@@ -53,7 +53,7 @@ export default function AdsManagerDashboardPage() {
           id: t.task_id || t.id,
           title: t.task_title || t.taskTitle || 'Untitled Task',
           description: t.description || '',
-          assignedTo: t.assignee?.fullName || t.assignee?.full_name || 'Unassigned',
+          assignedTo: t.assign_to?.name || t.notes?.[0]?.assign_to?.name || t.assignee?.fullName || t.assignee?.full_name || 'Unassigned',
           role: t.assignee?.role || t.workflow_stage || ROLES.ADS_MANAGER,
           client: t.client_name || t.client?.clientName || 'N/A',
           deadline: (t.deadline_date || t.deadlineDate || '').split('T')[0] || 'N/A',
@@ -142,7 +142,7 @@ export default function AdsManagerDashboardPage() {
   const onCompleteTask = async (taskId: string, notes: string, nextMember?: { name: string; role: string }, screenshot?: string) => {
     try {
       await completeTaskMutation({ taskId, notes: notes, screenshot });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      await fetchTasks();
       setIsModalOpen(false);
     } catch (err) { }
   };
@@ -333,14 +333,6 @@ export default function AdsManagerDashboardPage() {
                         )}
                       </div>
 
-                      {taskStatus === 'completed' && (
-                        <div className="flex items-center gap-1 text-[12px] text-emerald-600 font-bold">
-                          <CheckCircle2 size={12} />
-                          {task.forwardedBy
-                            ? `${STATIC_STRINGS.ADS_DASHBOARD_FINALIZED_BY} ${task.forwardedBy}`
-                            : STATIC_STRINGS.ADS_DASHBOARD_TASK_FINALIZED}
-                        </div>
-                      )}
                     </div>
                   </article>
                 );
