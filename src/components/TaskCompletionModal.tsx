@@ -29,7 +29,6 @@ export default function TaskCompletionModal({
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [sendTo, setSendTo] = useState('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-
   const normalizedUserRole = useMemo(() => normalizeRole(userRole as string), [userRole]);
   const taskRole = useMemo(() => normalizeRole((task as Task)?.role || ''), [task]);
 
@@ -49,7 +48,7 @@ export default function TaskCompletionModal({
   }, [roleToCheck, task]);
 
   const flags = useMemo(() => {
-    const isAdsRole = roleToCheck === ROLES.ADS_MANAGER || roleToCheck === ROLES.SOCIAL_MEDIA_MANAGER;
+    const isAdsRole = roleToCheck === ROLES.ADS_MANAGER ;
     return {
       showHandoff: eligibleRoles.length > 0,
       needsScreenshot: isAdsRole ,
@@ -67,7 +66,6 @@ export default function TaskCompletionModal({
     if (flags.showHandoff && !sendTo) {
       errors.sendTo = STATIC_STRINGS.TASK_MODAL_ERR_HANDOFF;
     }
-    const isDev = process.env.NODE_ENV === 'development';
     if (flags.isAdsRole && !screenshotFile && !screenshot) {
       errors.screenshot = STATIC_STRINGS.TASK_MODAL_ERR_SCREENSHOT;
     }
@@ -85,7 +83,6 @@ export default function TaskCompletionModal({
       flags.needsScreenshot ? (screenshotFile || screenshot) : undefined
     );
 
-    // State Reset
     setNotes('');
     setScreenshot('');
     setScreenshotFile(null);

@@ -1012,3 +1012,44 @@ export const TEAM_MEMBERS = [
 export const OBJECTIVE_OPTIONS = [
   'Traffic', 'Awareness', 'Sales', 'Engagement', 'Leads', 'App Promotion',
 ] as const;
+
+export const TASK_CONSTANTS = {
+  DEBOUNCE_DELAY: 500,
+  DEFAULT_PER_PAGE: 8,
+} as const;
+
+export const TASK_STATUSES = {
+  PENDING: 'pending',
+  IN_PROGRESS: 'in_progress',
+  COMPLETED: 'completed',
+  ALL: 'all',
+} as const;
+
+export const TASK_FALLBACKS = {
+  UNTITLED: 'Untitled',
+  NOT_AVAILABLE: 'N/A',
+} as const;
+
+export const TASK_MGMT_KEYS = {
+  TITLE_ID: 'task-management-title',
+  ADD_BTN_ID: 'add-task-button',
+  SEARCH_ID: 'task-search',
+  STATUS_FILTER_ID: 'status-filter',
+} as const;
+
+export const EMPTY_TASK_FORM = {
+  title: '',
+  assignedTo: '',
+  role: ROLES.SHOOTER,
+  client: '',
+  deadline: '',
+  status: TASK_STATUSES.PENDING,
+  description: '',
+} as const;
+
+export const TASK_ROLE_FILTERS = [
+  { label: STATIC_STRINGS.TASK_MGMT_ALL_ROLES, value: TASK_STATUSES.ALL },
+  { label: ROLES.SHOOTER, value: ROLES.SHOOTER },
+  { label: ROLES.EDITOR, value: ROLES.EDITOR },
+  { label: ROLES.ADS_MANAGER, value: ROLES.ADS_MANAGER },
+] as const;

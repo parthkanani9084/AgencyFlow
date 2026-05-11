@@ -97,7 +97,7 @@ export const clientService = {
     return response;
   },
   updateClient: async (clientId: string, payload: UpdateClientPayload): Promise<UpdateClientResponse> => {
-    const response = await AxiosRequest.patch(`${GET_CLIENTS_URL}/${clientId}`, payload);
+    const response = await AxiosRequest.put(`${GET_CLIENTS_URL}/${clientId}`, payload);
     return response;
   },
   deleteClient: async (clientId: string): Promise<any> => {
