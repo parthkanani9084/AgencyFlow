@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { taskService, CreateTaskPayload, GetTasksParams } from '../services/task.service';
+import { QUERY_KEYS } from '../queryKeys';
 
 export const useCreateTask = () => {
   return useMutation({
@@ -9,7 +10,7 @@ export const useCreateTask = () => {
 
 export const useGetTasks = (params: GetTasksParams, options?: any) => {
   return useQuery({
-    queryKey: ['tasks', params],
+    queryKey: [QUERY_KEYS.TASKS, params],
     queryFn: () => taskService.getTasks(params),
     ...options,
   });

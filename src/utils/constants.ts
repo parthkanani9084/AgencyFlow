@@ -402,6 +402,9 @@ export const STATIC_STRINGS = {
   DASHBOARD_TODAY: 'Today',
   DASHBOARD_OVERDUE_LABEL: 'Overdue · ',
   DASHBOARD_FROM: 'From:',
+  LOADING_TASKS: 'Loading tasks...',
+  UNTITLED_TASK: 'Untitled Task',
+  NOT_AVAILABLE: 'N/A',
 
   // Client Management
   CLIENT_MGMT_TITLE: 'Client Management',

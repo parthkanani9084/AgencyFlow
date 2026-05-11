@@ -127,13 +127,13 @@ export const useTaskManagement = () => {
           id: t.task_id || t.id,
           title: t.task_title || t.taskTitle || TASK_FALLBACKS.UNTITLED,
           description: t.description || '',
-          assignedTo: t.current_assignee?.full_name,
-          role: t.current_assignee?.role,
-          client: t.client.client_name,
+          assignedTo: t.current_assignee?.full_name || TASK_FALLBACKS.NOT_AVAILABLE,
+          role: t.current_assignee?.role || ROLES.MANAGER,
+          client: t.client?.client_name || t.clientName || TASK_FALLBACKS.NOT_AVAILABLE,
           campaign: t.campaign?.campaignName || t.campaign_name || TASK_FALLBACKS.NOT_AVAILABLE,
           campaignId: t.campaign?.id,
           deadline:
-            (t.deadline_date).split('T')[0] || TASK_FALLBACKS.NOT_AVAILABLE,
+            (t.deadline_date || '').split('T')[0] || TASK_FALLBACKS.NOT_AVAILABLE,
           status: t.status || TASK_STATUSES.PENDING,
         })
       );

@@ -51,3 +51,11 @@ export const useTeamRole = (id: string | null) => {
     enabled: !!id,
   });
 };
+
+export const useGetTeamsByRole = (role: string, options?: any) => {
+  return useQuery({
+    queryKey: [QUERY_KEYS.TEAMS, 'role', role],
+    queryFn: () => teamService.getTeamsByRole(role),
+    ...options,
+  });
+};

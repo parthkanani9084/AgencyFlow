@@ -1,79 +1,82 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, Fragment } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { Megaphone, CheckCircle2, Timer, Circle, Calendar, ChevronRight, AlertCircle, Users } from 'lucide-react';
+import { Megaphone, CheckCircle2, Timer, Circle } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/context/AuthContext';
-import { Task, TaskStatus, Campaign, UserRole } from '@/types';
+import { Task, TaskStatus, UserRole } from '@/types';
 import TodayReportingCard from './components/TodayReportingCard';
 import TaskCompletionModal from '@/components/TaskCompletionModal';
-import { STATIC_STRINGS, PAGE_ROLES, STORAGE_KEY_CAMPAIGNS, ROLES } from '@/utils/constants';
-import { PRIORITY_STYLES, STATUS_CONFIG as STATUS_STYLES } from '@/utils/ui-configs';
-import { useUpdateTask, useUpdateTaskStatus, useCompleteTask } from '@/api/hooks/useTask';
-import { useQueryClient } from '@tanstack/react-query';
-import { teamService } from '@/api/services/team.service';
-import { taskService } from '@/api/services/task.service';
-
+import { STATIC_STRINGS, PAGE_ROLES, STORAGE_KEY_CAMPAIGNS, ROLES, TASK_STATUSES } from '@/utils/constants';
+import { STATUS_CONFIG } from '@/utils/ui-configs';
+import { useUpdateTaskStatus, useCompleteTask, useGetTasks } from '@/api/hooks/useTask';
+import { useGetTeamsByRole } from '@/api/hooks/useTeam';
+import { toApiRole } from '@/utils/roles';
+import TaskCard from '../shooter-dashboard/components/TaskCard';
 
 export default function AdsManagerDashboardPage() {
   useRoleGuard(PAGE_ROLES.ADS_TRACKING as unknown as UserRole[]);
-  const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<TaskStatus>('pending');
+  const [activeTab, setActiveTab] = useState<TaskStatus>(TASK_STATUSES.PENDING as TaskStatus);
   const [mounted, setMounted] = useState(false);
-  const [allCampaigns, setAllCampaigns] = useState<Campaign[]>([]);
+  const [allCampaigns, setAllCampaigns] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [adsTasks, setAdsTasks] = useState<Task[]>([]);
-  const [isTasksLoading, setIsTasksLoading] = useState(true);
-  const [teamMembers, setTeamMembers] = useState<{ id: string; name: string; role: string }[]>([]);
 
-  const { mutateAsync: updateTaskMutation } = useUpdateTask();
   const { mutateAsync: updateTaskStatusMutation } = useUpdateTaskStatus();
   const { mutateAsync: completeTaskMutation } = useCompleteTask();
 
-  const getEffectiveStatus = useCallback((t: any): TaskStatus => {
-    return (t.currentStatus || t.status) as TaskStatus;
-  }, []);
-
-  const fetchTasks = async (status?: TaskStatus) => {
-    setIsTasksLoading(true);
-    try {
-      const resp = await taskService.getTasks({ 
-        page: 1, 
-        limit: 100, 
-        role: 'ads-manager',
-        status: status || activeTab,
-        isHistory: true
-      });
-      if (resp?.results?.data) {
-        const mapped = resp.results.data.map((t: any) => ({
-          id: t.task_id || t.id,
-          title: t.task_title || t.taskTitle || 'Untitled Task',
-          description: t.description || '',
-          assignedTo: t.workstage_role_name || t.notes?.[0]?.assign_to?.name || t.assign_to?.name || t.assignee?.name || t.assignee?.fullName || t.assignee?.full_name || 'Unassigned',
-          role: t.notes?.[0]?.assign_to?.role || t.assign_to?.role || t.assignee?.role || t.workflow_stage || ROLES.ADS_MANAGER,
-          client: t.client_name || t.client?.clientName || 'N/A',
-          deadline: (t.deadline_date || t.deadlineDate || '').split('T')[0] || 'N/A',
-          deadlineStatus: t.deadline_status,
-          status: t.currentStatus || t.status || 'pending',
-          roleNotes: Array.isArray(t.notes) ? t.notes : (Array.isArray(t.roleNotes) ? t.roleNotes : []),
-        })) as Task[];
-
-        const uniqueTasks = mapped.filter((task, index, self) =>
-          index === self.findIndex((t) => t.id === task.id)
-        );
-
-        setAdsTasks(uniqueTasks);
-      }
-    } catch (err) {
-      console.error("Failed to fetch tasks", err);
-    } finally {
-      setIsTasksLoading(false);
+  const tasksQuery = useGetTasks({ 
+    page: 1, 
+    limit: 100, 
+    role: ROLES.ADS_MANAGER,
+    status: activeTab,
+    isHistory: true
+  }, {
+    enabled: mounted,
+    select: (resp: any) => {
+      if (!resp?.results?.data || !Array.isArray(resp.results.data)) return [];
+      const mapped = resp.results.data.map((t: any) => ({
+        id: t.task_id || t.id,
+        title: t.task_title || t.taskTitle || STATIC_STRINGS.UNTITLED_TASK,
+        description: t.description || '',
+        assignedTo: t.workstage_role_name || t.notes?.[0]?.assign_to?.name || t.assign_to?.name || t.assignee?.name || t.assignee?.fullName || t.assignee?.full_name || STATIC_STRINGS.COMMON_UNASSIGNED,
+        role: t.notes?.[0]?.assign_to?.role || t.assign_to?.role || t.assignee?.role || t.workflow_stage || ROLES.ADS_MANAGER,
+        client: t.client_name || t.client?.clientName || STATIC_STRINGS.NOT_AVAILABLE,
+        campaign: t.campaign?.campaignName || t.campaign_name || STATIC_STRINGS.NOT_AVAILABLE,
+        deadline: (t.deadline_date || t.deadlineDate || '').split('T')[0] || STATIC_STRINGS.NOT_AVAILABLE,
+        deadlineStatus: t.deadline_status,
+        status: t.currentStatus || t.status || TASK_STATUSES.PENDING,
+        priority: t.priority || 'medium',
+        roleNotes: Array.isArray(t.notes) ? t.notes : (Array.isArray(t.roleNotes) ? t.roleNotes : []),
+      })) as Task[];
+      
+      return mapped.filter((task, index, self) =>
+        index === self.findIndex((t) => t.id === task.id)
+      );
     }
-  };
+  });
+
+  const adsTasks = (tasksQuery.data as Task[]) || [];
+  const isTasksLoading = tasksQuery.isLoading;
+  const fetchTasks = tasksQuery.refetch;
+
+  const teamQuery = useGetTeamsByRole(toApiRole(ROLES.OWNER), { 
+    enabled: mounted,
+    select: (resp: any) => {
+      const data = Array.isArray(resp?.results) ? resp.results : (resp?.results?.data || []);
+      if (!Array.isArray(data)) return [];
+      return data.map((m: any) => ({
+        id: m.id,
+        name: m.full_name || m.fullName || m.name,
+        role: m.role || ROLES.OWNER
+      }));
+    }
+  });
+
+  const teamMembers = (teamQuery.data as any[]) || [];
 
   useEffect(() => {
     setMounted(true);
@@ -83,57 +86,22 @@ export default function AdsManagerDashboardPage() {
         setAllCampaigns(JSON.parse(saved));
       } catch (err) { }
     }
-
-    const fetchTeam = async () => {
-      try {
-        const resp = await teamService.getTeamMembers();
-        if (resp?.results?.data) {
-          setTeamMembers(resp.results.data.map((m: any) => ({
-            id: m.id,
-            name: m.fullName || m.name,
-            role: m.role
-          })));
-        }
-      } catch (err) { }
-    };
-    fetchTeam();
   }, []);
 
-  useEffect(() => {
-    if (mounted) {
-      fetchTasks();
-    }
-  }, [mounted, activeTab]);
+  const stats = useMemo(() => ({
+    pending: adsTasks.filter(t => t.status === TASK_STATUSES.PENDING).length,
+    inProgress: adsTasks.filter(t => t.status === TASK_STATUSES.IN_PROGRESS).length,
+    completed: adsTasks.filter(t => t.status === TASK_STATUSES.COMPLETED).length,
+  }), [adsTasks]);
 
-  const { filteredTasks, dashboardStats } = useMemo(() => {
-    const stats = { pending: 0, in_progress: 0, completed: 0 };
-    const filtered: any[] = [];
-
-    adsTasks.forEach(task => {
-      const status = task.status as TaskStatus;
-      if (stats[status] !== undefined) stats[status]++;
-    });
-
-    return {
-      filteredTasks: adsTasks,
-      dashboardStats: stats
-    };
-  }, [adsTasks, activeTab]);
-
-  // Handlers
-  const handleStatusChange = async (task: any, newStatus: TaskStatus) => {
-    if (newStatus === 'completed') {
-      if (task.status === 'completed') return;
+  const handleStatusChange = async (task: Task, newStatus: TaskStatus) => {
+    if (newStatus === TASK_STATUSES.COMPLETED) {
+      if (task.status === TASK_STATUSES.COMPLETED) return;
       setSelectedTask(task);
       setIsModalOpen(true);
-    } else if (newStatus === 'pending' || newStatus === 'in_progress') {
-      try {
-        await updateTaskStatusMutation({ taskId: task.id, status: newStatus });
-        fetchTasks();
-      } catch (err) { }
     } else {
       try {
-        await updateTaskMutation({ taskId: task.id, payload: { status: newStatus } });
+        await updateTaskStatusMutation({ taskId: task.id, status: newStatus });
         fetchTasks();
       } catch (err) { }
     }
@@ -152,25 +120,6 @@ export default function AdsManagerDashboardPage() {
     } catch (err) { }
   };
 
-  // View Helpers
-  const isOverdue = (deadline?: string, status?: TaskStatus) => {
-    if (!deadline || status === 'completed') return false;
-    return new Date(deadline) < new Date();
-  };
-
-  const formatDeadline = (deadline: string) => {
-    return new Date(deadline).toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
-
-  const getDaysLeft = (deadline: string) => {
-    return Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000);
-  };
-
-  // Prevent Hydration Flash
   if (!mounted) return <div className="min-h-screen bg-slate-50" />;
 
   return (
@@ -194,9 +143,9 @@ export default function AdsManagerDashboardPage() {
         {/* Global Statistics Cards */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {[
-            { label: STATIC_STRINGS.ADS_DASHBOARD_STAT_PENDING_HANDOFF, value: dashboardStats.pending, color: 'text-blue-600', icon: Circle },
-            { label: STATIC_STRINGS.ADS_DASHBOARD_STAT_ACTIVE_CAMPAIGNS, value: dashboardStats.in_progress, color: 'text-amber-600', icon: Timer },
-            { label: STATIC_STRINGS.ADS_DASHBOARD_STAT_COMPLETED_ADS, value: dashboardStats.completed, color: 'text-emerald-600', icon: CheckCircle2 },
+            { label: STATIC_STRINGS.ADS_DASHBOARD_STAT_PENDING_HANDOFF, value: stats.pending, color: 'text-blue-600', icon: Circle },
+            { label: STATIC_STRINGS.ADS_DASHBOARD_STAT_ACTIVE_CAMPAIGNS, value: stats.inProgress, color: 'text-amber-600', icon: Timer },
+            { label: STATIC_STRINGS.ADS_DASHBOARD_STAT_COMPLETED_ADS, value: stats.completed, color: 'text-emerald-600', icon: CheckCircle2 },
           ].map((stat, i) => (
             <div key={i} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:border-slate-300">
               <div className="flex items-center gap-3 mb-2">
@@ -222,17 +171,17 @@ export default function AdsManagerDashboardPage() {
 
             {/* Tab Navigation */}
             <nav className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
-              {(['in_progress', 'pending', 'completed'] as const).map((tab) => (
+              {([TASK_STATUSES.IN_PROGRESS, TASK_STATUSES.PENDING, TASK_STATUSES.COMPLETED] as const).map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setActiveTab(tab)}
+                  onClick={() => setActiveTab(tab as TaskStatus)}
                   className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-all ${activeTab === tab
                       ? 'bg-white text-slate-900 shadow-sm'
                       : 'text-slate-500 hover:text-slate-700'
                     }`}
                 >
-                  {tab === 'in_progress' ? STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_IN_PROGRESS :
-                    tab === 'pending' ? STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_PENDING :
+                  {tab === TASK_STATUSES.IN_PROGRESS ? STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_IN_PROGRESS :
+                    tab === TASK_STATUSES.PENDING ? STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_PENDING :
                       STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_COMPLETED}
                 </button>
               ))}
@@ -242,110 +191,21 @@ export default function AdsManagerDashboardPage() {
           <div className="space-y-3">
             {isTasksLoading ? (
               <div className="bg-white rounded-xl border border-dashed border-slate-200 py-12 text-center">
-                <p className="text-[13px] text-slate-400 font-medium">Loading tasks...</p>
+                <p className="text-[13px] text-slate-400 font-medium">{STATIC_STRINGS.LOADING_TASKS}</p>
               </div>
-            ) : filteredTasks.length === 0 ? (
+            ) : adsTasks.length === 0 ? (
               <div className="bg-white rounded-xl border border-dashed border-slate-200 py-12 text-center">
                 <p className="text-[13px] text-slate-400 font-medium">
                   {STATIC_STRINGS.ADS_DASHBOARD_NO_TASKS} {activeTab}
                 </p>
               </div>
             ) : (
-              filteredTasks.map((task) => {
-                const taskStatus = getEffectiveStatus(task);
-                const overdue = isOverdue(task.deadline, taskStatus);
-                const daysLeft = task.deadline ? getDaysLeft(task.deadline) : 0;
-
-                return (
-                  <article
-                    key={task.id}
-                    className={`rounded-xl border shadow-sm p-4 transition-all hover:shadow-md ${taskStatus === 'completed'
-                        ? 'bg-emerald-50/30 border-emerald-100'
-                        : overdue ? 'bg-white border-red-200 shadow-sm shadow-red-50'
-                          : 'bg-white border-slate-100'
-                      }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
-      
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[14px] font-bold text-slate-900 truncate">{task.title}</p>
-                          <p className="text-[12px] text-slate-500 mt-0.5">
-                            {task.client}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="relative">
-                        {overdue && <AlertCircle size={14} className="text-red-500 absolute -left-5 top-1/2 -translate-y-1/2" />}
-                        <select
-                          value={taskStatus}
-                          onChange={(e) => handleStatusChange(task, e.target.value as TaskStatus)}
-                          className={`appearance-none pl-2.5 pr-8 py-1 rounded-lg text-[12px] font-bold transition-all cursor-pointer outline-none border-none ${STATUS_STYLES[taskStatus]?.bg || STATUS_STYLES.pending.bg} ${STATUS_STYLES[taskStatus]?.color || STATUS_STYLES.pending.color} hover:opacity-80`}
-                        >
-                          <option value="pending">{STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_PENDING}</option>
-                          <option value="in_progress">{STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_IN_PROGRESS}</option>
-                          <option value="completed">{STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_COMPLETED}</option>
-                        </select>
-                        <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none text-slate-400" size={12} />
-                      </div>
-                    </div>
-
-
-                    {Array.isArray(task.roleNotes) && task.roleNotes.length > 0 && (
-                      <div className="mt-4 mb-4 space-y-2 border-t border-slate-100 pt-4">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                          {STATIC_STRINGS.ADS_DASHBOARD_HISTORY_LOG}
-                        </p>
-                        {task.roleNotes.map((note, idx) => (
-                          <div key={idx} className="bg-slate-50/50 p-3 rounded-lg border border-slate-100/50">
-                            <div className="flex items-center justify-between mb-1.5">
-                              <div className="flex items-center gap-2">
-                                <div className="w-5 h-5 rounded bg-orange-50 text-orange-600 flex items-center justify-center flex-shrink-0">
-                                  <span className="text-[10px] font-bold">{(note.role || 'A').charAt(0)}</span>
-                                </div>
-                                <span className="text-[11px] font-bold text-slate-700">{note.name}</span>
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium">{note.role}</span>
-                              </div>
-                              <time className="text-[10px] text-slate-400 font-medium">{new Date(note.created_at || note.timestamp || '').toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</time>
-                            </div>
-                            <p className="text-[12px] text-slate-600 leading-relaxed">
-                              {note.note || note.message}
-                            </p>
-                            {note.screenshot && (
-                              <div className="mt-2 rounded-lg overflow-hidden border border-slate-200">
-                                <img src={note.screenshot} alt="Task Proof" className="w-full h-auto max-h-48 object-cover hover:scale-105 transition-transform duration-300 cursor-zoom-in" />
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-
-                    <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
-                      <div className={`flex items-center gap-1.5 text-[12px] ${overdue ? 'text-red-600 font-bold' : 'text-slate-500 font-medium'}`}>
-                        <Calendar size={14} />
-                        {overdue ? `${STATIC_STRINGS.ADS_DASHBOARD_OVERDUE} · ` : ''}
-                        {task.deadline ? formatDeadline(task.deadline) : STATIC_STRINGS.ADS_DASHBOARD_NO_DEADLINE}
-                        {!overdue && taskStatus !== 'completed' && task.deadline && (
-                          <span className={`ml-1 ${daysLeft <= 3 ? 'text-red-500 font-bold' : 'text-slate-400'}`}>
-                            ({task.deadlineStatus || (daysLeft > 0 ? `${daysLeft}${STATIC_STRINGS.ADS_DASHBOARD_DAYS_LEFT}` : STATIC_STRINGS.ADS_DASHBOARD_TODAY)})
-                          </span>
-                        )}
-                        {taskStatus === 'completed' && task.deadlineStatus && (
-                          <span className="ml-1 text-slate-400 font-medium">({task.deadlineStatus})</span>
-                        )}
-                      </div>
-
-                    </div>
-                  </article>
-                );
-              })
+              adsTasks.map((task) => (
+                <TaskCard key={task.id} task={task} onStatusChange={handleStatusChange} />
+              ))
             )}
           </div>
         </section>
-
 
         <TaskCompletionModal
           open={isModalOpen}
