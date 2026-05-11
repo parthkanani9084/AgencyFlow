@@ -5,12 +5,13 @@ import Modal from '@/components/ui/Modal';
 import { CheckCircle2, UserPlus, Info, ChevronRight, Image } from 'lucide-react';
 import { Task, Reel, UserRole } from '@/types';
 import { STATIC_STRINGS, ROLES } from '@/utils/constants';
+import { normalizeRole } from '@/utils/roles';
 
 interface TaskCompletionModalProps {
   open: boolean;
   onClose: () => void;
   task: Task | Reel | any | null;
-  onComplete: (taskId: string, notes: string, nextMember?: { name: string; role: string }, screenshot?: string) => void;
+  onComplete: (taskId: string, notes: string, nextMember?: { name: string; role: string }, screenshot?: string | File) => void;
   userRole: UserRole | string;
   teamMembers: readonly { id: string; name: string; role: string }[];
 }
@@ -25,54 +26,36 @@ export default function TaskCompletionModal({
 }: TaskCompletionModalProps) {
   const [notes, setNotes] = useState('');
   const [screenshot, setScreenshot] = useState('');
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [sendTo, setSendTo] = useState('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  const normalizedUserRole = useMemo(() => normalizeRole(userRole as string), [userRole]);
+  const taskRole = useMemo(() => normalizeRole((task as Task)?.role || ''), [task]);
+
+  const roleToCheck = useMemo(() => {
+    if (normalizedUserRole === ROLES.MANAGER || normalizedUserRole === ROLES.OWNER) {
+      return taskRole;
+    }
+    return normalizedUserRole;
+  }, [normalizedUserRole, taskRole]);
 
   const eligibleRoles = useMemo(() => {
     if (!task) return [];
 
-    const taskRole = (task as Task)?.role || ROLES.SOCIAL_MEDIA_MANAGER;
-    const roleToCheck = userRole === ROLES.MANAGER || userRole === ROLES.OWNER ? taskRole : userRole;
-
-    const roles = (() => {
-      const r = roleToCheck?.toLowerCase();
-      if (r === ROLES.SHOOTER.toLowerCase()) return [ROLES.EDITOR];
-      if (r === ROLES.EDITOR.toLowerCase()) return [ROLES.ADS_MANAGER];
-      if (r === ROLES.ADS_MANAGER.toLowerCase()) return [];
-      if (r === ROLES.SOCIAL_MEDIA_MANAGER.toLowerCase()) return [];
-      return [];
-    })();
-
-    const r = roleToCheck?.toLowerCase();
-    const isSpecialized =
-      r === ROLES.EDITOR.toLowerCase() ||
-      r === ROLES.SHOOTER.toLowerCase() ||
-      r === ROLES.ADS_MANAGER.toLowerCase() ||
-      r === ROLES.SOCIAL_MEDIA_MANAGER.toLowerCase();
-
-    if (isSpecialized) return roles;
-
-    // Default fallback for admin roles or non-specialized handoffs
-    return Array.from(new Set([...roles, ROLES.MANAGER, ROLES.OWNER]));
-  }, [userRole, task]);
+    if (roleToCheck === ROLES.SHOOTER) return [ROLES.EDITOR];
+    if (roleToCheck === ROLES.EDITOR) return [ROLES.ADS_MANAGER];
+    return [];
+  }, [roleToCheck, task]);
 
   const flags = useMemo(() => {
-    const isManagerOrOwner = userRole === ROLES.MANAGER || userRole === ROLES.OWNER;
-    const taskRole = (task as Task)?.role;
-    const isAdsTask = taskRole === ROLES.ADS_MANAGER || taskRole === ROLES.SOCIAL_MEDIA_MANAGER;
-
-    const normalizedUserRole = userRole?.toLowerCase();
-    const isSpecializedAdsRole = normalizedUserRole === ROLES.ADS_MANAGER.toLowerCase() || normalizedUserRole === ROLES.SOCIAL_MEDIA_MANAGER.toLowerCase();
-    const isEditorOrShooter = normalizedUserRole === ROLES.EDITOR.toLowerCase() || normalizedUserRole === ROLES.SHOOTER.toLowerCase();
-
+    const isAdsRole = roleToCheck === ROLES.ADS_MANAGER || roleToCheck === ROLES.SOCIAL_MEDIA_MANAGER;
     return {
-      showHandoff: eligibleRoles.length > 0 || isEditorOrShooter,
-      isManagerOrOwner,
-      isAdsTask,
-      needsScreenshot: isAdsTask || isSpecializedAdsRole
+      showHandoff: eligibleRoles.length > 0,
+      needsScreenshot: isAdsRole ,
+      isAdsRole
     };
-  }, [userRole, task?.role, eligibleRoles.length]);
-
+  }, [eligibleRoles.length, roleToCheck]);
 
   const handleSubmit = useCallback(() => {
     if (!task) return;
@@ -82,12 +65,10 @@ export default function TaskCompletionModal({
       errors.notes = STATIC_STRINGS.TASK_MODAL_ERR_NOTES;
     }
     if (flags.showHandoff && !sendTo) {
-      // Required for Shooter and Editor, optional for Manager/Owner if we want, 
-      // but user says "Hand Off To field must be required" for Shooter/Editor.
       errors.sendTo = STATIC_STRINGS.TASK_MODAL_ERR_HANDOFF;
     }
     const isDev = process.env.NODE_ENV === 'development';
-    if (flags.isAdsTask && !screenshot.trim() && !isDev) {
+    if (flags.isAdsRole && !screenshotFile && !screenshot) {
       errors.screenshot = STATIC_STRINGS.TASK_MODAL_ERR_SCREENSHOT;
     }
 
@@ -101,12 +82,13 @@ export default function TaskCompletionModal({
       task.id,
       notes,
       selectedMember ? { name: selectedMember.name, role: selectedMember.role } : undefined,
-      flags.needsScreenshot ? screenshot : undefined
+      flags.needsScreenshot ? (screenshotFile || screenshot) : undefined
     );
 
     // State Reset
     setNotes('');
     setScreenshot('');
+    setScreenshotFile(null);
     setSendTo('');
     setFormErrors({});
     onClose();
@@ -115,6 +97,7 @@ export default function TaskCompletionModal({
   const handleScreenshotUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setScreenshotFile(file);
       const reader = new FileReader();
       reader.onload = (ev) => setScreenshot(ev.target?.result as string);
       reader.readAsDataURL(file);
@@ -155,9 +138,9 @@ export default function TaskCompletionModal({
           {flags.needsScreenshot && (
             <div>
               <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">
-                {flags.isAdsTask ? STATIC_STRINGS.TASK_MODAL_LABEL_DELIVERY_SS : STATIC_STRINGS.TASK_MODAL_LABEL_EXPORT_SS} 
-                {(process.env.NODE_ENV === 'development' || !flags.isAdsTask) && <span className="text-slate-400 font-normal ml-1">({STATIC_STRINGS.COMMON_OPTIONAL})</span>} 
-                {flags.isAdsTask && process.env.NODE_ENV !== 'development' && <span className="text-red-500">*</span>}
+                {flags.isAdsRole ? STATIC_STRINGS.TASK_MODAL_LABEL_DELIVERY_SS : STATIC_STRINGS.TASK_MODAL_LABEL_EXPORT_SS} 
+                {!flags.isAdsRole && <span className="text-slate-400 font-normal ml-1">({STATIC_STRINGS.COMMON_OPTIONAL})</span>} 
+                {flags.isAdsRole && <span className="text-red-500">*</span>}
               </label>
               <input
                 type="file"
@@ -180,7 +163,7 @@ export default function TaskCompletionModal({
                     <p className="text-[12px] font-bold text-emerald-700">{STATIC_STRINGS.TASK_MODAL_SS_ATTACHED}</p>
                     <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); setScreenshot(''); }}
+                      onClick={(e) => { e.stopPropagation(); setScreenshot(''); setScreenshotFile(null); }}
                       className="text-[11px] text-red-500 font-medium hover:underline"
                     >
                       {STATIC_STRINGS.COMMON_REMOVE}
@@ -192,7 +175,7 @@ export default function TaskCompletionModal({
                       <Image size={16} />
                     </div>
                     <p className="text-[12px] font-medium text-slate-500">
-                      {flags.isAdsTask ? STATIC_STRINGS.TASK_MODAL_UPLOAD_PROOF : STATIC_STRINGS.TASK_MODAL_UPLOAD_PREVIEW}
+                      {flags.isAdsRole ? STATIC_STRINGS.TASK_MODAL_UPLOAD_PROOF : STATIC_STRINGS.TASK_MODAL_UPLOAD_PREVIEW}
                     </p>
                   </>
                 )}
@@ -205,7 +188,6 @@ export default function TaskCompletionModal({
             </div>
           )}
 
-          {/* Handoff Field */}
           {flags.showHandoff && (
             <div>
               <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">

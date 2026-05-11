@@ -12,8 +12,9 @@ import { Task, TaskStatus, TaskRole, UserRole } from '@/types';
 import { STATIC_STRINGS, ROLES, PAGE_ROLES } from '@/utils/constants';
 import { ROLE_CONFIG, STATUS_CONFIG } from '@/utils/ui-configs';
 import { teamService } from '@/api/services/team.service';
-import { useCreateTask, useGetTasks, useUpdateTask, useDeleteTask } from '@/api/hooks/useTask';
+import { useCreateTask, useGetTasks, useUpdateTask, useDeleteTask, useUpdateTaskStatus, useAssignTask, useCompleteTask } from '@/api/hooks/useTask';
 import { useClients } from '@/api/hooks/useClient';
+import TaskCompletionModal from '@/components/TaskCompletionModal';
 import { useGetTeams } from '@/api/hooks/useTeam';
 import { normalizeRole, toApiRole } from '@/utils/roles';
 
@@ -59,6 +60,9 @@ export default function TaskManagementPage() {
   const { mutateAsync: createTaskMutation, isPending: isCreatingTask } = useCreateTask();
   const { mutateAsync: updateTaskMutation } = useUpdateTask();
   const { mutateAsync: deleteTaskMutation } = useDeleteTask();
+  const { mutateAsync: updateTaskStatusMutation } = useUpdateTaskStatus();
+  const { mutateAsync: assignTaskMutation } = useAssignTask();
+  const { mutateAsync: completeTaskMutation } = useCompleteTask();
   
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(8);
@@ -102,7 +106,9 @@ export default function TaskManagementPage() {
   
   const [mounted, setMounted] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [completionModalOpen, setCompletionModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [selectedTaskForCompletion, setSelectedTaskForCompletion] = useState<Task | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; task: Task | null }>({ open: false, task: null });
   const [form, setForm] = useState<TaskForm>(EMPTY_FORM);
   const [errors, setErrors] = useState<Partial<Record<keyof TaskForm, string>>>({});
@@ -118,10 +124,11 @@ export default function TaskManagementPage() {
       name: c.clientName
     })) || [], [clientsResponse]);
 
-  const teamMembers = useMemo((): {id: string, name: string}[] => 
+  const teamMembers = useMemo((): { id: string; name: string; role: string }[] =>
     (teamResponse as any)?.results?.data?.map((m: any) => ({
       id: m.id,
-      name: m.fullName || m.name
+      name: m.fullName || m.name,
+      role: m.role,
     })) || [], [teamResponse]);
 
   const handleMemberChange = async (memberId: string) => {
@@ -274,12 +281,46 @@ export default function TaskManagementPage() {
   };
   
   const handleStatusChange = async (taskId: string, newStatus: TaskStatus) => {
-    try {
-      await updateTaskMutation({ taskId, payload: { status: newStatus } });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-    } catch (err: any) {
-      console.error('Failed to update status:', err);
+    if (newStatus === 'completed') {
+      const task = paginatedTasks.find(t => t.id === taskId);
+      if (task) {
+        setSelectedTaskForCompletion(task);
+        setCompletionModalOpen(true);
+      }
+    } else {
+      try {
+        await updateTaskStatusMutation({ taskId, status: newStatus });
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      } catch (err: any) {
+        console.error('Failed to update status:', err);
+      }
     }
+  };
+
+  const onCompleteTask = async (taskId: string, notes: string, nextMember?: { name: string; role: string }, screenshot?: string | File) => {
+    try {
+      let assignedToId: string | undefined;
+      if (nextMember) {
+        const member = teamMembers.find(m => m.name === nextMember.name);
+        if (member) assignedToId = member.id;
+      }
+      
+      if (assignedToId) {
+        await assignTaskMutation({ 
+          taskId, 
+          assignedTo: assignedToId,
+          notes 
+        });
+      } else {
+        await completeTaskMutation({ 
+          taskId, 
+          notes, 
+          screenshot 
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      setCompletionModalOpen(false);
+    } catch (err) { }
   };
 
 
@@ -587,6 +628,15 @@ export default function TaskManagementPage() {
           </div>
         </div>
       </Modal>
+
+      <TaskCompletionModal
+        open={completionModalOpen}
+        onClose={() => setCompletionModalOpen(false)}
+        task={selectedTaskForCompletion}
+        onComplete={onCompleteTask}
+        userRole={user?.role as UserRole || ROLES.MANAGER}
+        teamMembers={teamMembers as any}
+      />
     </AppLayout>
   );
 }

@@ -2,14 +2,14 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { Camera, CheckCircle2, Calendar, ChevronRight, AlertCircle, Users } from 'lucide-react';
+import { Camera, Calendar, ChevronRight, AlertCircle, Users } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/context/AuthContext';
 import { Task, TaskStatus, UserRole } from '@/types';
 import TaskCompletionModal from '@/components/TaskCompletionModal';
 import { STATIC_STRINGS, PAGE_ROLES, ROLES } from '@/utils/constants';
 import { PRIORITY_STYLES as PRIORITY_DOT, STATUS_CONFIG } from '@/utils/ui-configs';
-import { useUpdateTask, useUpdateTaskStatus, useAssignTask } from '@/api/hooks/useTask';
+import { useUpdateTask, useUpdateTaskStatus, useAssignTask, useCompleteTask } from '@/api/hooks/useTask';
 import { useQueryClient } from '@tanstack/react-query';
 import { teamService } from '@/api/services/team.service';
 import { taskService } from '@/api/services/task.service';
@@ -51,6 +51,7 @@ export default function ShooterDashboardPage() {
   const { mutateAsync: updateTaskMutation } = useUpdateTask();
   const { mutateAsync: updateTaskStatusMutation } = useUpdateTaskStatus();
   const { mutateAsync: assignTaskMutation } = useAssignTask();
+  const { mutateAsync: completeTaskMutation } = useCompleteTask();
 
   const fetchTasks = async (status?: TaskStatus) => {
     setIsTasksLoading(true);
@@ -67,8 +68,8 @@ export default function ShooterDashboardPage() {
           id: t.task_id || t.id,
           title: t.task_title || t.taskTitle || 'Untitled Task',
           description: t.description || '',
-          assignedTo: t.assign_to?.name || t.notes?.[0]?.assign_to?.name || t.assignee?.fullName || t.assignee?.full_name || 'Unassigned',
-          role: t.assignee?.role || t.workflow_stage || ROLES.SHOOTER,
+          assignedTo: t.assign_to_name ,
+          role: t.notes?.[0]?.assign_to?.role || t.assign_to?.role || t.assignee?.role || t.workflow_stage || ROLES.SHOOTER,
           client: t.client_name || t.client?.clientName || 'N/A',
           deadline: (t.deadline_date || t.deadlineDate || '').split('T')[0] || 'N/A',
           deadlineStatus: t.deadline_status,
@@ -149,13 +150,26 @@ export default function ShooterDashboardPage() {
     }
   };
 
-  const onCompleteTask = async (taskId: string, notes: string, nextMember?: { name: string; role: string }, screenshot?: string) => {
+  const onCompleteTask = async (taskId: string, notes: string, nextMember?: { name: string; role: string }, screenshot?: string | File) => {
     try {
+      let assignedToId: string | undefined;
       if (nextMember) {
-        const member = teamMembers.find(m => m.name === nextMember.name && m.role === nextMember.role);
-        if (member) {
-          await assignTaskMutation({ taskId, assignedTo: member.id, notes: notes });
-        }
+        const member = teamMembers.find(m => m.name === nextMember.name);
+        if (member) assignedToId = member.id;
+      }
+      
+      if (assignedToId) {
+        await assignTaskMutation({ 
+          taskId, 
+          assignedTo: assignedToId,
+          notes 
+        });
+      } else {
+        await completeTaskMutation({ 
+          taskId, 
+          notes, 
+          screenshot 
+        });
       }
       await fetchTasks();
       setIsModalOpen(false);
@@ -323,12 +337,7 @@ export default function ShooterDashboardPage() {
                           <span className="ml-1 text-slate-400 font-medium">({task.deadlineStatus})</span>
                         )}
                       </div>
-                      {task.status === 'completed' && (
-                        <div className="flex items-center gap-1 text-[12px] text-emerald-600 font-bold ml-auto">
-                          <Users size={14} />
-                          <span>Assigned To: {task.assignedTo}</span>
-                        </div>
-                      )}
+        
                     </footer>
                   </article>
                 );

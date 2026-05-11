@@ -53,8 +53,8 @@ export default function AdsManagerDashboardPage() {
           id: t.task_id || t.id,
           title: t.task_title || t.taskTitle || 'Untitled Task',
           description: t.description || '',
-          assignedTo: t.assign_to?.name || t.notes?.[0]?.assign_to?.name || t.assignee?.fullName || t.assignee?.full_name || 'Unassigned',
-          role: t.assignee?.role || t.workflow_stage || ROLES.ADS_MANAGER,
+          assignedTo: t.workstage_role_name || t.notes?.[0]?.assign_to?.name || t.assign_to?.name || t.assignee?.name || t.assignee?.fullName || t.assignee?.full_name || 'Unassigned',
+          role: t.notes?.[0]?.assign_to?.role || t.assign_to?.role || t.assignee?.role || t.workflow_stage || ROLES.ADS_MANAGER,
           client: t.client_name || t.client?.clientName || 'N/A',
           deadline: (t.deadline_date || t.deadlineDate || '').split('T')[0] || 'N/A',
           deadlineStatus: t.deadline_status,
@@ -139,9 +139,14 @@ export default function AdsManagerDashboardPage() {
     }
   };
 
-  const onCompleteTask = async (taskId: string, notes: string, nextMember?: { name: string; role: string }, screenshot?: string) => {
+  const onCompleteTask = async (taskId: string, notes: string, nextMember?: { name: string; role: string }, screenshot?: string | File) => {
     try {
-      await completeTaskMutation({ taskId, notes: notes, screenshot });
+      let assignedToId: string | undefined;
+      if (nextMember) {
+        const member = teamMembers.find(m => m.name === nextMember.name);
+        if (member) assignedToId = member.id;
+      }
+      await completeTaskMutation({ taskId, notes, screenshot, assignedTo: assignedToId });
       await fetchTasks();
       setIsModalOpen(false);
     } catch (err) { }

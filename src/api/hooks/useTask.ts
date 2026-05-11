@@ -44,7 +44,7 @@ export const useAssignTask = () => {
 
 export const useCompleteTask = () => {
   return useMutation({
-    mutationFn: ({ taskId, notes, screenshot }: { taskId: string; notes: string; screenshot?: string }) => 
-      taskService.completeTask(taskId, notes, screenshot),
+    mutationFn: ({ taskId, notes, screenshot, assignedTo }: { taskId: string; notes: string; screenshot?: string | File; assignedTo?: string }) => 
+      taskService.completeTask(taskId, notes, screenshot, assignedTo),
   });
 };

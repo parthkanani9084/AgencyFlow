@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { STATIC_STRINGS, PAGE_ROLES, ROLES } from '@/utils/constants';
 import { Task, TaskStatus, TaskPriority, TaskRole, UserRole } from '@/types';
 import TaskCompletionModal from '@/components/TaskCompletionModal';
-import { useUpdateTask } from '@/api/hooks/useTask';
+import { useUpdateTask, useUpdateTaskStatus, useAssignTask, useCompleteTask } from '@/api/hooks/useTask';
 import { useQueryClient } from '@tanstack/react-query';
 import { teamService } from '@/api/services/team.service';
 import { taskService } from '@/api/services/task.service';
@@ -49,8 +49,7 @@ const ROLE_COLORS: Record<string, string> = {
   [ROLES.OWNER]: 'bg-violet-600',
 };
 
-const ROLE_FILTERS: { label: string; value: TaskRole | 'all' }[] = [
-  { label: STATIC_STRINGS.DASHBOARD_ALL, value: 'all' },
+const ROLE_FILTERS: { label: string; value: TaskRole }[] = [
   { label: ROLES.SHOOTER, value: ROLES.SHOOTER as TaskRole },
   { label: ROLES.EDITOR, value: ROLES.EDITOR as TaskRole },
   { label: ROLES.ADS_MANAGER, value: ROLES.ADS_MANAGER as TaskRole },
@@ -73,7 +72,7 @@ export default function ManagerDashboardPage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const [roleFilter, setRoleFilter] = useState<TaskRole | 'all'>('all');
+  const [roleFilter, setRoleFilter] = useState<TaskRole>(ROLES.SHOOTER as TaskRole);
   const [mounted, setMounted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -82,6 +81,9 @@ export default function ManagerDashboardPage() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
   const { mutateAsync: updateTaskMutation } = useUpdateTask();
+  const { mutateAsync: updateTaskStatusMutation } = useUpdateTaskStatus();
+  const { mutateAsync: assignTaskMutation } = useAssignTask();
+  const { mutateAsync: completeTaskMutation } = useCompleteTask();
 
   const fetchTasks = async () => {
     setIsTasksLoading(true);
@@ -101,7 +103,7 @@ export default function ManagerDashboardPage() {
       const resp = await taskService.getTasks({
         page: 1,
         limit: 100,
-        role: roleFilter === 'all' ? undefined : getRoleParam(roleFilter),
+        role: getRoleParam(roleFilter),
         isHistory: true
       });
       if (resp?.results?.data) {
@@ -109,8 +111,8 @@ export default function ManagerDashboardPage() {
           id: t.task_id || t.id,
           title: t.task_title || t.taskTitle || 'Untitled Task',
           description: t.description || '',
-          assignedTo: t.assign_to?.name || t.notes?.[0]?.assign_to?.name || t.assignee?.fullName || t.assignee?.full_name || 'Unassigned',
-          role: t.assignee?.role || t.workflow_stage || 'N/A',
+          assignedTo: t.workstage_role_name || t.notes?.[0]?.assign_to?.name || t.assign_to?.name || t.assignee?.name || t.assignee?.fullName || t.assignee?.full_name || 'Unassigned',
+          role: t.notes?.[0]?.assign_to?.role || t.assign_to?.role || t.assignee?.role || t.workflow_stage || 'N/A',
           client: t.client_name || t.client?.clientName || 'N/A',
           deadline: (t.deadline_date || t.deadlineDate || '').split('T')[0] || 'N/A',
           status: t.currentStatus || t.status || 'pending',
@@ -175,20 +177,33 @@ export default function ManagerDashboardPage() {
       setIsModalOpen(true);
     } else {
       try {
-        await updateTaskMutation({ taskId: task.id, payload: { status: newStatus } });
+        await updateTaskStatusMutation({ taskId: task.id, status: newStatus });
         fetchTasks();
       } catch (err) { }
     }
   };
 
-  const onCompleteTask = async (taskId: string, notes: string, nextMember?: { name: string; role: string }, screenshot?: string) => {
+  const onCompleteTask = async (taskId: string, notes: string, nextMember?: { name: string; role: string }, screenshot?: string | File) => {
     try {
-      const payload: any = { status: 'completed', description: notes };
+      let assignedToId: string | undefined;
       if (nextMember) {
         const member = teamMembers.find(m => m.name === nextMember.name);
-        if (member) payload.assigned_to = member.id;
+        if (member) assignedToId = member.id;
       }
-      await updateTaskMutation({ taskId, payload });
+      
+      if (assignedToId) {
+        await assignTaskMutation({ 
+          taskId, 
+          assignedTo: assignedToId,
+          notes 
+        });
+      } else {
+        await completeTaskMutation({ 
+          taskId, 
+          notes, 
+          screenshot 
+        });
+      }
       fetchTasks();
       setIsModalOpen(false);
     } catch (err) { }
@@ -370,12 +385,7 @@ export default function ManagerDashboardPage() {
                           </span>
                         )}
                       </div>
-                      {task.status === 'completed' && task.role !== ROLES.ADS_MANAGER && (
-                        <div className="flex items-center gap-1 text-[12px] text-emerald-600 font-bold ml-auto">
-                          <Users size={14} />
-                          <span>Assigned To: {task.assignedTo}</span>
-                        </div>
-                      )}
+            
                     </footer>
                   </article>
                 );
