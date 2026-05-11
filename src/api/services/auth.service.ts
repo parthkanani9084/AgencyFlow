@@ -1,5 +1,5 @@
 import AxiosRequest from '@/utils/axiosHelper';
-import { LOGIN_URL } from '@/lib/endpoints';
+import { LOGIN_URL } from '@/api/endpoints';
 
 export interface LoginPayload {
   email: string;

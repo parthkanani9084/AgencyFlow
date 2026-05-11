@@ -1,5 +1,5 @@
 import AxiosRequest from '@/utils/axiosHelper';
-import { CREATE_CLIENT_URL, GET_CLIENTS_URL } from '@/lib/endpoints';
+import { CREATE_CLIENT_URL, GET_CLIENTS_URL } from '@/api/endpoints';
 
 export interface CreateClientPayload {
   client_name: string;
@@ -29,6 +29,11 @@ export interface UpdateClientPayload {
   service_required?: string[];
   package_amount?: number;
   per_day_spend_amount?: number;
+  plan_type?: string;
+  reels_per_month?: number;
+  platform_type?: 'online' | 'offline';
+  weblink?: string;
+  file_location?: string;
 }
 
 export interface UpdateClientResponse {

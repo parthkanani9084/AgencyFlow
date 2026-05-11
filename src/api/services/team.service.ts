@@ -1,5 +1,5 @@
 import AxiosRequest from '@/utils/axiosHelper';
-import { CREATE_TEAM_URL, GET_TEAM_ROLE_URL, GET_TEAMS_URL } from '@/lib/endpoints';
+import { CREATE_TEAM_URL, GET_TEAM_ROLE_URL, GET_TEAMS_URL } from '@/api/endpoints';
 
 export interface CreateTeamPayload {
   full_name: string;

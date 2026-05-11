@@ -1,6 +1,14 @@
 import { ROLES } from '@/constants/roles';
 export { ROLES };
 
+export const COMMON_STATUS = {
+  ALL: 'all',
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  PENDING: 'pending',
+  COMPLETED: 'completed',
+} as const;
+
 export const STATIC_STRINGS = {
   TITLE: 'AgencyFlow',
   // Task Management Defaults
@@ -593,7 +601,6 @@ export const STATIC_STRINGS = {
   LOGIN_DEMO_ROLE: 'Role',
   LOGIN_DEMO_EMAIL: 'Email',
   LOGIN_DEMO_USE: 'Use',
-  LOGIN_DEMO_PWD_NOTICE: 'All demo accounts share the same password format:',
   LOGIN_NO_ACCOUNT: "Don't have an account?",
   LOGIN_REQUEST_ACCESS: 'Request access',
   LOGIN_TERMS_AGREEMENT: 'By signing in, you agree to our',
@@ -621,6 +628,7 @@ export const STATIC_STRINGS = {
   SMM_LABEL_CLIENT: 'Client',
   SMM_PLACEHOLDER_CLIENT: 'Select client...',
   SMM_LABEL_DATE: 'Schedule Date',
+  CLIENTS:'Clients',
   SMM_BTN_CANCEL: 'Cancel',
   SMM_BTN_SCHEDULE: 'Schedule Reel',
   SMM_TOAST_UPLOADED: 'Reel marked as uploaded!',
@@ -821,7 +829,6 @@ export const STATIC_STRINGS = {
   CLIENT_MGMT_INVALID_AMOUNT: 'Please enter a valid amount',
   CLIENT_MGMT_SELECT_PLATFORM: 'Select Platform',
   CLIENT_MGMT_PLATFORM_WEBSITE: 'Website',
-  CLIENT_MGMT_PLATFORM_OFFLINE: 'Offline',
   CLIENT_MGMT_RECORD_PAYMENT_TOOLTIP: 'Record Payment',
   CLIENT_MGMT_VIEW_PAYMENTS_TOOLTIP: 'View Payments',
   CLIENT_MGMT_EDIT_CLIENT_TOOLTIP: 'Edit client',
@@ -850,6 +857,35 @@ export const STATIC_STRINGS = {
   CLIENT_MGMT_PLAN_WEEKLY: 'Weekly',
   CLIENT_MGMT_PLAN_MONTHLY: 'Monthly',
   CLIENT_MGMT_PLAN_YEARLY: 'Yearly',
+  DATE: 'Date',
+  NOTES: 'Notes',
+  AMOUNT: 'Amount',
+  DELETE_ENTRY: 'Delete entry',
+  FORM_DELETING: 'Deleting...',
+  LOCALE_GB: 'en-GB',
+  CLIENT_MGMT_PLATFORM_ONLINE: 'online',
+  CLIENT_MGMT_PLATFORM_OFFLINE: 'offline',
+  FORM_EMAIL_PLACEHOLDER_DEMO: 'e.g. client@test.com',
+  PAYMENT_ZERO_PLACEHOLDER: '0',
+} as const;
+
+export const CLIENT_SERVICES = {
+  REELS: 'reels',
+  CAMPAIGN: 'campaign',
+  META: 'meta',
+  SOCIAL_MEDIA: 'social media',
+} as const;
+
+export const CLIENT_PLANS = {
+  WEEKLY: 'weekly',
+  MONTHLY: 'monthly',
+  YEARLY: 'yearly',
+} as const;
+
+export const CLIENT_PLATFORMS = {
+  WEBSITE: 'Website',
+  OFFLINE: 'Offline',
+  ONLINE: 'online',
 } as const;
 
 export const SUPER_ADMIN_ACTIONS = {
