@@ -1,7 +1,6 @@
 import { 
   Camera, Film, Megaphone, TrendingUp, User, 
-  Circle, Timer, CheckCircle2, AlertCircle,
-  Layout, Shield, Star, Briefcase
+  Circle, Timer, CheckCircle2, Crown, UserCheck
 } from 'lucide-react';
 import { ROLES, STATIC_STRINGS } from './constants';
 import React from 'react';
@@ -26,13 +25,25 @@ export const PRIORITY_STYLES: Record<string, string> = {
 } as const;
 
 export const ROLE_CONFIG: Record<string, { color: string; bg: string; icon: React.ElementType }> = {
-  [ROLES.SHOOTER]: { color: 'text-blue-700', bg: 'bg-blue-100', icon: Camera },
-  [ROLES.EDITOR]: { color: 'text-purple-700', bg: 'bg-purple-100', icon: Film },
-  [ROLES.ADS_MANAGER]: { color: 'text-orange-700', bg: 'bg-orange-100', icon: Megaphone },
+  [ROLES.SUPER_ADMIN]: { color: 'text-violet-700', bg: 'bg-violet-100', icon: Crown },
+  [ROLES.OWNER]:        { color: 'text-violet-700', bg: 'bg-violet-100', icon: Crown },
+  [ROLES.MANAGER]:      { color: 'text-teal-700',   bg: 'bg-teal-100',   icon: UserCheck },
+  [ROLES.SHOOTER]:      { color: 'text-blue-700',   bg: 'bg-blue-100',   icon: Camera },
+  [ROLES.EDITOR]:       { color: 'text-purple-700', bg: 'bg-purple-100', icon: Film },
+  [ROLES.ADS_MANAGER]:{ color: 'text-orange-700', bg: 'bg-orange-100', icon: Megaphone },
   [ROLES.SOCIAL_MEDIA_MANAGER]: { color: 'text-pink-700', bg: 'bg-pink-100', icon: TrendingUp },
-  [ROLES.OWNER]: { color: 'text-violet-700', bg: 'bg-violet-100', icon: Shield },
-  [ROLES.MANAGER]: { color: 'text-teal-700', bg: 'bg-teal-100', icon: Star },
-  [ROLES.CLIENT]: { color: 'text-indigo-700', bg: 'bg-indigo-100', icon: Briefcase },
+  [ROLES.CLIENT]:       { color: 'text-indigo-700', bg: 'bg-indigo-100', icon: UserCheck },
+};
+
+export const ROLE_AVATAR_COLORS: Record<string, string> = {
+  [ROLES.SUPER_ADMIN]: 'bg-violet-600',
+  [ROLES.OWNER]:        'bg-violet-600',
+  [ROLES.MANAGER]:      'bg-teal-600',
+  [ROLES.SHOOTER]:      'bg-blue-600',
+  [ROLES.EDITOR]:       'bg-purple-600',
+  [ROLES.ADS_MANAGER]:'bg-orange-600',
+  [ROLES.SOCIAL_MEDIA_MANAGER]: 'bg-pink-600',
+  [ROLES.CLIENT]:      'bg-indigo-600',
 };
 
 export const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {

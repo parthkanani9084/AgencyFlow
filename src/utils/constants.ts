@@ -1,6 +1,14 @@
 import { ROLES } from '@/constants/roles';
 export { ROLES };
 
+export const COMMON_STATUS = {
+  ALL: 'all',
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  PENDING: 'pending',
+  COMPLETED: 'completed',
+} as const;
+
 export const STATIC_STRINGS = {
   TITLE: 'AgencyFlow',
   // Task Management Defaults
@@ -688,6 +696,10 @@ export const STATIC_STRINGS = {
   TEAM_PAGE_CONFIRM_REMOVE_TITLE: 'Remove Member?',
   TEAM_PAGE_CONFIRM_REMOVE_SUBTITLE: 'This will remove the member from your team.',
   TEAM_PAGE_BTN_REMOVE: 'Remove',
+  TEAM_PAGE_LOADING: 'Fetching team members...',
+  TEAM_PAGE_PLACEHOLDER_NAME: 'e.g. Marco Reyes',
+  TEAM_PAGE_PLACEHOLDER_EMAIL: 'e.g. marco@agencyflow.io',
+  TEAM_PAGE_BTN_SENDING: 'Sending...',
   NOT_FOUND_TITLE: 'Page Not Found',
   NOT_FOUND_DESC: "The page you're looking for doesn't exist. Let's get you back!",
   NOT_FOUND_GO_BACK: 'Go Back',
