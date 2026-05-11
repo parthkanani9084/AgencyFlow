@@ -1,5 +1,5 @@
 import AxiosRequest from '@/utils/axiosHelper';
-import { CLIENT_CREATE_URL, CLIENT_LIST_URL } from '@/lib/endpoints';
+import { CLIENT_CREATE_URL, CLIENT_LIST_URL } from '../endpoints';
 const CLIENT_UPDATE_URL = (id: string) => `/owner/client/${id}`;
 
 export interface CreateClientPayload {
