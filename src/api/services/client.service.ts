@@ -30,6 +30,11 @@ export interface UpdateClientPayload {
   service_required?: string[];
   package_amount?: number;
   per_day_spend_amount?: number;
+  plan_type?: string;
+  reels_per_month?: number;
+  platform_type?: 'online' | 'offline';
+  weblink?: string;
+  file_location?: string;
 }
 
 export interface UpdateClientResponse {
@@ -40,8 +45,9 @@ export interface UpdateClientResponse {
 }
 
 export interface GetClientsParams {
-  page: number;
-  limit: number;
+  page?: number;
+  limit?: number;
+  search?: string;
 }
 
 export interface ClientData {
