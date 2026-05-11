@@ -11,8 +11,6 @@ import TaskCompletionModal from '@/components/TaskCompletionModal';
 import { STATIC_STRINGS, PAGE_ROLES, STORAGE_KEY_CAMPAIGNS, ROLES, TASK_STATUSES } from '@/utils/constants';
 import { STATUS_CONFIG } from '@/utils/ui-configs';
 import { useUpdateTaskStatus, useCompleteTask, useGetTasks } from '@/api/hooks/useTask';
-import { useGetTeamsByRole } from '@/api/hooks/useTeam';
-import { toApiRole } from '@/utils/roles';
 import TaskCard from '../shooter-dashboard/components/TaskCard';
 
 export default function AdsManagerDashboardPage() {
@@ -63,20 +61,7 @@ export default function AdsManagerDashboardPage() {
   const isTasksLoading = tasksQuery.isLoading;
   const fetchTasks = tasksQuery.refetch;
 
-  const teamQuery = useGetTeamsByRole(toApiRole(ROLES.OWNER), { 
-    enabled: mounted,
-    select: (resp: any) => {
-      const data = Array.isArray(resp?.results) ? resp.results : (resp?.results?.data || []);
-      if (!Array.isArray(data)) return [];
-      return data.map((m: any) => ({
-        id: m.id,
-        name: m.full_name || m.fullName || m.name,
-        role: m.role || ROLES.OWNER
-      }));
-    }
-  });
-
-  const teamMembers = (teamQuery.data as any[]) || [];
+  const teamMembers: any[] = [];
 
   useEffect(() => {
     setMounted(true);

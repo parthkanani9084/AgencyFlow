@@ -125,14 +125,8 @@ export const useClientManagement = () => {
           fetchClients();
         }
       } else {
-        const data = await createClient(payload);
-        const newClient: Client = {
-          id: data.results?.id || `c${Date.now()}`,
-          ...submissionData,
-          payments: [],
-          createdAt: new Date().toISOString().split('T')[0],
-        };
-        setClients(prev => [newClient, ...prev]);
+        await createClient(payload);
+        fetchClients();
       }
       setModalOpen(false);
     } catch (error) { }

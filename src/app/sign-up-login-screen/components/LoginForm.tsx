@@ -162,9 +162,9 @@ export default function LoginForm() {
                   minLength: { value: STATIC_STRINGS.LOGIN_PWD_MIN_LENGTH as number, message: STATIC_STRINGS.LOGIN_ERR_PWD_MIN },
                 }}
               >
-                <button type="button" className="text-[12px] text-violet-600 hover:text-violet-700 font-medium transition-colors">
+                {/* <button type="button" className="text-[12px] text-violet-600 hover:text-violet-700 font-medium transition-colors">
                   {STATIC_STRINGS.LOGIN_FORM_PWD_FORGOT}
-                </button>
+                </button> */}
               </AuthInput>
               <button
                 type="button"
@@ -176,10 +176,10 @@ export default function LoginForm() {
               </button>
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <input id="remember" type="checkbox" className="w-4 h-4 rounded border-slate-300 accent-violet-600 cursor-pointer" {...register('remember')} />
               <label htmlFor="remember" className="text-[13px] text-slate-600 cursor-pointer">{STATIC_STRINGS.LOGIN_FORM_REMEMBER}</label>
-            </div>
+            </div> */}
 
             <button
               type="submit"

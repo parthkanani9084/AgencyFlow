@@ -78,8 +78,7 @@ export default function Sidebar() {
     // Account
     { id: 'nav-team',          label: 'Team',          icon: Users,           href: ROUTES.TEAM,                  group: 'settings',  allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
     { id: 'nav-notifications', label: 'Notifications', icon: Bell,            href: ROUTES.NOTIFICATIONS,         badge: unreadCount > 0 ? unreadCount : undefined, group: 'settings', allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
-    { id: 'nav-settings',      label: 'Settings',      icon: Settings,        href: ROUTES.SETTINGS,              group: 'settings',  allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
-    // Super Admin - Settings (Removed as per request)
+    // { id: 'nav-settings',      label: 'Settings',      icon: Settings,        href: ROUTES.SETTINGS,              group: 'settings',  allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
   ];
 
   // Filter nav items to only those the current user's role can access
