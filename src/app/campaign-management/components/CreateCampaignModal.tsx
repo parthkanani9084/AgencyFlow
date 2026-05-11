@@ -1,11 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import Modal from '@/components/ui/Modal';
-import { STATIC_STRINGS, TEAM_MEMBERS, OBJECTIVE_OPTIONS, PLATFORM_OPTIONS } from '@/utils/constants';
+import {
+  STATIC_STRINGS,
+  TEAM_MEMBERS,
+  OBJECTIVE_OPTIONS,
+  PLATFORM_OPTIONS,
+} from '@/utils/constants';
 import { clientService } from '@/api/services/client.service';
-import { ROLES } from '@/constants/roles';
+import { LoaderCircle } from 'lucide-react';
+
+
+import { useCreateCampaign  } from '@/api/hooks/useCreateCampaign';
+import { CreateCampaignPayload } from '@/api/services/campaign.service';
+import { useGetTeamsByRole } from '@/api/hooks/useTeam';
 
 interface CampaignFormValues {
   name: string;
@@ -33,7 +43,31 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [clientsList, setClientsList] = useState<{ id: string; name: string }[]>([]);
   const [isFetchingClients, setIsFetchingClients] = useState(false);
+  const [adManagers, setAdManagers] = useState<{ id: string; full_name: string }[]>([]);
 
+
+  // For fetching ad managers based on role
+  const role = STATIC_STRINGS.CAMPAIGN_ADSMANAGER_ROLE;
+
+  const { data, isLoading, error } = useGetTeamsByRole(role, open);
+
+  useEffect(() => {
+    if (data) {
+      const results = data?.results || [];
+      const mapped = results.map((m: any) => ({
+        id: String(m.id),
+        full_name: String(m.full_name),
+      }));
+
+      setAdManagers(mapped);
+    }
+
+    if (error) {
+      setAdManagers([]);
+    }
+  }, [data, error]);
+
+  // Adjust if your API returns a different structure
   const {
     register,
     handleSubmit,
@@ -63,10 +97,12 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
       try {
         const response = await clientService.getClients({ page: 1, limit: 100 });
         if (response?.results?.data) {
-          setClientsList(response.results.data.map((c: any) => ({
-            id: c.id,
-            name: c.clientName
-          })));
+          setClientsList(
+            response.results.data.map((c: any) => ({
+              id: c.id,
+              name: c.clientName,
+            }))
+          );
         }
       } catch (error) {
       } finally {
@@ -84,10 +120,11 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
 
   const handleNext = async (e: React.MouseEvent) => {
     e.preventDefault();
-    const fieldsToValidate = step === 1
-      ? (['name', 'platforms', 'objective', 'dailyBudget', 'adsAssignee', 'deadline'] as const)
-      : ([] as any);
-    
+    const fieldsToValidate =
+      step === 1
+        ? (['name', 'platforms', 'objective', 'dailyBudget', 'adsAssignee', 'deadline'] as const)
+        : ([] as any);
+
     if (fieldsToValidate.length > 0) {
       const valid = await trigger(fieldsToValidate);
       if (valid) setStep(2);
@@ -96,32 +133,44 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
     }
   };
 
+  const { mutateAsync: createCampaign } = useCreateCampaign();
+
   const onSubmit = async (data: CampaignFormValues) => {
     setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 1100));
-    const idNum = Math.floor(Math.random() * 900) + 100;
-    const newCampaign = {
-      id: `camp-${idNum}`,
-      name: data.name,
-      client: data.client,
-      status: STATIC_STRINGS.ADS_STATUS_DRAFT,
-      stage: 'in draft',
-      assignee: TEAM_MEMBERS.find((m) => m.id === data.adsAssignee)?.name ?? STATIC_STRINGS.COMMON_UNASSIGNED,
-      assigneeInitials: (TEAM_MEMBERS.find((m) => m.id === data.adsAssignee)?.name ?? STATIC_STRINGS.COMMON_UNASSIGNED_INITIALS).split(' ').map((n) => n[0]).join(''),
-      deadline: data.deadline,
-      spend: `${STATIC_STRINGS.CURRENCY_SYMBOL}0`,
-      budget: `${STATIC_STRINGS.CURRENCY_SYMBOL}${Number(data.dailyBudget).toLocaleString()}${STATIC_STRINGS.BUDGET_PER_DAY}`,
-      leads: 0,
-      roas: 0,
-      platform: data.platforms.length > 1 ? STATIC_STRINGS.MULTI_PLATFORM : (data.platforms[0] || STATIC_STRINGS.DEFAULT_PLATFORM),
-      progress: 0,
-      createdAt: new Date().toLocaleDateString(),
-    };
-    setIsSubmitting(false);
-    reset();
-    setStep(1);
-    onSuccess(newCampaign);
+
+    try {
+      const payload: CreateCampaignPayload = {
+        campaign_name: data.name,
+        client_id: clientsList.find((c) => c.name === data.client)?.id || '',
+        assigned_to: data.adsAssignee,
+        ads_platform: data.platforms,
+        objective: data.objective,
+        daily_budget: Number(data.dailyBudget),
+        campaign_run_location: data.location,
+        target_audience: data.targetAudience,
+        media_location: data.photoVideoLocation,
+        deadline_date: data.deadline,
+        notes: data.note,
+        priority_level: data.priority,
+      };
+
+      const response = await createCampaign(payload);
+
+      if (response.success) {
+        onSuccess(response.results);
+        handleClose();
+
+        reset();
+        setStep(1);
+      } else {
+      }
+    } catch (error) {
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+  
+
 
   const steps = [
     { id: 1, label: STATIC_STRINGS.CREATE_CAMPAIGN_STEP_DETAILS },
@@ -129,7 +178,13 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
   ];
 
   return (
-    <Modal open={open} onClose={handleClose} title={STATIC_STRINGS.CREATE_CAMPAIGN_TITLE} subtitle={STATIC_STRINGS.CREATE_CAMPAIGN_SUBTITLE} size="lg">
+    <Modal
+      open={open}
+      onClose={handleClose}
+      title={STATIC_STRINGS.CREATE_CAMPAIGN_TITLE}
+      subtitle={STATIC_STRINGS.CREATE_CAMPAIGN_SUBTITLE}
+      size="lg"
+    >
       <form onSubmit={handleSubmit(onSubmit)}>
         {/* Step progress */}
         <div className="px-6 pt-5 pb-4 border-b border-slate-100">
@@ -137,18 +192,27 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
             {steps.map((s, i) => (
               <React.Fragment key={`step-indicator-${s.id}`}>
                 <div className="flex flex-col items-center">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-all ${
-                    step > s.id ? 'bg-violet-600 text-white' :
-                    step === s.id ? 'bg-violet-600 text-white ring-4 ring-violet-100': 'bg-slate-100 text-slate-400'
-                  }`}>
+                  <div
+                    className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-all ${
+                      step > s.id
+                        ? 'bg-violet-600 text-white'
+                        : step === s.id
+                          ? 'bg-violet-600 text-white ring-4 ring-violet-100'
+                          : 'bg-slate-100 text-slate-400'
+                    }`}
+                  >
                     {step > s.id ? '✓' : s.id}
                   </div>
-                  <span className={`text-[10.5px] mt-1 font-medium whitespace-nowrap ${step >= s.id ? 'text-violet-700' : 'text-slate-400'}`}>
+                  <span
+                    className={`text-[10.5px] mt-1 font-medium whitespace-nowrap ${step >= s.id ? 'text-violet-700' : 'text-slate-400'}`}
+                  >
                     {s.label}
                   </span>
                 </div>
                 {i < steps.length - 1 && (
-                  <div className={`flex-1 h-0.5 mb-4 mx-1 transition-all ${step > s.id ? 'bg-violet-400' : 'bg-slate-200'}`} />
+                  <div
+                    className={`flex-1 h-0.5 mb-4 mx-1 transition-all ${step > s.id ? 'bg-violet-400' : 'bg-slate-200'}`}
+                  />
                 )}
               </React.Fragment>
             ))}
@@ -161,58 +225,89 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
             <div className="space-y-4 animate-fade-in max-h-[60vh] overflow-y-auto pr-1">
               {/* 1. Campaign Name */}
               <div>
-                <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CAMPAIGN_FIELD_NAME} <span className="text-red-500">*</span></label>
+                <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
+                  {STATIC_STRINGS.CAMPAIGN_FIELD_NAME} <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   placeholder={STATIC_STRINGS.CREATE_CAMPAIGN_PLACEHOLDER_NAME}
                   className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all ${errors.name ? 'border-red-400 bg-red-50' : 'border-slate-200'}`}
                   {...register('name', { required: STATIC_STRINGS.FORM_NAME_REQUIRED })}
                 />
-                {errors.name && <p className="mt-1 text-[11.5px] text-red-600">{errors.name.message}</p>}
+                {errors.name && (
+                  <p className="mt-1 text-[11.5px] text-red-600">{errors.name.message}</p>
+                )}
               </div>
 
               {/* 2. Ad Platform */}
               <div>
-                <label className="block text-[12.5px] font-semibold text-slate-700 mb-2">{STATIC_STRINGS.CREATE_CAMPAIGN_PLATFORM} <span className="text-red-500">*</span></label>
+                <label className="block text-[12.5px] font-semibold text-slate-700 mb-2">
+                  {STATIC_STRINGS.CREATE_CAMPAIGN_PLATFORM} <span className="text-red-500">*</span>
+                </label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {PLATFORM_OPTIONS.filter(p => p !== STATIC_STRINGS.MULTI_PLATFORM).map((p) => (
-                    <label key={`plat-${p}`} className="flex items-center gap-2 rounded-lg cursor-pointer transition-all">
+                  {PLATFORM_OPTIONS.filter((p) => p !== STATIC_STRINGS.MULTI_PLATFORM).map((p) => (
+                    <label
+                      key={`plat-${p}`}
+                      className="flex items-center gap-2 rounded-lg cursor-pointer transition-all"
+                    >
                       <input
                         type="checkbox"
                         value={p}
                         className="w-4 h-4 rounded text-violet-600 focus:ring-violet-500/20 border-slate-300"
-                        {...register('platforms', { validate: (val) => val.length > 0 || STATIC_STRINGS.CREATE_CAMPAIGN_ERR_SELECT_PLATFORM })}
+                        {...register('platforms', {
+                          validate: (val) =>
+                            val.length > 0 || STATIC_STRINGS.CREATE_CAMPAIGN_ERR_SELECT_PLATFORM,
+                        })}
                       />
                       <span className="text-[13px] text-slate-600">{p}</span>
                     </label>
                   ))}
                 </div>
-                {errors.platforms && <p className="mt-1 text-[11.5px] text-red-600">{errors.platforms.message as string}</p>}
+                {errors.platforms && (
+                  <p className="mt-1 text-[11.5px] text-red-600">
+                    {errors.platforms.message as string}
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 {/* 3. Objective */}
                 <div>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_OBJECTIVE} <span className="text-red-500">*</span></label>
+                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
+                    {STATIC_STRINGS.CREATE_CAMPAIGN_OBJECTIVE}{' '}
+                    <span className="text-red-500">*</span>
+                  </label>
                   <select
                     className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all bg-white ${errors.objective ? 'border-red-400' : 'border-slate-200'}`}
-                    {...register('objective', { required: STATIC_STRINGS.CREATE_CAMPAIGN_ERR_SELECT_OBJECTIVE })}
+                    {...register('objective', {
+                      required: STATIC_STRINGS.CREATE_CAMPAIGN_ERR_SELECT_OBJECTIVE,
+                    })}
                   >
                     <option value="">{STATIC_STRINGS.CREATE_CAMPAIGN_SELECT_OBJECTIVE}</option>
-                    {OBJECTIVE_OPTIONS.map((o) => <option key={`obj-${o}`} value={o}>{o}</option>)}
+                    {OBJECTIVE_OPTIONS.map((o) => (
+                      <option key={`obj-${o}`} value={o}>
+                        {o}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 {/* 4. Daily Budget (INR) */}
                 <div>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_BUDGET} <span className="text-red-500">*</span></label>
+                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
+                    {STATIC_STRINGS.CREATE_CAMPAIGN_BUDGET} <span className="text-red-500">*</span>
+                  </label>
                   <div className="relative">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[13px]">{STATIC_STRINGS.CURRENCY_SYMBOL}</span>
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[13px]">
+                      {STATIC_STRINGS.CURRENCY_SYMBOL}
+                    </span>
                     <input
                       type="number"
                       placeholder={STATIC_STRINGS.CREATE_CAMPAIGN_PLACEHOLDER_BUDGET}
                       className={`w-full pl-8 pr-3.5 py-2.5 rounded-lg border text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all ${errors.dailyBudget ? 'border-red-400 bg-red-50' : 'border-slate-200'}`}
-                      {...register('dailyBudget', { required: STATIC_STRINGS.CREATE_CAMPAIGN_ERR_BUDGET_REQUIRED })}
+                      {...register('dailyBudget', {
+                        required: STATIC_STRINGS.CREATE_CAMPAIGN_ERR_BUDGET_REQUIRED,
+                      })}
                     />
                   </div>
                 </div>
@@ -221,7 +316,9 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
               <div className="grid grid-cols-2 gap-4">
                 {/* 5. Location */}
                 <div>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_LOCATION}</label>
+                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
+                    {STATIC_STRINGS.CREATE_CAMPAIGN_LOCATION}
+                  </label>
                   <input
                     type="text"
                     placeholder={STATIC_STRINGS.CREATE_CAMPAIGN_PLACEHOLDER_LOCATION}
@@ -231,7 +328,9 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
                 </div>
                 {/* 6. Target Audience */}
                 <div>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_AUDIENCE}</label>
+                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
+                    {STATIC_STRINGS.CREATE_CAMPAIGN_AUDIENCE}
+                  </label>
                   <input
                     type="text"
                     placeholder={STATIC_STRINGS.CREATE_CAMPAIGN_PLACEHOLDER_AUDIENCE}
@@ -244,7 +343,9 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
               <div className="grid grid-cols-2 gap-4">
                 {/* 7. Photo/Video Location */}
                 <div>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_MEDIA_LOCATION}</label>
+                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
+                    {STATIC_STRINGS.CREATE_CAMPAIGN_MEDIA_LOCATION}
+                  </label>
                   <input
                     type="text"
                     placeholder={STATIC_STRINGS.CREATE_CAMPAIGN_PLACEHOLDER_MEDIA_LOCATION}
@@ -254,7 +355,10 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
                 </div>
                 {/* 8. Campaign Deadline */}
                 <div>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_DEADLINE} <span className="text-red-500">*</span></label>
+                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
+                    {STATIC_STRINGS.CREATE_CAMPAIGN_DEADLINE}{' '}
+                    <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="date"
                     className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all ${errors.deadline ? 'border-red-400 bg-red-50' : 'border-slate-200'}`}
@@ -266,14 +370,28 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
               <div className="grid grid-cols-2 gap-4">
                 {/* 9. Ad Manager */}
                 <div>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_AD_MANAGER} <span className="text-red-500">*</span></label>
+                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
+                    {STATIC_STRINGS.CREATE_CAMPAIGN_AD_MANAGER}{' '}
+                    <span className="text-red-500">*</span>
+                  </label>
                   <select
-                    className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all bg-white ${errors.adsAssignee ? 'border-red-400' : 'border-slate-200'}`}
-                    {...register('adsAssignee', { required: STATIC_STRINGS.CREATE_CAMPAIGN_ERR_SELECT_MANAGER })}
+                    className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all bg-white ${
+                      errors.adsAssignee ? 'border-red-400' : 'border-slate-200'
+                    }`}
+                    {...register('adsAssignee', {
+                      required: STATIC_STRINGS.CREATE_CAMPAIGN_ERR_SELECT_MANAGER,
+                    })}
                   >
-                    <option value="">{STATIC_STRINGS.CREATE_CAMPAIGN_SELECT_MANAGER}</option>
-                    {TEAM_MEMBERS.filter((m) => m.role === ROLES.ADS_MANAGER || m.role === ROLES.MANAGER).map((m) => (
-                      <option key={`mgr-${m.id}`} value={m.id}>{m.name}</option>
+                    <option value="">
+                      {adManagers.length === 0
+                        ? STATIC_STRINGS.CREATE_CAMPAIGN_SELECT_MANAGER
+                        : STATIC_STRINGS.CREATE_CAMPAIGN_SELECT_MANAGER}
+                    </option>
+
+                    {adManagers.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.full_name}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -281,7 +399,9 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
 
               {/* 10. Note */}
               <div>
-                <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_NOTE}</label>
+                <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
+                  {STATIC_STRINGS.CREATE_CAMPAIGN_NOTE}
+                </label>
                 <textarea
                   rows={2}
                   placeholder={STATIC_STRINGS.CREATE_CAMPAIGN_PLACEHOLDER_NOTE}
@@ -297,8 +417,12 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
             <div className="space-y-4 animate-fade-in">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_PRIORITY}</label>
-                  <p className="text-[11.5px] text-slate-400 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_PRIORITY_DESC}</p>
+                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
+                    {STATIC_STRINGS.CREATE_CAMPAIGN_PRIORITY}
+                  </label>
+                  <p className="text-[11.5px] text-slate-400 mb-1.5">
+                    {STATIC_STRINGS.CREATE_CAMPAIGN_PRIORITY_DESC}
+                  </p>
                   <select
                     className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all bg-white"
                     {...register('priority')}
@@ -310,14 +434,26 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
                 </div>
 
                 <div>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CAMPAIGN_FIELD_CLIENT}</label>
-                  <p className="text-[11.5px] text-slate-400 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_CLIENT_DESC}</p>
+                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
+                    {STATIC_STRINGS.CAMPAIGN_FIELD_CLIENT}
+                  </label>
+                  <p className="text-[11.5px] text-slate-400 mb-1.5">
+                    {STATIC_STRINGS.CREATE_CAMPAIGN_CLIENT_DESC}
+                  </p>
                   <select
                     className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all bg-white"
                     {...register('client')}
                   >
-                    <option value="">{isFetchingClients ? 'Loading clients...' : STATIC_STRINGS.CREATE_CAMPAIGN_SELECT_CLIENT}</option>
-                    {clientsList.map((c) => <option key={`client-sel-${c.id}`} value={c.name}>{c.name}</option>)}
+                    <option value="">
+                      {isFetchingClients
+                        ? 'Loading clients...'
+                        : STATIC_STRINGS.CREATE_CAMPAIGN_SELECT_CLIENT}
+                    </option>
+                    {clientsList.map((c) => (
+                      <option key={`client-sel-${c.id}`} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -343,7 +479,9 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
           </button>
 
           <div className="flex items-center gap-2">
-            <span className="text-[11.5px] text-slate-400">{STATIC_STRINGS.CREATE_CAMPAIGN_STEP} {step} {STATIC_STRINGS.CREATE_CAMPAIGN_OF} 2</span>
+            <span className="text-[11.5px] text-slate-400">
+              {STATIC_STRINGS.CREATE_CAMPAIGN_STEP} {step} {STATIC_STRINGS.CREATE_CAMPAIGN_OF} 2
+            </span>
             {step < 2 ? (
               <button
                 type="button"
@@ -360,10 +498,7 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
               >
                 {isSubmitting ? (
                   <>
-                    <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                    </svg>
+                   <LoaderCircle className="w-4 h-4 animate-spin" />
                     {STATIC_STRINGS.CREATE_CAMPAIGN_CREATING}
                   </>
                 ) : (

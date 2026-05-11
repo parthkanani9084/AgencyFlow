@@ -1,5 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { teamService, CreateTeamPayload, UpdateTeamPayload, GetTeamsParams } from '../services/team.service';
+import {
+  teamService,
+  CreateTeamPayload,
+  UpdateTeamPayload,
+  GetTeamsParams,
+} from '../services/team.service';
 
 export const useGetTeams = (params: GetTeamsParams) => {
   return useQuery({
@@ -47,5 +52,13 @@ export const useTeamRole = (id: string | null) => {
     queryKey: ['team-role', id],
     queryFn: () => teamService.getTeamRole(id!),
     enabled: !!id,
+  });
+};
+
+export const useGetTeamsByRole = (role: string, open: boolean) => {
+  return useQuery({
+    queryKey: ['teams-by-role', role],
+    queryFn: () => teamService.getTeamsByRole(role),
+    enabled: !!role && open,
   });
 };

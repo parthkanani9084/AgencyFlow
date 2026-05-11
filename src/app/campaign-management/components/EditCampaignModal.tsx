@@ -5,7 +5,14 @@ import { useForm } from 'react-hook-form';
 import Modal from '@/components/ui/Modal';
 import { useAuth } from '@/context/AuthContext';
 import { auditService } from '@/lib/services/auditService';
-import { STATIC_STRINGS, CAMPAIGN_STATUS_OPTIONS, CAMPAIGN_STAGE_OPTIONS, PLATFORM_OPTIONS, TEAM_MEMBERS } from '@/utils/constants';
+import {
+  STATIC_STRINGS,
+  CAMPAIGN_STATUS_OPTIONS,
+  CAMPAIGN_STAGE_OPTIONS,
+  PLATFORM_OPTIONS,
+  TEAM_MEMBERS,
+} from '@/utils/constants';
+import { useGetCampaignById } from '@/api/hooks/useCreateCampaign';
 
 interface CampaignFormValues {
   name: string;
@@ -33,6 +40,15 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
   const isOwnerOrManager = user?.role === 'Owner' || user?.role === 'Manager';
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [editOpen, setEditOpen] = useState(false);
+const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
+
+const { data: campaignResponse, isLoading } = useGetCampaignById(
+  selectedCampaignId ?? undefined
+);
+
+const currentCampaign = campaignResponse?.results;
+
   const {
     register,
     handleSubmit,
@@ -40,7 +56,6 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
     watch,
     formState: { errors },
   } = useForm<CampaignFormValues>();
-
 
   useEffect(() => {
     if (campaign) {
@@ -51,22 +66,22 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
       }
       let currentStage = campaign.stage || 'in draft';
       const stageMap: Record<string, string> = {
-        'Briefing': 'in draft',
-        'Shooting': 'process',
-        'Editing': 'process',
+        Briefing: 'in draft',
+        Shooting: 'process',
+        Editing: 'process',
         'Ads Setup': 'process',
         'Ads Live': 'publish',
-        'Review': 'in review',
-        'Completed': 'publish'
+        Review: 'in review',
+        Completed: 'publish',
       };
-      
+
       if (stageMap[currentStage]) {
         currentStage = stageMap[currentStage];
       }
-      
+
       const normalizedStatus = (campaign.status || STATIC_STRINGS.ADS_STATUS_DRAFT).toLowerCase();
       const normalizedStage = currentStage.toLowerCase();
-      const normalizedPlatform = (campaign.platform || STATIC_STRINGS.DEFAULT_PLATFORM);
+      const normalizedPlatform = campaign.platform || STATIC_STRINGS.DEFAULT_PLATFORM;
 
       reset({
         name: campaign.name,
@@ -94,18 +109,21 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
       savedDate = `${m}/${d}/${y}`;
     }
 
-    const selectedMember = TEAM_MEMBERS.find(m => m.name === data.assignee);
+    const selectedMember = TEAM_MEMBERS.find((m) => m.name === data.assignee);
     const updatedData = {
       ...campaign,
       ...data,
       deadline: savedDate,
       leads: Number(data.leads),
       roas: Number(data.roas),
-      assigneeInitials: selectedMember 
-        ? selectedMember.name.split(' ').map(n => n[0]).join('').toUpperCase()
-        : STATIC_STRINGS.COMMON_UNASSIGNED_INITIALS
+      assigneeInitials: selectedMember
+        ? selectedMember.name
+            .split(' ')
+            .map((n) => n[0])
+            .join('')
+            .toUpperCase()
+        : STATIC_STRINGS.COMMON_UNASSIGNED_INITIALS,
     };
-
 
     const finalCampaign = auditService.performAtomicUpdate(campaign, updatedData, user as any);
 
@@ -122,10 +140,11 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
       size="xl"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-5">
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CAMPAIGN_FIELD_NAME}</label>
+            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
+              {STATIC_STRINGS.CAMPAIGN_FIELD_NAME}
+            </label>
             <input
               type="text"
               className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 font-semibold disabled:bg-slate-50 disabled:text-slate-500"
@@ -134,7 +153,9 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
             />
           </div>
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CAMPAIGN_FIELD_CLIENT}</label>
+            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
+              {STATIC_STRINGS.CAMPAIGN_FIELD_CLIENT}
+            </label>
             <input
               type="text"
               className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 disabled:bg-slate-50 disabled:text-slate-500"
@@ -147,7 +168,9 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
         {/* Row 2: Workflow & Status */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CAMPAIGN_FIELD_STATUS}</label>
+            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
+              {STATIC_STRINGS.CAMPAIGN_FIELD_STATUS}
+            </label>
             <select
               className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 bg-white disabled:bg-slate-50 disabled:text-slate-500"
               {...register('status')}
@@ -161,7 +184,9 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
             </select>
           </div>
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CAMPAIGN_FIELD_STAGE}</label>
+            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
+              {STATIC_STRINGS.CAMPAIGN_FIELD_STAGE}
+            </label>
             <select
               className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 bg-white disabled:bg-slate-50 disabled:text-slate-500"
               {...register('stage')}
@@ -169,23 +194,34 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
             >
               {CAMPAIGN_STAGE_OPTIONS.map((s) => (
                 <option key={s} value={s}>
-                  {s.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                  {s
+                    .split(' ')
+                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ')}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CAMPAIGN_FIELD_PLATFORM}</label>
+            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
+              {STATIC_STRINGS.CAMPAIGN_FIELD_PLATFORM}
+            </label>
             <select
               className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 bg-white disabled:bg-slate-50 disabled:text-slate-500"
               {...register('platform')}
               disabled={!isOwnerOrManager}
             >
-              {PLATFORM_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+              {PLATFORM_OPTIONS.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
             </select>
           </div>
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CAMPAIGN_FIELD_DEADLINE}</label>
+            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
+              {STATIC_STRINGS.CAMPAIGN_FIELD_DEADLINE}
+            </label>
             <input
               type="date"
               className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 bg-white disabled:bg-slate-50 disabled:text-slate-500"
@@ -198,23 +234,33 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
         {/* Row 3: Assignment */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CAMPAIGN_FIELD_ASSIGNEE}</label>
+            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
+              {STATIC_STRINGS.CAMPAIGN_FIELD_ASSIGNEE}
+            </label>
             <select
               className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 bg-white disabled:bg-slate-50 disabled:text-slate-500"
               {...register('assignee')}
               disabled={!isOwnerOrManager}
             >
-              {TEAM_MEMBERS.map((m) => <option key={m.id} value={m.name}>{m.name}</option>)}
+              {TEAM_MEMBERS.map((m) => (
+                <option key={m.id} value={m.name}>
+                  {m.name}
+                </option>
+              ))}
             </select>
           </div>
         </div>
 
         {/* Row 4: Financials & Metrics */}
         <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-          <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-4">{STATIC_STRINGS.EDIT_MODAL_FINANCIALS}</h3>
+          <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-4">
+            {STATIC_STRINGS.EDIT_MODAL_FINANCIALS}
+          </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-[12px] font-semibold text-slate-600 mb-1">{STATIC_STRINGS.CAMPAIGN_FIELD_BUDGET}</label>
+              <label className="block text-[12px] font-semibold text-slate-600 mb-1">
+                {STATIC_STRINGS.CAMPAIGN_FIELD_BUDGET}
+              </label>
               <input
                 type="text"
                 className="w-full px-3 py-2 rounded-lg border border-slate-200 text-[13px] outline-none"
@@ -222,7 +268,9 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
               />
             </div>
             <div>
-              <label className="block text-[12px] font-semibold text-slate-600 mb-1">{STATIC_STRINGS.EDIT_MODAL_ACTUAL_SPEND}</label>
+              <label className="block text-[12px] font-semibold text-slate-600 mb-1">
+                {STATIC_STRINGS.EDIT_MODAL_ACTUAL_SPEND}
+              </label>
               <input
                 type="text"
                 className="w-full px-3 py-2 rounded-lg border border-slate-200 text-[13px] outline-none"
@@ -230,7 +278,9 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
               />
             </div>
             <div>
-              <label className="block text-[12px] font-semibold text-slate-600 mb-1">{STATIC_STRINGS.CAMPAIGN_FIELD_LEADS}</label>
+              <label className="block text-[12px] font-semibold text-slate-600 mb-1">
+                {STATIC_STRINGS.CAMPAIGN_FIELD_LEADS}
+              </label>
               <input
                 type="number"
                 className="w-full px-3 py-2 rounded-lg border border-slate-200 text-[13px] outline-none"
@@ -238,7 +288,9 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
               />
             </div>
             <div>
-              <label className="block text-[12px] font-semibold text-slate-600 mb-1">{STATIC_STRINGS.CAMPAIGN_FIELD_ROAS}</label>
+              <label className="block text-[12px] font-semibold text-slate-600 mb-1">
+                {STATIC_STRINGS.CAMPAIGN_FIELD_ROAS}
+              </label>
               <input
                 type="number"
                 step="0.1"

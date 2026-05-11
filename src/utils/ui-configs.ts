@@ -79,7 +79,7 @@ export const PLATFORM_STYLES: Record<string, string> = {
   Facebook: 'bg-blue-50 text-blue-700 border border-blue-100',
   Instagram: 'bg-pink-50 text-pink-700 border border-pink-100 px-2.5',
   Google: 'bg-emerald-50 text-emerald-700 border border-emerald-100',
-  TikTok: UI_PALETTE.DARK,
+  TikTok: 'bg-pink-50 text-pink-700 border border-pink-100 px-2.5',
   LinkedIn: UI_PALETTE.SKY,
   Multi: UI_PALETTE.PRIMARY,
 };

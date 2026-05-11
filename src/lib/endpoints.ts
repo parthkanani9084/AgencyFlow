@@ -5,6 +5,14 @@ export const CLIENT_BASE_URL = '/owner/client';
 export const TEAM_BASE_URL = '/owner/team';
 export const TASK_BASE_URL = '/owner/task';
 
+//
+export const CREATE_CAMPAIGN_URL = '/owner/campaign';
+export const GET_CAMPAIGNS_URL = '/owner/campaign';
+export const DELETE_CAMPAIGN_URL = '/owner/campaign';
+export const UPDATE_CAMPAIGN_URL = '/owner/campaign';
+export const GET_CAMPAIGN_BY_ID_URL = '/owner/campaign';
+
+
 // Specific Endpoint Constants (using base URLs)
 export const CREATE_CLIENT_URL = CLIENT_BASE_URL;
 export const GET_CLIENTS_URL = CLIENT_BASE_URL;

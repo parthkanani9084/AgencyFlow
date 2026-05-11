@@ -1,10 +1,19 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
-  Search, Plus, ChevronUp, ChevronDown, ChevronsUpDown,
-  Edit2, Trash2, X, Download, Megaphone,
-  TrendingUp, History
+  Search,
+  Plus,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown,
+  Edit2,
+  Trash2,
+  X,
+  Download,
+  Megaphone,
+  TrendingUp,
+  History,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
@@ -15,11 +24,15 @@ import LogPerformanceModal from './LogPerformanceModal';
 import CampaignHistoryModal from './CampaignHistoryModal';
 import Pagination from '@/components/ui/Pagination';
 import {
-  STATIC_STRINGS, ROLES,
-  CAMPAIGN_STATUS_OPTIONS, CAMPAIGN_STAGE_OPTIONS
+  STATIC_STRINGS,
+  ROLES,
+  CAMPAIGN_STATUS_OPTIONS,
+  CAMPAIGN_STAGE_OPTIONS,
 } from '@/utils/constants';
 import { CAMPAIGN_STATUS_STYLES, CAMPAIGN_STAGE_STYLES, PLATFORM_STYLES } from '@/utils/ui-configs';
-
+import { useGetCampaigns } from '@/api/hooks/useCreateCampaign';
+import { campaignService } from '@/api/services/campaign.service';
+import { useDeleteCampaign } from '@/api/hooks/useCreateCampaign';
 
 type CampaignStatus = 'active' | 'draft' | 'paused' | 'completed' | 'archived';
 type WorkflowStage = 'in draft' | 'in review' | 'process' | 'publish';
@@ -54,25 +67,10 @@ type SortField = 'name' | 'client' | 'deadline' | 'leads' | 'roas' | 'spend';
 type SortDir = 'asc' | 'desc';
 
 
-const INITIAL_CAMPAIGNS: Campaign[] = [
-  { id: 'camp-001', name: 'Spring Collection Launch', client: 'Luma Apparel', status: 'active', stage: 'publish', assignee: 'Sofia Nguyen', assigneeInitials: 'SN', deadline: '04/18/2026', spend: '$8,420', budget: '$12,000', leads: 624, roas: 5.8, platform: 'Meta', createdAt: '03/01/2026' },
-  { id: 'camp-002', name: 'Q2 Lead Generation Drive', client: 'Nexus Capital', status: 'active', stage: 'publish', assignee: 'Sofia Nguyen', assigneeInitials: 'SN', deadline: '04/30/2026', spend: '$12,100', budget: '$18,000', leads: 891, roas: 4.9, platform: 'Google', createdAt: '03/05/2026' },
-  { id: 'camp-003', name: 'Product Reveal Reel', client: 'Orion Fitness', status: 'active', stage: 'process', assignee: 'Jin Park', assigneeInitials: 'JP', deadline: '04/12/2026', spend: '$3,200', budget: '$7,500', leads: 210, roas: 3.1, platform: 'TikTok', createdAt: '03/10/2026' },
-  { id: 'camp-004', name: 'B2B Awareness Push', client: 'Synapse Tech', status: 'active', stage: 'publish', assignee: 'Sofia Nguyen', assigneeInitials: 'SN', deadline: '04/25/2026', spend: '$6,750', budget: '$10,000', leads: 178, roas: 4.2, platform: 'LinkedIn', createdAt: '03/12/2026' },
-  { id: 'camp-005', name: 'Summer Sale Blitz', client: 'Coral Beauty', status: 'active', stage: 'process', assignee: 'Marco Reyes', assigneeInitials: 'MR', deadline: '04/10/2026', spend: '$1,800', budget: '$9,000', leads: 94, roas: 2.4, platform: 'Meta', createdAt: '03/20/2026' },
-  { id: 'camp-006', name: 'Reactivation Campaign', client: 'Pulse Nutrition', status: 'active', stage: 'in review', assignee: 'Priya Sharma', assigneeInitials: 'PS', deadline: '04/11/2026', spend: '$4,500', budget: '$6,000', leads: 312, roas: 3.9, platform: 'Meta', createdAt: '02/28/2026' },
-  { id: 'camp-007', name: 'Brand Awareness Wave', client: 'Helios Solar', status: 'paused', stage: 'process', assignee: 'Sofia Nguyen', assigneeInitials: 'SN', deadline: '04/22/2026', spend: '$2,100', budget: '$8,500', leads: 67, roas: 1.8, platform: 'Google', createdAt: '03/15/2026' },
-  { id: 'camp-008', name: 'Influencer Collab Push', client: 'Bloom Skincare', status: 'active', stage: 'process', assignee: 'Jin Park', assigneeInitials: 'JP', deadline: '04/14/2026', spend: '$5,600', budget: '$11,000', leads: 445, roas: 4.1, platform: 'TikTok', createdAt: '03/18/2026' },
-  { id: 'camp-009', name: 'Retargeting Funnel Q2', client: 'Nexus Capital', status: 'active', stage: 'publish', assignee: 'Sofia Nguyen', assigneeInitials: 'SN', deadline: '05/05/2026', spend: '$7,300', budget: '$14,000', leads: 534, roas: 4.6, platform: 'Multi', createdAt: '03/22/2026' },
-  { id: 'camp-010', name: 'Gym Membership Drive', client: 'Orion Fitness', status: 'draft', stage: 'in draft', assignee: 'Priya Sharma', assigneeInitials: 'PS', deadline: '04/28/2026', spend: '$0', budget: '$6,000', leads: 0, roas: 0, platform: 'Meta', createdAt: '04/01/2026' },
-  { id: 'camp-011', name: 'End-of-Season Clearance', client: 'Luma Apparel', status: 'completed', stage: 'publish', assignee: 'Sofia Nguyen', assigneeInitials: 'SN', deadline: '03/31/2026', spend: '$9,800', budget: '$10,000', leads: 728, roas: 5.2, platform: 'Meta', createdAt: '02/15/2026' },
-  { id: 'camp-012', name: 'Tech Event Sponsorship', client: 'Synapse Tech', status: 'active', stage: 'process', assignee: 'Marco Reyes', assigneeInitials: 'MR', deadline: '04/16/2026', spend: '$2,400', budget: '$7,000', leads: 88, roas: 2.1, platform: 'LinkedIn', createdAt: '03/28/2026' },
-];
-
-
 export default function CampaignTable() {
   const { user } = useAuth();
-  const [campaigns, setCampaigns] = useState<Campaign[]>(INITIAL_CAMPAIGNS);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [isFetching, setIsFetching] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<CampaignStatus | ''>('');
   const [clientFilter, setClientFilter] = useState('');
@@ -89,38 +87,33 @@ export default function CampaignTable() {
   const [logTarget, setLogTarget] = useState<Campaign | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Campaign | null>(null);
   const [historyTarget, setHistoryTarget] = useState<Campaign | null>(null);
+   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('agencyflow_campaigns');
-    if (saved) {
-      try {
-        setCampaigns(JSON.parse(saved));
-      } catch (err) {
-      }
-    }
+    setIsMounted(true);
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('agencyflow_campaigns', JSON.stringify(campaigns));
-  }, [campaigns]);
-
-  const clientOptions = useMemo(() =>
-    [...new Set(campaigns.map((c) => c.client))].sort(),
-    [campaigns]);
+  const clientOptions = useMemo(
+    () => [...new Set(campaigns.map((c) => c.client))].sort(),
+    [campaigns]
+  );
 
   const filtered = useMemo(() => {
     let data = [...campaigns];
 
-    const hasFullAccess = user?.role === ROLES.OWNER || user?.role === ROLES.MANAGER || user?.role === ROLES.SUPER_ADMIN;
+    const hasFullAccess =
+      user?.role === ROLES.OWNER ||
+      user?.role === ROLES.MANAGER ||
+      user?.role === ROLES.SUPER_ADMIN;
     if (!hasFullAccess && user) {
       data = data.filter((c) => c.assignee === user.name);
     }
 
     const searchLower = search.toLowerCase();
     if (search) {
-      data = data.filter((c) =>
-        c.name.toLowerCase().includes(searchLower) ||
-        c.client.toLowerCase().includes(searchLower)
+      data = data.filter(
+        (c) =>
+          c.name.toLowerCase().includes(searchLower) || c.client.toLowerCase().includes(searchLower)
       );
     }
 
@@ -141,15 +134,23 @@ export default function CampaignTable() {
       const aNum = Number(av);
       const bNum = Number(bv);
 
-      const cmp = isNaN(aNum) || isNaN(bNum)
-        ? String(av).localeCompare(String(bv))
-        : aNum - bNum;
+      const cmp = isNaN(aNum) || isNaN(bNum) ? String(av).localeCompare(String(bv)) : aNum - bNum;
 
       return sortDir === 'asc' ? cmp : -cmp;
     });
 
     return data;
-  }, [campaigns, user, search, statusFilter, clientFilter, stageFilter, platformFilter, sortField, sortDir]);
+  }, [
+    campaigns,
+    user,
+    search,
+    statusFilter,
+    clientFilter,
+    stageFilter,
+    platformFilter,
+    sortField,
+    sortDir,
+  ]);
 
   const totalPages = Math.ceil(filtered.length / perPage);
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
@@ -157,8 +158,11 @@ export default function CampaignTable() {
 
   // -- Handlers --
   const handleSort = (field: SortField) => {
-    if (sortField === field) setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
-    else { setSortField(field); setSortDir('asc'); }
+    if (sortField === field) setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    else {
+      setSortField(field);
+      setSortDir('asc');
+    }
   };
 
   const toggleRow = (id: string) => {
@@ -174,39 +178,69 @@ export default function CampaignTable() {
     else setSelectedIds(new Set(paginated.map((c) => c.id)));
   };
 
-  const handleBulkAction = (action: 'delete' | 'pause') => {
-    if (action === 'delete') {
-      setCampaigns(prev => prev.filter(c => !selectedIds.has(c.id)));
-      toast.success(`${selectedIds.size} ${STATIC_STRINGS.CAMPAIGN_MGMT_DELETED_TOAST}`);
-    } else {
-      setCampaigns(prev => prev.map(c => selectedIds.has(c.id) ? { ...c, status: 'paused' } : c));
-      toast.success(`${selectedIds.size} ${STATIC_STRINGS.CAMPAIGN_MGMT_PAUSED_TOAST}`);
+  const handleBulkAction = async (action: 'delete' | 'pause') => {
+  if (selectedIds.size === 0) return;
+
+  if (action === 'delete') {
+    const ids = Array.from(selectedIds);
+
+    try {
+      await Promise.all(ids.map((id) => campaignService.deleteCampaign(id)));
+
+      setCampaigns((prev) => prev.filter((c) => !selectedIds.has(c.id)));
+      setSelectedIds(new Set());
+
+      // optional: fresh data from backend
+      fetchCampaigns();
+    } catch (error) {
     }
-    setSelectedIds(new Set());
-  };
 
-  const confirmDelete = () => {
-    if (!deleteTarget) return;
-    setCampaigns(prev => prev.filter(c => c.id !== deleteTarget.id));
-    toast.success(`"${deleteTarget.name}" ${STATIC_STRINGS.CAMPAIGN_MGMT_DELETE}`);
-    setDeleteTarget(null);
-  };
+    return;
+  }
 
+  setCampaigns((prev) =>
+    prev.map((c) => (selectedIds.has(c.id) ? { ...c, status: 'paused' } : c))
+  );
+
+  toast.success(`${selectedIds.size} ${STATIC_STRINGS.CAMPAIGN_MGMT_PAUSED_TOAST}`);
+  setSelectedIds(new Set());
+};
+
+
+ const { mutate: deleteCampaign, isPending: isDeleting } =
+  useDeleteCampaign();
+
+const confirmDelete = async () => {
+  if (!deleteTarget?.id) return;
+
+  deleteCampaign(deleteTarget.id, {
+    onSuccess: () => {
+      fetchCampaigns();
+      setCampaigns((prev) =>
+        prev.filter(({ id }) => id !== deleteTarget.id)
+      );
+      setDeleteTarget(null);
+    },
+  });
+};
   const handleStatusChange = (campaignId: string, newStatus: CampaignStatus) => {
-    setCampaigns(prev => prev.map(c => c.id === campaignId ? { ...c, status: newStatus } : c));
+    setCampaigns((prev) =>
+      prev.map((c) => (c.id === campaignId ? { ...c, status: newStatus } : c))
+    );
     setStatusDropdownId(null);
     toast.success(STATIC_STRINGS.CAMPAIGN_MGMT_STATUS_UPDATED);
   };
 
-  const handleCreateSuccess = (newCampaign: Campaign) => {
-    setCampaigns(prev => [newCampaign, ...prev]);
-    setCreateOpen(false);
-    toast.success(`${STATIC_STRINGS.CAMPAIGN_FIELD_NAME} "${newCampaign.name}" ${STATIC_STRINGS.CAMPAIGN_MGMT_CREATED_TOAST}`);
-  };
+  const handleCreateSuccess = async () => {
+  setCreateOpen(false);
+  await fetchCampaigns();
+};
 
-  const handleEditSuccess = (updated: Campaign) => {
-    setCampaigns(prev => prev.map(c => c.id === updated.id ? updated : c));
+
+  const handleEditSuccess =  async (updated: Campaign) => {
+    setCampaigns((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
     setEditTarget(null);
+    await fetchCampaigns();
     toast.success(STATIC_STRINGS.CAMPAIGN_MGMT_UPDATED_TOAST);
   };
 
@@ -221,26 +255,104 @@ export default function CampaignTable() {
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return <ChevronsUpDown size={12} className="text-slate-300" />;
-    return sortDir === 'asc' ? <ChevronUp size={12} className="text-violet-600" /> : <ChevronDown size={12} className="text-violet-600" />;
+    return sortDir === 'asc' ? (
+      <ChevronUp size={12} className="text-violet-600" />
+    ) : (
+      <ChevronDown size={12} className="text-violet-600" />
+    );
   };
 
   const isDeadlineCritical = (deadline: string) => {
     const d = new Date(deadline);
-    const now = new Date('2026-04-09'); 
+    const now = new Date('2026-04-09');
     const diff = (d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
     return diff >= 0 && diff <= 3;
   };
+  
+ const fetchCampaigns = async () => {
+  setIsFetching(true);
+
+  try {
+    const { results } = await campaignService.getCampaigns({
+      page,
+      limit: perPage,
+    });
+
+    const mappedCampaigns: Campaign[] =
+      results?.data?.map((c: any) => {
+        const assigneeName =
+          c.assignee?.fullName || c.assignedTo || 'NA';
+
+        return {
+          id: c.id,
+          name: c.campaignName,
+          client: c.client?.clientName,
+          status: c.status,
+          stage:
+            c.stage === 'in-draft'
+              ? 'in draft'
+              : c.stage,
+
+          assignee: assigneeName,
+
+          assigneeInitials: assigneeName
+            .split(' ')
+            .map((n: string) => n.charAt(0))
+            .join('')
+            .slice(0, 2)
+            .toUpperCase(),
+
+          deadline: c.deadlineDate
+            ? new Intl.DateTimeFormat('en-US', {
+                month: '2-digit',
+                day: '2-digit',
+                year: '2-digit',
+              }).format(new Date(c.deadlineDate))
+            : '-',
+
+          spend: '$0',
+          budget: `$${Number(
+            c.dailyBudget ?? 0
+          ).toLocaleString()}`,
+
+          leads: 0,
+          roas: 0,
+
+          platform:
+            c.adsPlatform?.length > 1
+              ? 'Multi'
+              : c.adsPlatform?.[0] || 'Meta',
+
+          createdAt: c.createdAt,
+        };
+      }) || [];
+
+    setCampaigns(mappedCampaigns);
+  } catch (error) {
+    toast.error('Failed to fetch campaigns');
+  } finally {
+    setIsFetching(false);
+  }
+};
+
+useEffect(() => {
+  fetchCampaigns();
+}, [page, perPage]);
+
 
   return (
     <>
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-
         <header className="px-5 py-4 border-b border-slate-100">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <h1 className="text-[20px] font-bold text-slate-900 tracking-tight">{STATIC_STRINGS.CAMPAIGN_MGMT_TITLE}</h1>
+              <h1 className="text-[20px] font-bold text-slate-900 tracking-tight">
+                {STATIC_STRINGS.CAMPAIGN_MGMT_TITLE}
+              </h1>
               <p className="text-[12.5px] text-slate-500 mt-0.5">
-                {filtered.length} {STATIC_STRINGS.CAMPAIGN_MGMT_TOTAL} · {campaigns.filter(c => c.status === 'active').length} {STATIC_STRINGS.CAMPAIGN_MGMT_ACTIVE}
+                {filtered.length} {STATIC_STRINGS.CAMPAIGN_MGMT_TOTAL} ·{' '}
+                {campaigns.filter((c) => c.status === 'active').length}{' '}
+                {STATIC_STRINGS.CAMPAIGN_MGMT_ACTIVE}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -259,51 +371,78 @@ export default function CampaignTable() {
           {/* Filtering Controls */}
           <div className="flex items-center gap-2 flex-wrap">
             <div className="relative flex-1 min-w-[200px] max-w-xs">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              />
               <input
                 type="text"
                 placeholder={STATIC_STRINGS.CAMPAIGN_MGMT_SEARCH_PLACEHOLDER}
                 value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
                 className="w-full pl-8 pr-3 py-2 text-[12.5px] border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all"
               />
             </div>
 
             <select
               value={statusFilter}
-              onChange={(e) => { setStatusFilter(e.target.value as CampaignStatus | ''); setPage(1); }}
+              onChange={(e) => {
+                setStatusFilter(e.target.value as CampaignStatus | '');
+                setPage(1);
+              }}
               className="px-3 py-2 text-[12.5px] border border-slate-200 rounded-lg bg-slate-50 hover:border-slate-300 outline-none cursor-pointer transition-all"
             >
               <option value="">{STATIC_STRINGS.CAMPAIGN_MGMT_ALL_STATUSES}</option>
               {CAMPAIGN_STATUS_OPTIONS.map((s) => (
-                <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                <option key={s} value={s}>
+                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                </option>
               ))}
             </select>
 
-            <select
-              value={clientFilter}
-              onChange={(e) => { setClientFilter(e.target.value); setPage(1); }}
-              className="px-3 py-2 text-[12.5px] border border-slate-200 rounded-lg bg-slate-50 hover:border-slate-300 outline-none cursor-pointer transition-all"
-            >
-              <option value="">{STATIC_STRINGS.CAMPAIGN_MGMT_ALL_CLIENTS}</option>
-              {clientOptions.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+           <select
+  value={clientFilter}
+  onChange={(e) => {
+    setClientFilter(e.target.value);
+    setPage(1);
+  }}
+  className="px-3 py-2 text-[12.5px] border border-slate-200 rounded-lg bg-slate-50 hover:border-slate-300 outline-none cursor-pointer transition-all"
+>
+  <option value="">
+    {STATIC_STRINGS.CAMPAIGN_MGMT_ALL_CLIENTS}
+  </option>
+
+  {clientOptions.map((c, index) => (
+    <option key={`${c}-${index}`} value={c}>
+      {c}
+    </option>
+  ))}
+</select>
 
             <select
               value={stageFilter}
-              onChange={(e) => { setStageFilter(e.target.value as WorkflowStage | ''); setPage(1); }}
+              onChange={(e) => {
+                setStageFilter(e.target.value as WorkflowStage | '');
+                setPage(1);
+              }}
               className="px-3 py-2 text-[12.5px] border border-slate-200 rounded-lg bg-slate-50 hover:border-slate-300 outline-none cursor-pointer transition-all"
             >
               <option value="">{STATIC_STRINGS.CAMPAIGN_MGMT_ALL_STAGES}</option>
               {CAMPAIGN_STAGE_OPTIONS.map((s) => (
-                <option key={s} value={s}>{s}</option>
+                <option key={s} value={s}>
+                  {s}
+                </option>
               ))}
             </select>
 
             {hasFilters && (
-              <button onClick={clearFilters} className="flex items-center gap-1 px-3 py-2 text-[12px] text-slate-500 hover:text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+              <button
+                onClick={clearFilters}
+                className="flex items-center gap-1 px-3 py-2 text-[12px] text-slate-500 hover:text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+              >
                 <X size={12} /> {STATIC_STRINGS.FORM_CANCEL}
               </button>
             )}
@@ -324,40 +463,68 @@ export default function CampaignTable() {
                   />
                 </th>
                 <th className="text-left px-3 py-3 text-slate-500 font-semibold">
-                  <button onClick={() => handleSort('name')} className="flex items-center gap-1 hover:text-slate-700 transition-colors">
+                  <button
+                    onClick={() => handleSort('name')}
+                    className="flex items-center gap-1 hover:text-slate-700 transition-colors"
+                  >
                     {STATIC_STRINGS.CAMPAIGN_FIELD_NAME} <SortIcon field="name" />
                   </button>
                 </th>
                 <th className="text-left px-3 py-3 text-slate-500 font-semibold">
-                  <button onClick={() => handleSort('client')} className="flex items-center gap-1 hover:text-slate-700 transition-colors">
+                  <button
+                    onClick={() => handleSort('client')}
+                    className="flex items-center gap-1 hover:text-slate-700 transition-colors"
+                  >
                     {STATIC_STRINGS.CAMPAIGN_FIELD_CLIENT} <SortIcon field="client" />
                   </button>
                 </th>
-                <th className="text-left px-3 py-3 text-slate-500 font-semibold">{STATIC_STRINGS.CAMPAIGN_FIELD_STATUS}</th>
-                <th className="text-left px-3 py-3 text-slate-500 font-semibold whitespace-nowrap">{STATIC_STRINGS.CAMPAIGN_FIELD_STAGE}</th>
-                <th className="text-left px-3 py-3 text-slate-500 font-semibold">{STATIC_STRINGS.CAMPAIGN_FIELD_ASSIGNEE}</th>
-                <th className="text-left px-3 py-3 text-slate-500 font-semibold">{STATIC_STRINGS.CAMPAIGN_FIELD_PLATFORM}</th>
                 <th className="text-left px-3 py-3 text-slate-500 font-semibold">
-                  <button onClick={() => handleSort('deadline')} className="flex items-center gap-1 hover:text-slate-700 transition-colors">
+                  {STATIC_STRINGS.CAMPAIGN_FIELD_STATUS}
+                </th>
+                <th className="text-left px-3 py-3 text-slate-500 font-semibold whitespace-nowrap">
+                  {STATIC_STRINGS.CAMPAIGN_FIELD_STAGE}
+                </th>
+                <th className="text-left px-3 py-3 text-slate-500 font-semibold">
+                  {STATIC_STRINGS.CAMPAIGN_FIELD_ASSIGNEE}
+                </th>
+                <th className="text-left px-3 py-3 text-slate-500 font-semibold">
+                  {STATIC_STRINGS.CAMPAIGN_FIELD_PLATFORM}
+                </th>
+                <th className="text-left px-3 py-3 text-slate-500 font-semibold">
+                  <button
+                    onClick={() => handleSort('deadline')}
+                    className="flex items-center gap-1 hover:text-slate-700 transition-colors"
+                  >
                     {STATIC_STRINGS.CAMPAIGN_FIELD_DEADLINE} <SortIcon field="deadline" />
                   </button>
                 </th>
                 <th className="text-right px-3 py-3 text-slate-500 font-semibold">
-                  <button onClick={() => handleSort('spend')} className="flex items-center gap-1 ml-auto hover:text-slate-700 transition-colors">
+                  <button
+                    onClick={() => handleSort('spend')}
+                    className="flex items-center gap-1 ml-auto hover:text-slate-700 transition-colors"
+                  >
                     {STATIC_STRINGS.CAMPAIGN_FIELD_SPEND} <SortIcon field="spend" />
                   </button>
                 </th>
                 <th className="text-right px-3 py-3 text-slate-500 font-semibold">
-                  <button onClick={() => handleSort('leads')} className="flex items-center gap-1 ml-auto hover:text-slate-700 transition-colors">
+                  <button
+                    onClick={() => handleSort('leads')}
+                    className="flex items-center gap-1 ml-auto hover:text-slate-700 transition-colors"
+                  >
                     {STATIC_STRINGS.CAMPAIGN_FIELD_LEADS} <SortIcon field="leads" />
                   </button>
                 </th>
                 <th className="text-right px-3 py-3 text-slate-500 font-semibold">
-                  <button onClick={() => handleSort('roas')} className="flex items-center gap-1 ml-auto hover:text-slate-700 transition-colors">
+                  <button
+                    onClick={() => handleSort('roas')}
+                    className="flex items-center gap-1 ml-auto hover:text-slate-700 transition-colors"
+                  >
                     {STATIC_STRINGS.CAMPAIGN_FIELD_ROAS} <SortIcon field="roas" />
                   </button>
                 </th>
-                <th className="px-4 py-3 w-20 text-slate-500 font-semibold text-center">{STATIC_STRINGS.TABLE_ACTIONS}</th>
+                <th className="px-4 py-3 w-20 text-slate-500 font-semibold text-center">
+                  {STATIC_STRINGS.TABLE_ACTIONS}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -368,18 +535,26 @@ export default function CampaignTable() {
                       <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center">
                         <Megaphone size={22} className="text-slate-400" />
                       </div>
-                      <p className="text-[14px] font-semibold text-slate-600">{STATIC_STRINGS.CAMPAIGN_MGMT_NO_CAMPAIGNS}</p>
-                      <p className="text-[12.5px] text-slate-400">{STATIC_STRINGS.CAMPAIGN_MGMT_NO_CAMPAIGNS_DESC}</p>
+                      <p className="text-[14px] font-semibold text-slate-600">
+                        {STATIC_STRINGS.CAMPAIGN_MGMT_NO_CAMPAIGNS}
+                      </p>
+                      <p className="text-[12.5px] text-slate-400">
+                        {STATIC_STRINGS.CAMPAIGN_MGMT_NO_CAMPAIGNS_DESC}
+                      </p>
                     </div>
                   </td>
                 </tr>
               ) : (
                 paginated.map((campaign, idx) => {
                   const isSelected = selectedIds.has(campaign.id);
-                  const isCritical = isDeadlineCritical(campaign.deadline) && campaign.status === 'active';
+                  const isCritical =
+                    isDeadlineCritical(campaign.deadline) && campaign.status === 'active';
 
                   return (
-                    <tr key={campaign.id} className={`border-b border-slate-50 last:border-0 transition-colors ${isSelected ? 'bg-violet-50/60' : idx % 2 === 0 ? 'hover:bg-slate-50/70' : 'bg-slate-50/20 hover:bg-slate-50/70'}`}>
+                    <tr
+                      key={campaign.id}
+                      className={`border-b border-slate-50 last:border-0 transition-colors ${isSelected ? 'bg-violet-50/60' : idx % 2 === 0 ? 'hover:bg-slate-50/70' : 'bg-slate-50/20 hover:bg-slate-50/70'}`}
+                    >
                       <td className="px-4 py-3">
                         <input
                           type="checkbox"
@@ -390,13 +565,18 @@ export default function CampaignTable() {
                       </td>
                       <td className="px-3 py-3 max-w-[180px]">
                         <p className="font-semibold text-slate-800 truncate">{campaign.name}</p>
-                        <p className="text-[11px] text-slate-400 font-mono mt-0.5">{campaign.id}</p>
                       </td>
-                      <td className="px-3 py-3 text-slate-600 truncate max-w-[120px]">{campaign.client}</td>
+                      <td className="px-3 py-3 text-slate-600 truncate max-w-[120px]">
+                        {campaign.client}
+                      </td>
                       <td className="px-3 py-3">
                         <div className="relative" onClick={(e) => e.stopPropagation()}>
                           <button
-                            onClick={() => setStatusDropdownId(statusDropdownId === campaign.id ? null : campaign.id)}
+                            onClick={() =>
+                              setStatusDropdownId(
+                                statusDropdownId === campaign.id ? null : campaign.id
+                              )
+                            }
                             className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-semibold transition-opacity hover:opacity-80 ${CAMPAIGN_STATUS_STYLES[campaign.status]}`}
                           >
                             {campaign.status}
@@ -409,7 +589,9 @@ export default function CampaignTable() {
                                   onClick={() => handleStatusChange(campaign.id, s)}
                                   className={`w-full text-left px-3 py-1.5 text-[12px] hover:bg-slate-50 flex items-center gap-2 ${campaign.status === s ? 'font-bold text-violet-700' : 'text-slate-600'}`}
                                 >
-                                  <span className={`w-2 h-2 rounded-full ${s === 'active' ? 'bg-emerald-500' : s === 'paused' ? 'bg-orange-400' : 'bg-slate-300'}`} />
+                                  <span
+                                    className={`w-2 h-2 rounded-full ${s === 'active' ? 'bg-emerald-500' : s === 'paused' ? 'bg-orange-400' : 'bg-slate-300'}`}
+                                  />
                                   {s}
                                 </button>
                               ))}
@@ -418,7 +600,9 @@ export default function CampaignTable() {
                         </div>
                       </td>
                       <td className="px-3 py-3">
-                        <span className={`inline-flex px-2 py-0.5 rounded-md text-[10.5px] font-semibold ${CAMPAIGN_STAGE_STYLES[campaign.stage]}`}>
+                        <span
+                          className={`inline-flex px-2 py-0.5 rounded-md text-[10.5px] font-semibold ${CAMPAIGN_STAGE_STYLES[campaign.stage]}`}
+                        >
                           {campaign.stage}
                         </span>
                       </td>
@@ -427,39 +611,67 @@ export default function CampaignTable() {
                           <div className="w-6 h-6 rounded-full bg-violet-500 flex items-center justify-center text-[9px] font-bold text-white">
                             {campaign.assigneeInitials}
                           </div>
-                          <span className="text-slate-600 truncate max-w-[80px]">{campaign.assignee}</span>
+                          <span className="text-slate-600 truncate max-w-[80px]">
+                            {campaign.assignee}
+                          </span>
                         </div>
                       </td>
                       <td className="px-3 py-3">
-                        <span className={`inline-flex px-2 py-0.5 rounded-md text-[10.5px] font-semibold ${PLATFORM_STYLES[campaign.platform]}`}>
+                        <span
+                          className={`inline-flex px-2 py-0.5 rounded-md text-[10.5px] font-semibold ${PLATFORM_STYLES[campaign.platform]}`}
+                        >
                           {campaign.platform}
                         </span>
                       </td>
                       <td className="px-3 py-3">
-                        <span className={`font-medium ${isCritical ? 'text-red-600' : 'text-slate-600'}`}>
+                        <span
+                          className={`font-medium ${isCritical ? 'text-red-600' : 'text-slate-600'}`}
+                        >
                           {campaign.deadline} {isCritical && '⚠'}
                         </span>
                       </td>
-                      <td className="px-3 py-3 text-right tabular-nums text-slate-700 font-mono">{campaign.spend}</td>
-                      <td className="px-3 py-3 text-right tabular-nums text-slate-700 font-mono">{campaign.leads.toLocaleString()}</td>
+                      <td className="px-3 py-3 text-right tabular-nums text-slate-700 font-mono">
+                        {campaign.spend}
+                      </td>
+                     <td className="px-3 py-3 text-right tabular-nums text-slate-700 font-mono">
+  {(campaign.leads ?? 0).toLocaleString()}
+</td>
                       <td className="px-3 py-3 text-right">
-                        <span className={`font-bold tabular-nums font-mono ${campaign.roas >= 4 ? 'text-emerald-600' : campaign.roas >= 2.5 ? 'text-slate-700' : 'text-red-500'}`}>
+                        <span
+                          className={`font-bold tabular-nums font-mono ${campaign.roas >= 4 ? 'text-emerald-600' : campaign.roas >= 2.5 ? 'text-slate-700' : 'text-red-500'}`}
+                        >
                           {campaign.roas > 0 ? `${campaign.roas}×` : '—'}
                         </span>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-0.5">
-                          <button onClick={() => setLogTarget(campaign)} title={STATIC_STRINGS.CAMPAIGN_MGMT_LOG_PERFORMANCE} className="p-1.5 rounded-lg hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 transition-colors">
+                          <button
+                            onClick={() => setLogTarget(campaign)}
+                            title={STATIC_STRINGS.CAMPAIGN_MGMT_LOG_PERFORMANCE}
+                            className="p-1.5 rounded-lg hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 transition-colors"
+                          >
                             <TrendingUp size={13} />
                           </button>
-                          <button onClick={() => setEditTarget(campaign)} title={STATIC_STRINGS.CAMPAIGN_MGMT_EDIT} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-violet-600 transition-colors">
+                          <button
+                            onClick={() => setEditTarget(campaign)}
+                            title={STATIC_STRINGS.CAMPAIGN_MGMT_EDIT}
+                            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-violet-600 transition-colors"
+                          >
                             <Edit2 size={13} />
                           </button>
-                          <button onClick={() => setDeleteTarget(campaign)} title={STATIC_STRINGS.CAMPAIGN_MGMT_DELETE} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
+                          <button
+                            onClick={() => setDeleteTarget(campaign)}
+                            title={STATIC_STRINGS.CAMPAIGN_MGMT_DELETE}
+                            className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+                          >
                             <Trash2 size={13} />
                           </button>
                           {user?.role === 'Owner' && (
-                            <button onClick={() => setHistoryTarget(campaign)} title={STATIC_STRINGS.CAMPAIGN_MGMT_AUDIT_HISTORY} className="p-1.5 rounded-lg hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition-colors">
+                            <button
+                              onClick={() => setHistoryTarget(campaign)}
+                              title={STATIC_STRINGS.CAMPAIGN_MGMT_AUDIT_HISTORY}
+                              className="p-1.5 rounded-lg hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition-colors"
+                            >
                               <History size={13} />
                             </button>
                           )}
@@ -483,29 +695,60 @@ export default function CampaignTable() {
           labels={{
             show: STATIC_STRINGS.CAMPAIGN_MGMT_PAGINATION_SHOW,
             of: STATIC_STRINGS.CAMPAIGN_MGMT_PAGINATION_OF,
-            entries: STATIC_STRINGS.CAMPAIGN_MGMT_PAGINATION_ENTRIES
+            entries: STATIC_STRINGS.CAMPAIGN_MGMT_PAGINATION_ENTRIES,
           }}
         />
       </div>
 
       {selectedIds.size > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl z-40 animate-slide-up">
-          <span className="text-[13px] font-bold">{selectedIds.size} {STATIC_STRINGS.CAMPAIGN_MGMT_SELECTED}</span>
+          <span className="text-[13px] font-bold">
+            {selectedIds.size} {STATIC_STRINGS.CAMPAIGN_MGMT_SELECTED}
+          </span>
           <div className="w-px h-4 bg-slate-700" />
-          <button onClick={() => handleBulkAction('pause')} className="text-[12.5px] font-medium text-slate-300 hover:text-white transition-colors">
+          <button
+            onClick={() => handleBulkAction('pause')}
+            className="text-[12.5px] font-medium text-slate-300 hover:text-white transition-colors"
+          >
             {STATIC_STRINGS.CAMPAIGN_MGMT_BULK_PAUSE}
           </button>
-          <button onClick={() => handleBulkAction('delete')} className="bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-lg text-[12.5px] font-bold transition-all">
+          <button
+            onClick={() => handleBulkAction('delete')}
+            className="bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-lg text-[12.5px] font-bold transition-all"
+          >
             {STATIC_STRINGS.CAMPAIGN_MGMT_BULK_DELETE}
           </button>
-          <button onClick={() => setSelectedIds(new Set())} className="p-1 text-slate-400 hover:text-white"><X size={16} /></button>
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            className="p-1 text-slate-400 hover:text-white"
+          >
+            <X size={16} />
+          </button>
         </div>
       )}
 
       {/* Modals */}
-      <CreateCampaignModal open={createOpen} onClose={() => setCreateOpen(false)} onSuccess={handleCreateSuccess} />
-      {editTarget && <EditCampaignModal open={!!editTarget} campaign={editTarget} onClose={() => setEditTarget(null)} onSuccess={handleEditSuccess} />}
-      {logTarget && <LogPerformanceModal open={!!logTarget} campaign={logTarget} onClose={() => setLogTarget(null)} onSuccess={handleEditSuccess} />}
+      <CreateCampaignModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onSuccess={handleCreateSuccess}
+      />
+      {editTarget && (
+        <EditCampaignModal
+          open={!!editTarget}
+          campaign={editTarget}
+          onClose={() => setEditTarget(null)}
+          onSuccess={handleEditSuccess}
+        />
+      )}
+      {logTarget && (
+        <LogPerformanceModal
+          open={!!logTarget}
+          campaign={logTarget}
+          onClose={() => setLogTarget(null)}
+          onSuccess={handleEditSuccess}
+        />
+      )}
       {historyTarget && (
         <CampaignHistoryModal
           open={!!historyTarget}
@@ -513,7 +756,12 @@ export default function CampaignTable() {
           onClose={() => setHistoryTarget(null)}
         />
       )}
-      <DeleteConfirmModal open={!!deleteTarget} campaignName={deleteTarget?.name || ''} onClose={() => setDeleteTarget(null)} onConfirm={confirmDelete} />
+      <DeleteConfirmModal
+        open={!!deleteTarget}
+        campaignName={deleteTarget?.name || ''}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
     </>
   );
 }

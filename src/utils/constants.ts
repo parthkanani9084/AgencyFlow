@@ -178,6 +178,7 @@ export const STATIC_STRINGS = {
   CAMPAIGN_HISTORY_IMMUTABLE_NOTICE: 'Logs are immutable and reflect real-time activity.',
   CAMPAIGN_HISTORY_DONE: 'Done',
   CAMPAIGN_HISTORY_UPDATED_TEXT: 'Updated',
+  CAMPAIGN_ADSMANAGER_ROLE : 'ads-manager',
 
   // Campaign Management
   CAMPAIGN_MGMT_TITLE: 'Campaign Management',
@@ -574,7 +575,8 @@ export const STATIC_STRINGS = {
   LOGIN_SUBTITLE_PLATFORM: 'Campaign Automation Platform',
   LOGIN_HERO_TITLE_PART1: 'Your entire agency',
   LOGIN_HERO_TITLE_PART2: 'on autopilot.',
-  LOGIN_HERO_DESC: 'From shoot to ad launch — AgencyFlow routes every task automatically so your team ships faster and your clients see results.',
+  LOGIN_HERO_DESC:
+    'From shoot to ad launch — AgencyFlow routes every task automatically so your team ships faster and your clients see results.',
   LOGIN_FEATURE_PIPELINE: 'Auto-route tasks through your entire production pipeline',
   LOGIN_FEATURE_ADS: 'Track ad spend, ROAS, and leads across Meta & Google',
   LOGIN_FEATURE_SCALE: 'Manage 50+ clients and 200+ active tasks simultaneously',
@@ -866,37 +868,12 @@ export const AUTH_ACTIONS = {
 } as const;
 
 export const PAGE_ROLES = {
-  ADS_TRACKING: [
-    ROLES.OWNER,
-    ROLES.ADS_MANAGER,
-    ROLES.SOCIAL_MEDIA_MANAGER,
-    ROLES.MANAGER,
-  ],
-  CAMPAIGN_MANAGEMENT: [
-    ROLES.OWNER,
-    ROLES.MANAGER,
-    ROLES.SOCIAL_MEDIA_MANAGER,
-    ROLES.ADS_MANAGER,
-  ],
-  EDITOR_DASHBOARD: [
-    ROLES.OWNER,
-    ROLES.MANAGER,
-    ROLES.EDITOR,
-  ],
-  SHOOTER_DASHBOARD: [
-    ROLES.OWNER,
-    ROLES.MANAGER,
-    ROLES.SHOOTER,
-  ],
-  MANAGER_DASHBOARD: [
-    ROLES.OWNER,
-    ROLES.MANAGER,
-  ],
-  SOCIAL_MEDIA_DASHBOARD: [
-    ROLES.OWNER,
-    ROLES.MANAGER,
-    ROLES.SOCIAL_MEDIA_MANAGER,
-  ],
+  ADS_TRACKING: [ROLES.OWNER, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER, ROLES.MANAGER],
+  CAMPAIGN_MANAGEMENT: [ROLES.OWNER, ROLES.MANAGER, ROLES.SOCIAL_MEDIA_MANAGER, ROLES.ADS_MANAGER],
+  EDITOR_DASHBOARD: [ROLES.OWNER, ROLES.MANAGER, ROLES.EDITOR],
+  SHOOTER_DASHBOARD: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER],
+  MANAGER_DASHBOARD: [ROLES.OWNER, ROLES.MANAGER],
+  SOCIAL_MEDIA_DASHBOARD: [ROLES.OWNER, ROLES.MANAGER, ROLES.SOCIAL_MEDIA_MANAGER],
   TASK_MANAGEMENT: [
     ROLES.OWNER,
     ROLES.MANAGER,
@@ -913,10 +890,7 @@ export const PAGE_ROLES = {
     ROLES.ADS_MANAGER,
     ROLES.SOCIAL_MEDIA_MANAGER,
   ],
-  REPORTS: [
-    ROLES.OWNER,
-    ROLES.MANAGER,
-  ],
+  REPORTS: [ROLES.OWNER, ROLES.MANAGER],
 } as const;
 export const STORAGE_KEYS = {
   AUTH_TOKEN: 'auth_token',
@@ -941,7 +915,15 @@ export const ADS_DATE_RANGE_KEYS = {
 
 export const STORAGE_KEY_CAMPAIGNS = STORAGE_KEYS.CAMPAIGNS;
 
-export const PLATFORM_OPTIONS = ['Meta', 'Facebook', 'Instagram', 'Google', 'TikTok', 'LinkedIn', 'Multi'] as const;
+export const PLATFORM_OPTIONS = [
+  'Meta',
+  'Facebook',
+  'Instagram',
+  'Google',
+  'TikTok',
+  'LinkedIn',
+  'Multi',
+] as const;
 
 export const CAMPAIGN_STATUS_OPTIONS = [
   STATIC_STRINGS.ADS_STATUS_ACTIVE,
@@ -960,8 +942,14 @@ export const ADS_DATE_RANGE_OPTIONS = [
 ] as const;
 
 export const CLIENT_OPTIONS = [
-  'Luma Apparel', 'Nexus Capital', 'Orion Fitness', 'Synapse Tech',
-  'Coral Beauty', 'Pulse Nutrition', 'Helios Solar', 'Bloom Skincare',
+  'Luma Apparel',
+  'Nexus Capital',
+  'Orion Fitness',
+  'Synapse Tech',
+  'Coral Beauty',
+  'Pulse Nutrition',
+  'Helios Solar',
+  'Bloom Skincare',
 ] as const;
 
 export const TEAM_MEMBERS = [
@@ -974,5 +962,10 @@ export const TEAM_MEMBERS = [
 ] as const;
 
 export const OBJECTIVE_OPTIONS = [
-  'Traffic', 'Awareness', 'Sales', 'Engagement', 'Leads', 'App Promotion',
+  'Traffic',
+  'Awareness',
+  'Sales',
+  'Engagement',
+  'Leads',
+  'App Promotion',
 ] as const;
