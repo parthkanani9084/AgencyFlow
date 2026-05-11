@@ -31,7 +31,7 @@ export const ROLE_CONFIG: Record<string, { color: string; bg: string; icon: Reac
   [ROLES.SHOOTER]:      { color: 'text-blue-700',   bg: 'bg-blue-100',   icon: Camera },
   [ROLES.EDITOR]:       { color: 'text-purple-700', bg: 'bg-purple-100', icon: Film },
   [ROLES.ADS_MANAGER]:{ color: 'text-orange-700', bg: 'bg-orange-100', icon: Megaphone },
-  [ROLES.SOCIAL_MEDIA_MANAGER]: { color: 'text-pink-700', bg: 'bg-pink-100', icon: TrendingUp },
+  [ROLES.SOCIAL_MEDIA_MANAGER]: { color: 'text-pink-600', bg: 'bg-pink-50', icon: TrendingUp },
   [ROLES.CLIENT]:       { color: 'text-indigo-700', bg: 'bg-indigo-100', icon: UserCheck },
 };
 

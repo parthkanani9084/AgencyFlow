@@ -1,5 +1,5 @@
 import AxiosRequest from '@/utils/axiosHelper';
-import { TEAM_CREATE_URL, TEAM_LIST_URL, TEAM_ROLE_URL } from '@/lib/endpoints';
+import { TEAM_ROLE_URL, TEAM_CREATE_URL, TEAM_LIST_URL } from '../endpoints';
 const TEAM_UPDATE_URL = (id: string) => `/owner/team/${id}`;
 
 export interface CreateTeamPayload {
