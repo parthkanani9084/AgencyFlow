@@ -16,6 +16,14 @@ export const useGetTasks = (params: GetTasksParams, options?: any) => {
   });
 };
 
+export const useGetTasksHistory = (params: GetTasksParams, options?: any) => {
+  return useQuery({
+    queryKey: [QUERY_KEYS.TASKS, 'history', params],
+    queryFn: () => taskService.getTasksHistory(params),
+    ...options,
+  });
+};
+
 export const useUpdateTaskStatus = () => {
   return useMutation({
     mutationFn: ({ taskId, status }: { taskId: string; status: string }) => 

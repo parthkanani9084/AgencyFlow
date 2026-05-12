@@ -38,8 +38,9 @@ export interface Task {
   id: string;
   title: string;
   assignedTo: string;
-  role: TaskRole;
+  role: TaskRole | string;
   client: string;
+  performer_name?: string;
   brand?: string;
   campaign: string;
   campaignId?: string;

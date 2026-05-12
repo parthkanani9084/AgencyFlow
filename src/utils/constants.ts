@@ -15,6 +15,11 @@ export const STATIC_STRINGS = {
   TASK_MGMT_ALL_ROLES: 'All Roles',
   TASK_MGMT_LABEL_DESCRIPTION: 'Description',
   TASK_MGMT_REQUIRED: 'Required',
+  TASK_MGMT_ERR_TITLE: 'Please enter a task title',
+  TASK_MGMT_ERR_ASSIGNED_TO: 'Please select a team member',
+  TASK_MGMT_ERR_ROLE: 'Role is required',
+  TASK_MGMT_ERR_CLIENT: 'Please select a client',
+  TASK_MGMT_ERR_DEADLINE: 'Please select a deadline date',
 
   //Super Admin Dashboard
   DASHBOARD_TITLE: 'Super Admin Dashboard',

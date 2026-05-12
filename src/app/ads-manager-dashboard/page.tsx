@@ -9,8 +9,7 @@ import { Task, TaskStatus, UserRole } from '@/types';
 import TodayReportingCard from './components/TodayReportingCard';
 import TaskCompletionModal from '@/components/TaskCompletionModal';
 import { STATIC_STRINGS, PAGE_ROLES, STORAGE_KEY_CAMPAIGNS, ROLES, TASK_STATUSES } from '@/utils/constants';
-import { STATUS_CONFIG } from '@/utils/ui-configs';
-import { useUpdateTaskStatus, useCompleteTask, useGetTasks } from '@/api/hooks/useTask';
+import { useUpdateTaskStatus, useCompleteTask, useGetTasksHistory } from '@/api/hooks/useTask';
 import TaskCard from '../shooter-dashboard/components/TaskCard';
 
 export default function AdsManagerDashboardPage() {
@@ -26,12 +25,11 @@ export default function AdsManagerDashboardPage() {
   const { mutateAsync: updateTaskStatusMutation } = useUpdateTaskStatus();
   const { mutateAsync: completeTaskMutation } = useCompleteTask();
 
-  const tasksQuery = useGetTasks({ 
+  const tasksQuery = useGetTasksHistory({ 
     page: 1, 
     limit: 100, 
     role: ROLES.ADS_MANAGER,
     status: activeTab,
-    isHistory: true
   }, {
     enabled: mounted,
     select: (resp: any) => {
@@ -42,7 +40,8 @@ export default function AdsManagerDashboardPage() {
         description: t.description || '',
         assignedTo: t.workstage_role_name || t.notes?.[0]?.assign_to?.name || t.assign_to?.name || t.assignee?.name || t.assignee?.fullName || t.assignee?.full_name || STATIC_STRINGS.COMMON_UNASSIGNED,
         role: t.notes?.[0]?.assign_to?.role || t.assign_to?.role || t.assignee?.role || t.workflow_stage || ROLES.ADS_MANAGER,
-        client: t.client_name || t.client?.clientName || STATIC_STRINGS.NOT_AVAILABLE,
+        client: t.client_name  || STATIC_STRINGS.NOT_AVAILABLE,
+        brand: t.brand_name || STATIC_STRINGS.NOT_AVAILABLE,
         campaign: t.campaign?.campaignName || t.campaign_name || STATIC_STRINGS.NOT_AVAILABLE,
         deadline: (t.deadline_date || t.deadlineDate || '').split('T')[0] || STATIC_STRINGS.NOT_AVAILABLE,
         deadlineStatus: t.deadline_status,

@@ -9,7 +9,7 @@ import { Task, TaskStatus, UserRole } from '@/types';
 import { STATIC_STRINGS, PAGE_ROLES, ROLES, TASK_STATUSES } from '@/utils/constants';
 import { STATUS_CONFIG } from '@/utils/ui-configs';
 import TaskCompletionModal from '@/components/TaskCompletionModal';
-import { useUpdateTaskStatus, useAssignTask, useCompleteTask, useGetTasks } from '@/api/hooks/useTask';
+import { useUpdateTaskStatus, useAssignTask, useCompleteTask, useGetTasksHistory } from '@/api/hooks/useTask';
 import { useGetTeamsByRole } from '@/api/hooks/useTeam';
 import { toApiRole } from '@/utils/roles';
 import TaskCard from '../shooter-dashboard/components/TaskCard';
@@ -36,12 +36,11 @@ export default function EditorDashboardPage() {
   const { mutateAsync: assignTaskMutation } = useAssignTask();
   const { mutateAsync: completeTaskMutation } = useCompleteTask();
 
-  const tasksQuery = useGetTasks({ 
+  const tasksQuery = useGetTasksHistory({ 
     page: 1, 
     limit: 100, 
     role: ROLES.EDITOR,
-    status: activeTab,
-    isHistory: true
+    status: activeTab
   }, {
     enabled: mounted,
     select: (resp: any) => {
@@ -52,7 +51,8 @@ export default function EditorDashboardPage() {
         description: t.description || '',
         assignedTo: t.workstage_role_name ,
         role: t.notes?.[0]?.assign_to?.role || t.assign_to?.role || t.assignee?.role || t.workflow_stage || ROLES.EDITOR,
-        client: t.client_name || t.client?.clientName || STATIC_STRINGS.NOT_AVAILABLE,
+        client: t.client_name || STATIC_STRINGS.NOT_AVAILABLE,
+        brand: t.brand_name || STATIC_STRINGS.NOT_AVAILABLE,
         campaign: t.campaign?.campaignName || t.campaign_name || STATIC_STRINGS.NOT_AVAILABLE,
         deadline: (t.deadline_date || t.deadlineDate || '').split('T')[0] || STATIC_STRINGS.NOT_AVAILABLE,
         deadlineStatus: t.deadline_status,
