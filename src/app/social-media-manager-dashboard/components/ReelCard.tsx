@@ -1,26 +1,14 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { CheckCircle2, Circle, Timer, ChevronRight, AlertCircle, Video } from 'lucide-react';
-import { Task, TaskStatus, TaskPriority } from '@/types';
+import { ChevronRight, AlertCircle, Video } from 'lucide-react';
+import { Task, TaskStatus } from '@/types';
 import { STATIC_STRINGS } from '@/utils/constants';
-
+import { REEL_STATUS_CONFIG, PRIORITY_STYLES } from '@/utils/ui-configs';
 interface ReelCardProps {
   task: Task;
   onStatusChange: (task: Task, newStatus: TaskStatus) => void;
 }
-
-const statusConfig: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  pending: { label: STATIC_STRINGS.SMM_TAB_SCHEDULED, color: 'text-slate-600', bg: 'bg-slate-100', icon: Circle },
-  in_progress: { label: STATIC_STRINGS.SMM_TAB_PRODUCTION, color: 'text-amber-700', bg: 'bg-amber-100', icon: Timer },
-  completed: { label: STATIC_STRINGS.SMM_TAB_UPLOADED, color: 'text-emerald-700', bg: 'bg-emerald-100', icon: CheckCircle2 },
-};
-
-const priorityDot: Record<TaskPriority, string> = {
-  low: 'bg-slate-400',
-  medium: 'bg-amber-400',
-  high: 'bg-red-500',
-};
 
 const checkIsOverdue = (deadline: string, status: TaskStatus) => {
   return status !== 'completed' && new Date(deadline) < new Date();
@@ -32,7 +20,7 @@ export default function ReelCard({ task, onStatusChange }: ReelCardProps) {
   [task.deadline, task.status]);
 
   const config = useMemo(() => 
-    statusConfig[task.status] || statusConfig.pending,
+    REEL_STATUS_CONFIG[task.status] || REEL_STATUS_CONFIG.pending,
   [task.status]);
 
   return (
@@ -51,7 +39,7 @@ export default function ReelCard({ task, onStatusChange }: ReelCardProps) {
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <span className={`w-1.5 h-1.5 rounded-full ${priorityDot[task.priority || 'medium']}`} />
+          <span className={`w-1.5 h-1.5 rounded-full ${PRIORITY_STYLES[task.priority || 'medium']}`} />
           <h4 className="text-[14px] font-bold text-slate-900 truncate">{task.title}</h4>
         </div>
         <p className="text-[12px] text-slate-500 truncate font-medium">
@@ -76,7 +64,7 @@ export default function ReelCard({ task, onStatusChange }: ReelCardProps) {
           <select
             value={task.status}
             onChange={(e) => onStatusChange(task, e.target.value as TaskStatus)}
-            className="absolute inset-0 opacity-0 cursor-pointer w-full"
+            className="absolute inset-0 opacity-0 cursor-pointer w-full text-[11px]"
           >
             <option value="pending">{STATIC_STRINGS.SMM_TAB_SCHEDULED}</option>
             <option value="in_progress">{STATIC_STRINGS.SMM_TAB_PRODUCTION}</option>

@@ -29,7 +29,6 @@ export interface TaskNote {
   note: string;
   screenshot?: string | null;
   created_at: string;
-  // For backward compatibility if needed
   message?: string;
   timestamp?: string;
 }
@@ -79,12 +78,18 @@ export interface ActivityLog {
 export interface Reel {
   id: string;
   title: string;
-  campaignId: string;
-  assignedToUserId: string;
-  scheduledDate: string;
-  status?: 'Scheduled' | 'Production' | 'Upload';
+  clientId?: string;
+  campaignId?: string; 
+  assignedToUserId?: string;
+  publishDate?: string;
+  scheduledDate?: string;
+  status?: 'schedule' | 'production' | 'uploaded' | string;
   createdAt: string;
   clientName?: string;
+  client?: {
+    id: string;
+    brandName: string;
+  };
 }
 export type CampaignStatus = "active" | "paused" | "completed" | "in draft" | "archived";
 

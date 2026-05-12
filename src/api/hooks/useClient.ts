@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { clientService, CreateClientPayload, UpdateClientPayload, GetClientsParams } from '../services/client.service';
+import { clientService, CreateClientPayload, UpdateClientPayload, GetClientsParams, GetClientsResponse } from '../services/client.service';
 import { QUERY_KEYS } from '../queryKeys';
 
 export const useCreateClient = () => {
@@ -14,8 +14,8 @@ export const useCreateClient = () => {
 };
 
 export const useClients = (params: GetClientsParams, options?: any) => {
-  return useQuery({
-    queryKey: ['clients', params],
+  return useQuery<GetClientsResponse>({
+    queryKey: [QUERY_KEYS.CLIENTS, params],
     queryFn: () => clientService.getClients(params),
     ...options,
   });

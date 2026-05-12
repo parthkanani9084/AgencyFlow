@@ -3,4 +3,5 @@ export const QUERY_KEYS = {
   TEAM_ROLE: 'team-role',
   CLIENTS: 'clients',
   TASKS: 'tasks',
+  REELS: 'reels',
 } as const;

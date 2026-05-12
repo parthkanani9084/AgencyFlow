@@ -9,6 +9,12 @@ export const COMMON_STATUS = {
   COMPLETED: 'completed',
 } as const;
 
+export const REEL_STATUS_MAP: Record<string, string> = {
+  pending: 'schedule',
+  in_progress: 'production',
+  completed: 'uploaded',
+};
+
 export const STATIC_STRINGS = {
   TITLE: 'AgencyFlow',
   // Task Management Defaults
@@ -642,6 +648,9 @@ export const STATIC_STRINGS = {
   SMM_TOAST_UPLOADED: 'Reel marked as uploaded!',
   SMM_TOAST_ADDED: 'New reel added to schedule',
   SMM_TOAST_ERROR: 'Failed to add reel',
+  SMM_ERR_TITLE: 'Reel title is required',
+  SMM_ERR_CLIENT: 'Please select a client',
+  SMM_ERR_DATE: 'Schedule date is required',
   SMM_NO_REELS: 'No reels found',
   SMM_NO_REELS_DESC: 'Try adjusting your filters or search query.',
   SMM_LABEL_REEL: 'Reel',

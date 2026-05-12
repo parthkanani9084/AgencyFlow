@@ -67,6 +67,27 @@ export const STATUS_CONFIG: Record<string, { label: string; color: string; bg: s
   },
 };
 
+export const REEL_STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
+  pending: { 
+    label: STATIC_STRINGS.SMM_TAB_SCHEDULED, 
+    color: 'text-slate-600', 
+    bg: 'bg-slate-100', 
+    icon: Circle 
+  },
+  in_progress: { 
+    label: STATIC_STRINGS.SMM_TAB_PRODUCTION, 
+    color: 'text-amber-700', 
+    bg: 'bg-amber-100', 
+    icon: Timer 
+  },
+  completed: { 
+    label: STATIC_STRINGS.SMM_TAB_UPLOADED, 
+    color: 'text-emerald-700', 
+    bg: 'bg-emerald-100', 
+    icon: CheckCircle2 
+  },
+};
+
 export const CAMPAIGN_STATUS_STYLES: Record<string, string> = {
   [STATIC_STRINGS.ADS_STATUS_ACTIVE]: UI_PALETTE.SUCCESS,
   [STATIC_STRINGS.ADS_STATUS_DRAFT]: UI_PALETTE.NEUTRAL,

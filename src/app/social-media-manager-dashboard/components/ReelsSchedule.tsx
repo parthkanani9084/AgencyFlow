@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Calendar, Search, Filter } from 'lucide-react';
+import { Calendar} from 'lucide-react';
 import { Task, TaskStatus } from '@/types';
 import { STATIC_STRINGS } from '@/utils/constants';
 import ReelCard from './ReelCard';

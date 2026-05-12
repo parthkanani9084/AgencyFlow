@@ -44,8 +44,8 @@ export interface UpdateClientResponse {
 }
 
 export interface GetClientsParams {
-  page: number;
-  limit: number;
+  page?: number;
+  limit?: number;
   search?: string;
 }
 

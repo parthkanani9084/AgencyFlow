@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { 
   Film, 
@@ -11,58 +11,95 @@ import {
   Calendar 
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { reelService } from '@/lib/services/reelService';
-import { reelAgent } from '@/lib/agent/reelAgent';
-import { Reel } from '@/types';
+import { useGetReels } from '@/api/hooks/useReel';
+import { Task, TaskStatus, Reel } from '@/types';
 import Badge from '@/components/ui/Badge';
 import { STATIC_STRINGS } from '@/utils/constants';
 
 export default function ClientReelsPage() {
   const { user } = useAuth();
   
-  const [reels, setReels] = useState<Reel[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'in_progress' | 'completed'>('all');
+  const [activeTab, setActiveTab] = useState<TaskStatus | 'all'>('all');
 
-  const fetchReels = useCallback(async () => {
-    if (!user?.name) return;
-    
-    setIsLoading(true);
-    try {
-      const allReels = await reelService.getReelsByUserId('any'); 
-      const clientReels = allReels.filter(r => r.clientName === user.name);
-      setReels(clientReels);
-    } catch (error) {
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user?.name]);
+  const { data: reelsData, isLoading } = useGetReels({
+    page: 1,
+    limit: 100,
+  });
 
-  useEffect(() => {
-    fetchReels();
-  }, [fetchReels]);
+  const reels = useMemo(() => {
+    return reelsData?.results?.data || [];
+  }, [reelsData]);
 
-  const transformedTasks = useMemo(() => 
-    reelAgent.transformToTasks(reels, user), 
-  [reels, user]);
+  const transformedTasks = useMemo(() => {
+    if (!user) return [];
+
+    return reels
+      .filter((reel) => {
+        const clientName = reel.client?.brandName || reel.clientName;
+        const isClientForThisReel = clientName === user.name;
+        return isClientForThisReel;
+      })
+      .map((reel) => {
+        const date = reel.publishDate || new Date().toISOString();
+
+        let taskStatus: TaskStatus = 'pending';
+        const rawStatus = reel.status?.toLowerCase();
+        if (rawStatus === 'uploaded') taskStatus = 'completed';
+        else if (rawStatus === 'production') taskStatus = 'in_progress';
+        else if (rawStatus === 'schedule') taskStatus = 'pending';
+
+        return {
+          id: reel.id,
+          title: reel.title,
+          assignedTo: user.name,
+          role: 'Social Media Manager',
+          client: 'AgencyFlow',
+          campaign: 'Social Media Strategy',
+          campaignId: reel.clientId || reel.campaignId,
+          deadline: date,
+          status: taskStatus,
+          priority: 'medium',
+          type: 'REEL',
+          scheduledDate: date,
+          clientName: user.name,
+        } as Task;
+      })
+      .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
+  }, [reels, user]);
 
   const filteredAndGroupedReels = useMemo(() => {
     let filtered = [...transformedTasks];
-    
+
     if (activeTab !== 'all') {
-      filtered = filtered.filter(t => t.status === activeTab);
+      filtered = filtered.filter((t) => t.status === activeTab);
     }
-    
+
     const query = searchQuery.trim().toLowerCase();
     if (query) {
-      filtered = filtered.filter(t => 
-        t.title.toLowerCase().includes(query) || 
-        t.campaign?.toLowerCase().includes(query)
+      filtered = filtered.filter(
+        (t) =>
+          t.title.toLowerCase().includes(query) || t.campaign?.toLowerCase().includes(query)
       );
     }
-    
-    return reelAgent.groupReelsByDate(filtered);
+
+    const groups: Record<string, Task[]> = {};
+
+    filtered.forEach((task) => {
+      const date = new Date(task.deadline).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+      if (!groups[date]) groups[date] = [];
+      groups[date].push(task);
+    });
+
+    return Object.entries(groups).map(([date, reels]) => ({
+      date,
+      reels: reels.sort((a, b) => a.title.localeCompare(b.title)),
+    }));
   }, [transformedTasks, activeTab, searchQuery]);
 
   const stats = useMemo(() => {
