@@ -90,6 +90,8 @@ export interface Reel {
   client?: {
     id: string;
     brandName: string;
+    clientName?: string;
+    fullName?: string;
   };
 }
 export type CampaignStatus = "active" | "paused" | "completed" | "in draft" | "archived";

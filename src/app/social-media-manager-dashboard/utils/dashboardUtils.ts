@@ -13,7 +13,7 @@ export const transformReelsToTasks = (reels: Reel[], user: AuthUser | null): Tas
         user.role === ROLES.MANAGER ||
         user.role === ROLES.SOCIAL_MEDIA_MANAGER;
       
-      const clientName = reel.client?.brandName || reel.clientName;
+      const clientName = reel.client?.clientName;
       const isClientForThisReel = user.role === ROLES.CLIENT && clientName === user.name;
       const isAssigned = reel.assignedToUserId === user.id;
 
@@ -24,7 +24,7 @@ export const transformReelsToTasks = (reels: Reel[], user: AuthUser | null): Tas
     })
     .map((reel) => {
       const date = reel.publishDate || new Date().toISOString();
-      const clientName = reel.client?.brandName || reel.clientName || STATIC_STRINGS.NOT_AVAILABLE;
+      const clientName = reel.client?.clientName || STATIC_STRINGS.NOT_AVAILABLE;
 
       let taskStatus: TaskStatus = COMMON_STATUS.PENDING as TaskStatus;
       const rawStatus = reel.status?.toLowerCase();

@@ -49,7 +49,7 @@ export function useSocialMediaDashboard() {
     if (!data || !Array.isArray(data)) return [];
     return data.map((client: any) => ({
       id: client.id,
-      name: client.clientName || client.client_name || '',
+      name: client.clientName ||'',
     }));
   }, [clientsData]);
 
