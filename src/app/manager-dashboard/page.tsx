@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Users, CheckCircle2, Timer, Circle, Calendar, ChevronRight, Camera, Film, Megaphone, AlertCircle } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/context/AuthContext';
 import { STATIC_STRINGS, PAGE_ROLES, ROLES } from '@/utils/constants';
-import { Task, TaskStatus, TaskPriority, TaskRole, UserRole } from '@/types';
+import { Task, TaskStatus, TaskRole, UserRole } from '@/types';
 import TaskCompletionModal from '@/components/TaskCompletionModal';
 import { useUpdateTask, useUpdateTaskStatus, useAssignTask, useCompleteTask } from '@/api/hooks/useTask';
 import { useQueryClient } from '@tanstack/react-query';
@@ -35,11 +35,6 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
   completed: { label: STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_COMPLETED, color: 'text-emerald-700', bg: 'bg-emerald-100', icon: CheckCircle2 },
 };
 
-const PRIORITY_DOT: Record<TaskPriority, string> = {
-  low: 'bg-slate-400',
-  medium: 'bg-amber-400',
-  high: 'bg-red-500',
-};
 
 const ROLE_COLORS: Record<string, string> = {
   [ROLES.SHOOTER]: 'bg-blue-600',
@@ -100,20 +95,21 @@ export default function ManagerDashboardPage() {
     };
 
     try {
-      const resp = await taskService.getTasks({
+      const resp = await taskService.getTasksHistory({
         page: 1,
         limit: 100,
-        role: getRoleParam(roleFilter),
-        isHistory: true
+        role: getRoleParam(roleFilter)
       });
       if (resp?.results?.data) {
         const mapped = resp.results.data.map((t: any) => ({
           id: t.task_id || t.id,
           title: t.task_title || t.taskTitle || 'Untitled Task',
           description: t.description || '',
-          assignedTo: t.workstage_role_name || t.notes?.[0]?.assign_to?.name || t.assign_to?.name || t.assignee?.name || t.assignee?.fullName || t.assignee?.full_name || 'Unassigned',
+          assignedTo: t.workstage_role_name || 'Unassigned',
           role: t.notes?.[0]?.assign_to?.role || t.assign_to?.role || t.assignee?.role || t.workflow_stage || 'N/A',
           client: t.client_name || t.client?.clientName || 'N/A',
+          brand: t.brand_name || 'N/A',
+          performer_name: t.performer_name ||  'N/A',
           deadline: (t.deadline_date || t.deadlineDate || '').split('T')[0] || 'N/A',
           status: t.currentStatus || t.status || 'pending',
           priority: t.priority || 'medium',
@@ -316,14 +312,16 @@ export default function ManagerDashboardPage() {
                         <div className="flex-1 min-w-0">
                           <p className="text-[13.5px] font-semibold text-slate-900 truncate">{task.title}</p>
                           <div className="flex items-center gap-2 mt-1 flex-wrap">
-                            <span className={`flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${ROLE_CONFIG[task.role]?.bg || 'bg-slate-100'} ${ROLE_CONFIG[task.role]?.color || 'text-slate-600'}`}>
-                              <RoleIcon size={10} />
-                              {task.assignedTo}
-                            </span>
-                            <span className="text-[11px] text-slate-400">
-                              {task.client}
-                            </span>
+                            <div className='flex gap-3 items-center'>
+                              <p className="text-[12px] text-slate-500 mt-0.5">{task.client}</p> . <p className="text-[12px] text-slate-500 mt-0.5">{task.brand}</p>
+                            </div>
+                      
+                        
                           </div>
+                          <span className={`flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full w-max  mt-2 ${ROLE_CONFIG[task.role]?.bg || 'bg-slate-100'} ${ROLE_CONFIG[task.role]?.color || 'text-slate-600'}`}>
+                            <RoleIcon size={10} />
+                            {task.performer_name}
+                          </span>
                         </div>
                       </div>
 

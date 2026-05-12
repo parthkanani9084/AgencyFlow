@@ -9,7 +9,7 @@ import { Task, TaskStatus, UserRole } from '@/types';
 import TaskCompletionModal from '@/components/TaskCompletionModal';
 import { STATIC_STRINGS, PAGE_ROLES, ROLES, TASK_STATUSES } from '@/utils/constants';
 import { STATUS_CONFIG } from '@/utils/ui-configs';
-import { useUpdateTask, useUpdateTaskStatus, useAssignTask, useCompleteTask, useGetTasks } from '@/api/hooks/useTask';
+import { useUpdateTask, useUpdateTaskStatus, useAssignTask, useCompleteTask, useGetTasksHistory } from '@/api/hooks/useTask';
 import { useGetTeamsByRole } from '@/api/hooks/useTeam';
 import { toApiRole } from '@/utils/roles';
 import TaskCard from './components/TaskCard';
@@ -37,12 +37,11 @@ export default function ShooterDashboardPage() {
   const { mutateAsync: assignTaskMutation } = useAssignTask();
   const { mutateAsync: completeTaskMutation } = useCompleteTask();
 
-  const tasksQuery = useGetTasks({ 
+  const tasksQuery = useGetTasksHistory({ 
     page: 1, 
     limit: 100, 
     role: ROLES.SHOOTER,
-    status: activeTab,
-    isHistory: true
+    status: activeTab
   }, {
     enabled: mounted,
     select: (resp: any) => {
@@ -54,6 +53,7 @@ export default function ShooterDashboardPage() {
         assignedTo: t.assign_to_name || STATIC_STRINGS.COMMON_UNASSIGNED,
         role: t.assign_to?.role ,
         client: t.client_name || STATIC_STRINGS.NOT_AVAILABLE,
+        brand: t.brand_name || STATIC_STRINGS.NOT_AVAILABLE,
         deadline: (t.deadline_date || t.deadlineDate || '').split('T')[0] || STATIC_STRINGS.NOT_AVAILABLE,
         deadlineStatus: t.deadline_status,
         status: t.currentStatus || t.status || TASK_STATUSES.PENDING,

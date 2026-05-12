@@ -184,11 +184,11 @@ export const useTaskManagement = () => {
 
   const handleSave = async () => {
     const newErrors: Partial<Record<keyof TaskForm, string>> = {};
-    if (!form.title.trim()) newErrors.title = STATIC_STRINGS.TASK_MGMT_REQUIRED;
-    if (!form.assignedTo.trim()) newErrors.assignedTo = STATIC_STRINGS.TASK_MGMT_REQUIRED;
-    if (!form.role) newErrors.role = STATIC_STRINGS.TASK_MGMT_REQUIRED;
-    if (!form.client.trim()) newErrors.client = STATIC_STRINGS.TASK_MGMT_REQUIRED;
-    if (!form.deadline.trim()) newErrors.deadline = STATIC_STRINGS.TASK_MGMT_REQUIRED;
+    if (!form.title.trim()) newErrors.title = STATIC_STRINGS.TASK_MGMT_ERR_TITLE;
+    if (!form.assignedTo.trim()) newErrors.assignedTo = STATIC_STRINGS.TASK_MGMT_ERR_ASSIGNED_TO;
+    if (!form.role) newErrors.role = STATIC_STRINGS.TASK_MGMT_ERR_ROLE;
+    if (!form.client.trim()) newErrors.client = STATIC_STRINGS.TASK_MGMT_ERR_CLIENT;
+    if (!form.deadline.trim()) newErrors.deadline = STATIC_STRINGS.TASK_MGMT_ERR_DEADLINE;
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);

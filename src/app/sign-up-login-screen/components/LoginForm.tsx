@@ -190,19 +190,19 @@ export default function LoginForm() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-[12px] text-slate-500">
+          {/* <p className="mt-6 text-center text-[12px] text-slate-500">
             {STATIC_STRINGS.LOGIN_NO_ACCOUNT}{' '}
             <button type="button" className="text-violet-600 hover:text-violet-700 font-semibold transition-colors">
               {STATIC_STRINGS.LOGIN_REQUEST_ACCESS}
             </button>
-          </p>
+          </p> */}
 
-          <p className="mt-4 text-center text-[11px] text-slate-400">
+          {/* <p className="mt-4 text-center text-[11px] text-slate-400">
             {STATIC_STRINGS.LOGIN_TERMS_AGREEMENT}{' '}
             <button type="button" className="underline hover:text-slate-600 transition-colors">{STATIC_STRINGS.LOGIN_TERMS_SERVICE}</button>{' '}
             {STATIC_STRINGS.LOGIN_AND}{' '}
             <button type="button" className="underline hover:text-slate-600 transition-colors">{STATIC_STRINGS.LOGIN_PRIVACY_POLICY}</button>.
-          </p>
+          </p> */}
         </div>
       </div>
     </div>
