@@ -45,7 +45,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
           <input
             type="text"
             value={form.title}
-            onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+            onChange={(e) => { setForm((f) => ({ ...f, title: e.target.value })); setErrors(er => ({ ...er, title: '' })); }}
             placeholder={STATIC_STRINGS.TASK_MGMT_PLACEHOLDER_TITLE}
             className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] focus:outline-none focus:ring-2 focus:ring-violet-500/30 transition ${errors.title ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-white focus:border-violet-400'}`}
           />
