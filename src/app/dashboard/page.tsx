@@ -86,12 +86,12 @@ export default function DashboardPage() {
         
         <div className="mt-6 space-y-6">
           <MetricSection title={STATIC_STRINGS.DASHBOARD_METRIC_CLIENT_SUMMARY} metrics={dynamicClientMetrics} cols={3} />
-          <MetricSection title={STATIC_STRINGS.DASHBOARD_METRIC_REVENUE} metrics={dynamicRevenueMetrics} cols={3} />
+          {/* <MetricSection title={STATIC_STRINGS.DASHBOARD_METRIC_REVENUE} metrics={dynamicRevenueMetrics} cols={3} /> */}
           <MetricSection title={STATIC_STRINGS.DASHBOARD_METRIC_REELS} metrics={reelsMetrics} cols={3} />
           <MetricSection title={STATIC_STRINGS.DASHBOARD_METRIC_META_ADS} metrics={dynamicMetaAdsMetrics} cols={4} />
           <MetricSection title={STATIC_STRINGS.DASHBOARD_METRIC_TODO} metrics={todoMetrics} cols={2} />
         </div>
-
+{/* 
         <section className="mt-8">
           <DashboardCharts />
         </section>
@@ -103,7 +103,7 @@ export default function DashboardPage() {
           <aside>
             <ActivityFeed />
           </aside>
-        </section>
+        </section> */}
       </main>
     </AppLayout>
   );
