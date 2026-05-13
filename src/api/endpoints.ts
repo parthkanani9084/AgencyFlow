@@ -1,5 +1,5 @@
 export const LOGIN_URL = '/common/auth/login';
-
+export const LOGOUT_URL = '/common/auth/logout';
 export const CLIENT_CREATE_URL = '/owner/client';
 export const CLIENT_LIST_URL = '/owner/client';
 
