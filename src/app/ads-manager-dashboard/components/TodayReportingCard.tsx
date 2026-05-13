@@ -17,11 +17,11 @@ export default function TodayReportingCard({ user, campaigns }: TodayReportingCa
     }
 
     const todayDate = new Date().toISOString().split('T')[0];
-    
-    const userCampaigns = campaigns.filter(campaign => 
+
+    const userCampaigns = campaigns.filter(campaign =>
       campaign.assignee === user.name || campaign.assignedAdsManagerId === user.id
     );
-    const updatedCampaigns = userCampaigns.filter(campaign => 
+    const updatedCampaigns = userCampaigns.filter(campaign =>
       campaign.performanceHistory?.some(log => log.date === todayDate)
     );
 
@@ -35,9 +35,6 @@ export default function TodayReportingCard({ user, campaigns }: TodayReportingCa
     }, { spent: 0, leads: 0 });
 
     return {
-      totalCampaigns: userCampaigns.length,
-      updatedCount: updatedCampaigns.length,
-      pendingCount: userCampaigns.length - updatedCampaigns.length,
       metrics: {
         ...metrics,
         roas: metrics.spent > 0 ? (metrics.leads * 10) / metrics.spent : 0
@@ -48,45 +45,45 @@ export default function TodayReportingCard({ user, campaigns }: TodayReportingCa
   if (!reportData) return null;
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-6">
-      <header className="px-5 py-4 border-b border-slate-100 bg-slate-50/50">
-        <div className="flex items-center gap-2">
-          <TrendingUp size={16} className="text-violet-600" />
-          <h3 className="text-[13.5px] font-bold text-slate-800 uppercase">
-            {STATIC_STRINGS.ADS_REPORT_TITLE}
-          </h3>
-        </div>
-      </header>
-      
-      <main className="p-5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Spend Metric Card */}
-          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 transition-all hover:border-violet-200 group">
-            <div className="flex items-center gap-2 mb-1.5 text-slate-500">
-              <DollarSign size={14} className="group-hover:text-violet-500 transition-colors" />
-              <span className="text-[11px] font-bold uppercase tracking-widest">
-                {STATIC_STRINGS.ADS_REPORT_TOTAL_SPEND}
-              </span>
-            </div>
-            <p className="text-[18px] font-black text-slate-900">
+    <section className="mb-8">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-1.5 h-6 bg-orange-500 rounded-full" />
+        <h2 className="text-[16px] font-bold text-slate-800">
+          {STATIC_STRINGS.ADS_REPORT_TITLE}
+        </h2>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Total Ad Spend Card */}
+        <article className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-5 transition-all hover:shadow-md hover:border-emerald-200 group">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:scale-105 transition-transform">
+            <DollarSign size={20} />
+          </div>
+          <div>
+            <p className="text-2xl font-black text-slate-900 tracking-tight">
               ₹{reportData.metrics.spent.toLocaleString()}
             </p>
-          </div>
-
-          {/* Leads Metric Card */}
-          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 transition-all hover:border-pink-200 group">
-            <div className="flex items-center gap-2 mb-1.5 text-slate-500">
-              <Target size={14} className="group-hover:text-pink-500 transition-colors" />
-              <span className="text-[11px] font-bold uppercase tracking-widest">
-                {STATIC_STRINGS.ADS_REPORT_LEADS_GENERATED}
-              </span>
-            </div>
-            <p className="text-[18px] font-black text-slate-900">
-              {reportData.metrics.leads}
+            <p className="text-[13px] font-semibold text-slate-500 mt-0.5">
+              {STATIC_STRINGS.ADS_REPORT_TOTAL_SPEND}
             </p>
           </div>
-        </div>
-      </main>
-    </div>
+        </article>
+
+        {/* Total Leads Generated Card */}
+        <article className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-5 transition-all hover:shadow-md hover:border-violet-200 group">
+          <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center text-violet-600 group-hover:scale-105 transition-transform">
+            <TrendingUp size={20} />
+          </div>
+          <div>
+            <p className="text-2xl font-black text-slate-900 tracking-tight">
+              {reportData.metrics.leads.toLocaleString()}
+            </p>
+            <p className="text-[13px] font-semibold text-slate-500 mt-0.5">
+              {STATIC_STRINGS.ADS_REPORT_LEADS_GENERATED}
+            </p>
+          </div>
+        </article>
+      </div>
+    </section>
   );
 }

@@ -1,14 +1,14 @@
 'use client';
 
 import React from 'react';
-import { Calendar, Search, Filter } from 'lucide-react';
-import { Task, TaskStatus } from '@/types';
+import { Calendar} from 'lucide-react';
+import { Reel } from '@/types';
 import { STATIC_STRINGS } from '@/utils/constants';
 import ReelCard from './ReelCard';
 
 interface ReelsScheduleProps {
-  groupedReels: { date: string; reels: Task[] }[];
-  onStatusChange: (task: Task, newStatus: TaskStatus) => void;
+  groupedReels: { date: string; reels: Reel[] }[];
+  onStatusChange: (reel: Reel, newStatus: string) => void;
   isLoading: boolean;
   searchQuery: string;
   onSearchChange: (query: string) => void;
@@ -75,7 +75,7 @@ export default function ReelsSchedule({
             {group.reels.map((reel) => (
               <ReelCard 
                 key={reel.id} 
-                task={reel} 
+                reel={reel} 
                 onStatusChange={onStatusChange} 
               />
             ))}

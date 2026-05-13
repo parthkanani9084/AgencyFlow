@@ -1,16 +1,42 @@
 import { ROLES } from '@/constants/roles';
 export { ROLES };
 
+export const COMMON_STATUS = {
+  ALL: 'all',
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  PENDING: 'pending',
+  COMPLETED: 'completed',
+} as const;
+
+export const REEL_STATUSES = {
+  SCHEDULED: 'schedule',
+  PRODUCTION: 'production',
+  UPLOADED: 'uploaded',
+  ALL: 'all',
+} as const;
+
 export const STATIC_STRINGS = {
   TITLE: 'AgencyFlow',
   // Task Management Defaults
   TASK_MGMT_ALL_ROLES: 'All Roles',
   TASK_MGMT_LABEL_DESCRIPTION: 'Description',
   TASK_MGMT_REQUIRED: 'Required',
+  TASK_MGMT_ERR_TITLE: 'Please enter a task title',
+  TASK_MGMT_ERR_ASSIGNED_TO: 'Please select a team member',
+  TASK_MGMT_ERR_ROLE: 'Role is required',
+  TASK_MGMT_ERR_CLIENT: 'Please select a client',
+  TASK_MGMT_ERR_DEADLINE: 'Please select a deadline date',
 
   //Super Admin Dashboard
   DASHBOARD_TITLE: 'Super Admin Dashboard',
   DASHBOARD_LOGOUT: 'Logout',
+  LOGOUT_MODAL_TITLE: 'Confirm Logout',
+  LOGOUT_MODAL_QUESTION: 'Are you sure you want to log out?',
+  LOGOUT_MODAL_DESCRIPTION: 'You will need to sign back in to access your dashboard.',
+  LOGOUT_MODAL_CONFIRM: 'Log Out',
+  LOGOUT_MODAL_CANCEL: 'Cancel',
+
   DASHBOARD_TOTAL_AGENCIES: 'Total Agencies',
   DASHBOARD_ALL_AGENCY_OWNERS: 'All Agency Owners',
   DASHBOARD_MANAGE_DESCRIPTION: 'Manage all agency owner accounts and their access.',
@@ -152,7 +178,7 @@ export const STATIC_STRINGS = {
   ADS_DASHBOARD_TITLE: 'Ads Manager Dashboard',
   ADS_DASHBOARD_TEAM_NAME: 'Ads Team',
   ADS_DASHBOARD_ASSIGNED_TASKS: 'Assigned Tasks',
-  ADS_DASHBOARD_STAT_PENDING_HANDOFF: 'Pending Handoff',
+  ADS_DASHBOARD_STAT_PENDING_HANDOFF: 'Pending Assign',
   ADS_DASHBOARD_STAT_ACTIVE_CAMPAIGNS: 'Active Campaigns',
   ADS_DASHBOARD_STAT_COMPLETED_ADS: 'Completed Ads',
   ADS_DASHBOARD_HISTORY_LOG: 'History Log:',
@@ -378,7 +404,6 @@ export const STATIC_STRINGS = {
   DASHBOARD_STAGE_REVIEW: 'Review',
   DASHBOARD_STAGE_EDITING: 'Editing',
   DASHBOARD_STAGE_SHOOTING: 'Shooting',
-  DASHBOARD_STAGE_RAW_UPLOAD: 'Raw Upload',
   DASHBOARD_STAGE_ADS: 'Ads',
   DASHBOARD_STAGE_COMPLETE: 'Complete',
   DASHBOARD_MONTH_YEAR: 'April 2026',
@@ -395,6 +420,12 @@ export const STATIC_STRINGS = {
   DASHBOARD_TODAY: 'Today',
   DASHBOARD_OVERDUE_LABEL: 'Overdue · ',
   DASHBOARD_FROM: 'From:',
+  LOADING_TASKS: 'Loading tasks...',
+  UNTITLED_TASK: 'Untitled Task',
+  NOT_AVAILABLE: 'N/A',
+  TASK_CARD_VIEW_PROOF: 'View',
+  TASK_CARD_SCREENSHOT_ALT: 'Task Screenshot',
+  TASK_CARD_DELIVERY_ALT: 'Delivery Screenshot',
 
   // Client Management
   CLIENT_MGMT_TITLE: 'Client Management',
@@ -582,8 +613,11 @@ export const STATIC_STRINGS = {
   LOGIN_FEATURE_SCALE: 'Manage 50+ clients and 200+ active tasks simultaneously',
   LOGIN_FEATURE_ROLES: 'Role-based access for every team member',
   LOGIN_STAT_CLIENTS: 'Active Clients',
+  LOGIN_STAT_CLIENTS_VAL: '50+',
   LOGIN_STAT_TASKS: 'Tasks Managed',
+  LOGIN_STAT_TASKS_VAL: '200+',
   LOGIN_STAT_ROAS: 'Avg ROAS',
+  LOGIN_STAT_ROAS_VAL: '4.2×',
   LOGIN_FORM_EMAIL_LABEL: 'Work Email',
   LOGIN_FORM_EMAIL_PLACEHOLDER: 'you@agency.io',
   LOGIN_FORM_PWD_LABEL: 'Password',
@@ -595,7 +629,6 @@ export const STATIC_STRINGS = {
   LOGIN_DEMO_ROLE: 'Role',
   LOGIN_DEMO_EMAIL: 'Email',
   LOGIN_DEMO_USE: 'Use',
-  LOGIN_DEMO_PWD_NOTICE: 'All demo accounts share the same password format:',
   LOGIN_NO_ACCOUNT: "Don't have an account?",
   LOGIN_REQUEST_ACCESS: 'Request access',
   LOGIN_TERMS_AGREEMENT: 'By signing in, you agree to our',
@@ -606,6 +639,10 @@ export const STATIC_STRINGS = {
   LOGIN_ERR_EMAIL_INVALID: 'Enter a valid email address',
   LOGIN_ERR_PWD_REQ: 'Password is required',
   LOGIN_ERR_PWD_MIN: 'Password must be at least 6 characters',
+  LOGIN_PWD_MIN_LENGTH: 6,
+  LOGIN_ERR_UNAUTHORIZED_ROLE: 'Unauthorized role access',
+  LOGIN_ARIA_HIDE_PWD: 'Hide password',
+  LOGIN_ARIA_SHOW_PWD: 'Show password',
   SMM_DASHBOARD_TITLE: 'Reels Schedule',
   SMM_DASHBOARD_DESC: 'Manage and track scheduled reel uploads for your campaigns',
   SMM_ADD_REEL: 'Add New Reel',
@@ -623,11 +660,15 @@ export const STATIC_STRINGS = {
   SMM_LABEL_CLIENT: 'Client',
   SMM_PLACEHOLDER_CLIENT: 'Select client...',
   SMM_LABEL_DATE: 'Schedule Date',
+  CLIENTS: 'Clients',
   SMM_BTN_CANCEL: 'Cancel',
   SMM_BTN_SCHEDULE: 'Schedule Reel',
   SMM_TOAST_UPLOADED: 'Reel marked as uploaded!',
   SMM_TOAST_ADDED: 'New reel added to schedule',
   SMM_TOAST_ERROR: 'Failed to add reel',
+  SMM_ERR_TITLE: 'Reel title is required',
+  SMM_ERR_CLIENT: 'Please select a client',
+  SMM_ERR_DATE: 'Schedule date is required',
   SMM_NO_REELS: 'No reels found',
   SMM_NO_REELS_DESC: 'Try adjusting your filters or search query.',
   SMM_LABEL_REEL: 'Reel',
@@ -696,7 +737,7 @@ export const STATIC_STRINGS = {
   NOT_FOUND_BACK_HOME: 'Back to Home',
   TASK_MODAL_CONFIRM_REEL: 'Confirm Reel Upload',
   TASK_MODAL_COMPLETE_TASK: 'Complete Task',
-  TASK_MODAL_LABEL_NOTES: 'Completion/Handoff Notes',
+  TASK_MODAL_LABEL_NOTES: 'Completion Notes',
   TASK_MODAL_PLACEHOLDER_NOTES: 'Provide details for the next person or audit records...',
   TASK_MODAL_ERR_NOTES: 'Descriptive notes are required (min 5 chars)',
   TASK_MODAL_ERR_HANDOFF: 'Please select a team member to hand off to',
@@ -706,9 +747,9 @@ export const STATIC_STRINGS = {
   TASK_MODAL_SS_ATTACHED: 'Screenshot Attached',
   TASK_MODAL_UPLOAD_PROOF: 'Click to upload campaign proof',
   TASK_MODAL_UPLOAD_PREVIEW: 'Click to upload edit preview/confirmation',
-  TASK_MODAL_LABEL_HANDOFF: 'Hand Off To',
+  TASK_MODAL_LABEL_HANDOFF: 'Assign To',
   TASK_MODAL_SELECT_RECIPIENT: 'Select recipient…',
-  TASK_MODAL_BTN_COMPLETE_HANDOFF: 'Complete & Hand Off',
+  TASK_MODAL_BTN_COMPLETE_HANDOFF: 'Complete & Assign',
   TASK_MODAL_BTN_CONFIRM_UPLOAD: 'Confirm Upload',
 
   // Super Admin Business Agency
@@ -823,7 +864,6 @@ export const STATIC_STRINGS = {
   CLIENT_MGMT_INVALID_AMOUNT: 'Please enter a valid amount',
   CLIENT_MGMT_SELECT_PLATFORM: 'Select Platform',
   CLIENT_MGMT_PLATFORM_WEBSITE: 'Website',
-  CLIENT_MGMT_PLATFORM_OFFLINE: 'Offline',
   CLIENT_MGMT_RECORD_PAYMENT_TOOLTIP: 'Record Payment',
   CLIENT_MGMT_VIEW_PAYMENTS_TOOLTIP: 'View Payments',
   CLIENT_MGMT_EDIT_CLIENT_TOOLTIP: 'Edit client',
@@ -852,6 +892,35 @@ export const STATIC_STRINGS = {
   CLIENT_MGMT_PLAN_WEEKLY: 'Weekly',
   CLIENT_MGMT_PLAN_MONTHLY: 'Monthly',
   CLIENT_MGMT_PLAN_YEARLY: 'Yearly',
+  DATE: 'Date',
+  NOTES: 'Notes',
+  AMOUNT: 'Amount',
+  DELETE_ENTRY: 'Delete entry',
+  FORM_DELETING: 'Deleting...',
+  LOCALE_GB: 'en-GB',
+  CLIENT_MGMT_PLATFORM_ONLINE: 'online',
+  CLIENT_MGMT_PLATFORM_OFFLINE: 'offline',
+  FORM_EMAIL_PLACEHOLDER_DEMO: 'e.g. client@test.com',
+  PAYMENT_ZERO_PLACEHOLDER: '0',
+} as const;
+
+export const CLIENT_SERVICES = {
+  REELS: 'reels',
+  CAMPAIGN: 'campaign',
+  META: 'meta',
+  SOCIAL_MEDIA: 'social media',
+} as const;
+
+export const CLIENT_PLANS = {
+  WEEKLY: 'weekly',
+  MONTHLY: 'monthly',
+  YEARLY: 'yearly',
+} as const;
+
+export const CLIENT_PLATFORMS = {
+  WEBSITE: 'Website',
+  OFFLINE: 'Offline',
+  ONLINE: 'online',
 } as const;
 
 export const SUPER_ADMIN_ACTIONS = {
@@ -894,7 +963,9 @@ export const PAGE_ROLES = {
 } as const;
 export const STORAGE_KEYS = {
   AUTH_TOKEN: 'auth_token',
+  REFRESH_TOKEN: 'refresh_token',
   USER_DATA: 'user_data',
+
   ADS_METRICS: 'agencyflow_ads_metrics',
   CAMPAIGNS: 'agencyflow_campaigns',
 } as const;
@@ -969,3 +1040,51 @@ export const OBJECTIVE_OPTIONS = [
   'Leads',
   'App Promotion',
 ] as const;
+
+export const TASK_CONSTANTS = {
+  DEBOUNCE_DELAY: 500,
+  DEFAULT_PER_PAGE: 8,
+} as const;
+
+export const TASK_STATUSES = {
+  PENDING: 'pending',
+  IN_PROGRESS: 'in_progress',
+  COMPLETED: 'completed',
+  ALL: 'all',
+} as const;
+
+export const TASK_FALLBACKS = {
+  UNTITLED: 'Untitled',
+  NOT_AVAILABLE: 'N/A',
+} as const;
+
+export const TASK_MGMT_KEYS = {
+  TITLE_ID: 'task-management-title',
+  ADD_BTN_ID: 'add-task-button',
+  SEARCH_ID: 'task-search',
+  STATUS_FILTER_ID: 'status-filter',
+} as const;
+
+export const EMPTY_TASK_FORM = {
+  title: '',
+  assignedTo: '',
+  role: ROLES.SHOOTER,
+  client: '',
+  deadline: '',
+  status: TASK_STATUSES.PENDING,
+  description: '',
+} as const;
+
+export const TASK_ROLE_FILTERS = [
+  { label: STATIC_STRINGS.TASK_MGMT_ALL_ROLES, value: TASK_STATUSES.ALL },
+  { label: ROLES.SHOOTER, value: ROLES.SHOOTER },
+  { label: ROLES.EDITOR, value: ROLES.EDITOR },
+  { label: ROLES.ADS_MANAGER, value: ROLES.ADS_MANAGER },
+] as const;
+
+export const REEL_CONSTANTS = {
+  DEBOUNCE_DELAY: 500,
+  REELS_LIMIT: 50,
+  DEFAULT_SORT: 'ASC',
+  DUE_SOON_KEYWORDS: ['today', '1 days'],
+} as const;

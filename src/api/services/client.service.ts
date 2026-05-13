@@ -1,5 +1,5 @@
 import AxiosRequest from '@/utils/axiosHelper';
-import { CREATE_CLIENT_URL, GET_CLIENTS_URL } from '@/lib/endpoints';
+import { CREATE_CLIENT_URL, GET_CLIENTS_URL } from '@/api/endpoints';
 
 export interface CreateClientPayload {
   client_name: string;
@@ -29,6 +29,11 @@ export interface UpdateClientPayload {
   service_required?: string[];
   package_amount?: number;
   per_day_spend_amount?: number;
+  plan_type?: string;
+  reels_per_month?: number;
+  platform_type?: 'online' | 'offline';
+  weblink?: string;
+  file_location?: string;
 }
 
 export interface UpdateClientResponse {
@@ -39,8 +44,9 @@ export interface UpdateClientResponse {
 }
 
 export interface GetClientsParams {
-  page: number;
-  limit: number;
+  page?: number;
+  limit?: number;
+  search?: string;
 }
 
 export interface ClientData {
@@ -88,6 +94,14 @@ export const clientService = {
   },
   getClients: async (params: GetClientsParams): Promise<GetClientsResponse> => {
     const response = await AxiosRequest.get(GET_CLIENTS_URL, params);
+    return response;
+  },
+  updateClient: async (clientId: string, payload: UpdateClientPayload): Promise<UpdateClientResponse> => {
+    const response = await AxiosRequest.put(`${GET_CLIENTS_URL}/${clientId}`, payload);
+    return response;
+  },
+  deleteClient: async (clientId: string): Promise<any> => {
+    const response = await AxiosRequest.delete(`${GET_CLIENTS_URL}/${clientId}`);
     return response;
   },
 };

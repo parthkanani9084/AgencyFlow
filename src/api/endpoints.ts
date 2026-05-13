@@ -1,9 +1,13 @@
 export const LOGIN_URL = '/common/auth/login';
-
+export const LOGOUT_URL = '/common/auth/logout';
 // Base URLs
 export const CLIENT_BASE_URL = '/owner/client';
 export const TEAM_BASE_URL = '/owner/team';
 export const TASK_BASE_URL = '/owner/task';
+export const REEL_BASE_URL = '/owner/reel';
+
+export const CLIENT_CREATE_URL = '/owner/client';
+export const CLIENT_LIST_URL = '/owner/client';
 
 //
 export const CREATE_CAMPAIGN_URL = '/owner/campaign';
@@ -23,3 +27,8 @@ export const GET_TEAM_ROLE_URL = TEAM_BASE_URL;
 
 export const CREATE_TASK_URL = TASK_BASE_URL;
 export const GET_TASKS_URL = TASK_BASE_URL;
+export const GET_TASKS_HISTORY_URL = `${TASK_BASE_URL}/history`;
+
+export const CREATE_REEL_URL = REEL_BASE_URL;
+export const GET_REELS_URL = REEL_BASE_URL;
+export const REEL_STATUS_UPDATE_URL = (id: string) => `${REEL_BASE_URL}/${id}/status`;

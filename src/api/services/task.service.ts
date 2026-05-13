@@ -1,5 +1,6 @@
 import AxiosRequest from '@/utils/axiosHelper';
-import { CREATE_TASK_URL, GET_TASKS_URL } from '@/lib/endpoints';
+import { CREATE_TASK_URL, GET_TASKS_URL, GET_TASKS_HISTORY_URL } from '@/api/endpoints';
+import { toApiRole } from '@/utils/roles';
 
 export interface CreateTaskPayload {
   task_title: string;
@@ -39,11 +40,27 @@ export const taskService = {
     return response;
   },
   getTasks: async (params: GetTasksParams): Promise<any> => {
-    const response = await AxiosRequest.get(GET_TASKS_URL, params);
+    const queryParams = { ...params };
+
+    if (queryParams.role) {
+      queryParams.role = toApiRole(queryParams.role);
+    }
+    
+    const response = await AxiosRequest.get(GET_TASKS_URL, queryParams);
+    return response;
+  },
+  getTasksHistory: async (params: GetTasksParams): Promise<any> => {
+    const queryParams = { ...params };
+
+    if (queryParams.role) {
+      queryParams.role = toApiRole(queryParams.role);
+    }
+    
+    const response = await AxiosRequest.get(GET_TASKS_HISTORY_URL, queryParams);
     return response;
   },
   updateTask: async (taskId: string, payload: UpdateTaskPayload): Promise<any> => {
-    const response = await AxiosRequest.patch(`${GET_TASKS_URL}/${taskId}`, payload);
+    const response = await AxiosRequest.put(`${GET_TASKS_URL}/${taskId}`, payload);
     return response;
   },
   updateTaskStatus: async (taskId: string, status: 'pending' | 'in_progress' | string): Promise<any> => {
@@ -55,16 +72,29 @@ export const taskService = {
     return response;
   },
   assignTask: async (taskId: string, assignedTo: string, notes: string): Promise<any> => {
-    const response = await AxiosRequest.post(`${GET_TASKS_URL}/${taskId}/assign`, {
-      assigned_to: assignedTo,
-      completion_notes: notes
+    const formData = new FormData();
+    formData.append('assigned_to', assignedTo);
+    formData.append('completion_notes', notes);
+
+    const response = await AxiosRequest.post(`${GET_TASKS_URL}/${taskId}/assign`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
     });
     return response;
   },
-  completeTask: async (taskId: string, notes: string, screenshot?: string): Promise<any> => {
-    const response = await AxiosRequest.post(`${GET_TASKS_URL}/${taskId}/complete`, {
-      completion_notes: notes,
-      delivery_screenshot: screenshot
+  completeTask: async (taskId: string, notes: string, screenshot?: string | File, assignedTo?: string): Promise<any> => {
+    const formData = new FormData();
+    formData.append('completion_notes', notes);
+    
+    if (screenshot) {
+      formData.append('delivery_screenshot', screenshot);
+    }
+    
+    if (assignedTo) {
+      formData.append('assigned_to', assignedTo);
+    }
+
+    const response = await AxiosRequest.post(`${GET_TASKS_URL}/${taskId}/complete`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
     });
     return response;
   }

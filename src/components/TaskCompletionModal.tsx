@@ -5,12 +5,13 @@ import Modal from '@/components/ui/Modal';
 import { CheckCircle2, UserPlus, Info, ChevronRight, Image } from 'lucide-react';
 import { Task, Reel, UserRole } from '@/types';
 import { STATIC_STRINGS, ROLES } from '@/utils/constants';
+import { normalizeRole } from '@/utils/roles';
 
 interface TaskCompletionModalProps {
   open: boolean;
   onClose: () => void;
   task: Task | Reel | any | null;
-  onComplete: (taskId: string, notes: string, nextMember?: { name: string; role: string }, screenshot?: string) => void;
+  onComplete: (taskId: string, notes: string, nextMember?: { name: string; role: string }, screenshot?: string | File) => void;
   userRole: UserRole | string;
   teamMembers: readonly { id: string; name: string; role: string }[];
 }
@@ -25,43 +26,35 @@ export default function TaskCompletionModal({
 }: TaskCompletionModalProps) {
   const [notes, setNotes] = useState('');
   const [screenshot, setScreenshot] = useState('');
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [sendTo, setSendTo] = useState('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const normalizedUserRole = useMemo(() => normalizeRole(userRole as string), [userRole]);
+  const taskRole = useMemo(() => normalizeRole((task as Task)?.role || ''), [task]);
+
+  const roleToCheck = useMemo(() => {
+    if (normalizedUserRole === ROLES.MANAGER || normalizedUserRole === ROLES.OWNER) {
+      return taskRole;
+    }
+    return normalizedUserRole;
+  }, [normalizedUserRole, taskRole]);
 
   const eligibleRoles = useMemo(() => {
     if (!task) return [];
-    
-    const taskRole = (task as Task)?.role || ROLES.SOCIAL_MEDIA_MANAGER;
-    const roleToCheck = userRole === ROLES.MANAGER || userRole === ROLES.OWNER ? taskRole : userRole;
-    
-    const roles = (() => {
-      switch (roleToCheck) {
-        case ROLES.SHOOTER: return [ROLES.EDITOR];
-        case ROLES.EDITOR: return [ROLES.ADS_MANAGER];
-        case ROLES.ADS_MANAGER: return [ROLES.MANAGER, ROLES.OWNER];
-        case ROLES.SOCIAL_MEDIA_MANAGER: return [ROLES.MANAGER, ROLES.OWNER];
-        default: return [];
-      }
-    })();
 
-    if (roleToCheck === ROLES.EDITOR || roleToCheck === ROLES.SHOOTER) return roles;
-    
-    // Default fallback for admin roles or non-editor handoffs
-    return Array.from(new Set([...roles, ROLES.MANAGER, ROLES.OWNER]));
-  }, [userRole, task]);
+    if (roleToCheck === ROLES.SHOOTER) return [ROLES.EDITOR];
+    if (roleToCheck === ROLES.EDITOR) return [ROLES.ADS_MANAGER];
+    return [];
+  }, [roleToCheck, task]);
 
   const flags = useMemo(() => {
-    const isManagerOrOwner = userRole === ROLES.MANAGER || userRole === ROLES.OWNER;
-    const taskRole = (task as Task)?.role;
-    const isAdsTask = taskRole === ROLES.ADS_MANAGER || taskRole === ROLES.SOCIAL_MEDIA_MANAGER;
+    const isAdsRole = roleToCheck === ROLES.ADS_MANAGER ;
     return {
       showHandoff: eligibleRoles.length > 0,
-      isManagerOrOwner,
-      isAdsTask,
-      needsScreenshot: isAdsTask
+      needsScreenshot: isAdsRole ,
+      isAdsRole
     };
-  }, [userRole, task?.role, eligibleRoles.length]);
-
+  }, [eligibleRoles.length, roleToCheck]);
 
   const handleSubmit = useCallback(() => {
     if (!task) return;
@@ -70,10 +63,10 @@ export default function TaskCompletionModal({
     if (!notes.trim() || notes.length < 5) {
       errors.notes = STATIC_STRINGS.TASK_MODAL_ERR_NOTES;
     }
-    if (flags.showHandoff && !sendTo && !flags.isManagerOrOwner) {
+    if (flags.showHandoff && !sendTo) {
       errors.sendTo = STATIC_STRINGS.TASK_MODAL_ERR_HANDOFF;
     }
-    if (flags.isAdsTask && !screenshot.trim()) {
+    if (flags.isAdsRole && !screenshotFile && !screenshot) {
       errors.screenshot = STATIC_STRINGS.TASK_MODAL_ERR_SCREENSHOT;
     }
 
@@ -84,15 +77,15 @@ export default function TaskCompletionModal({
 
     const selectedMember = teamMembers.find(m => m.id === sendTo);
     onComplete(
-      task.id, 
-      notes, 
+      task.id,
+      notes,
       selectedMember ? { name: selectedMember.name, role: selectedMember.role } : undefined,
-      flags.needsScreenshot ? screenshot : undefined
+      flags.needsScreenshot ? (screenshotFile || screenshot) : undefined
     );
-    
-    // State Reset
+
     setNotes('');
     setScreenshot('');
+    setScreenshotFile(null);
     setSendTo('');
     setFormErrors({});
     onClose();
@@ -101,6 +94,7 @@ export default function TaskCompletionModal({
   const handleScreenshotUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setScreenshotFile(file);
       const reader = new FileReader();
       reader.onload = (ev) => setScreenshot(ev.target?.result as string);
       reader.readAsDataURL(file);
@@ -125,9 +119,8 @@ export default function TaskCompletionModal({
             <textarea
               rows={4}
               placeholder={STATIC_STRINGS.TASK_MODAL_PLACEHOLDER_NOTES}
-              className={`w-full px-4 py-3 rounded-xl border text-[13.5px] outline-none transition-all resize-none ${
-                formErrors.notes ? 'border-red-300 bg-red-50 focus:ring-red-100' : 'border-slate-200 focus:ring-4 focus:ring-violet-50 focus:border-violet-300'
-              }`}
+              className={`w-full px-4 py-3 rounded-xl border text-[13.5px] outline-none transition-all resize-none ${formErrors.notes ? 'border-red-300 bg-red-50 focus:ring-red-100' : 'border-slate-200 focus:ring-4 focus:ring-violet-50 focus:border-violet-300'
+                }`}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
@@ -142,19 +135,20 @@ export default function TaskCompletionModal({
           {flags.needsScreenshot && (
             <div>
               <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">
-                {flags.isAdsTask ? STATIC_STRINGS.TASK_MODAL_LABEL_DELIVERY_SS : STATIC_STRINGS.TASK_MODAL_LABEL_EXPORT_SS} {!flags.isAdsTask && <span className="text-slate-400 font-normal ml-1">({STATIC_STRINGS.COMMON_OPTIONAL})</span>} {flags.isAdsTask && <span className="text-red-500">*</span>}
+                {flags.isAdsRole ? STATIC_STRINGS.TASK_MODAL_LABEL_DELIVERY_SS : STATIC_STRINGS.TASK_MODAL_LABEL_EXPORT_SS} 
+                {!flags.isAdsRole && <span className="text-slate-400 font-normal ml-1">({STATIC_STRINGS.COMMON_OPTIONAL})</span>} 
+                {flags.isAdsRole && <span className="text-red-500">*</span>}
               </label>
-              <input 
-                type="file" 
-                id="screenshot-upload" 
-                className="hidden" 
+              <input
+                type="file"
+                id="screenshot-upload"
+                className="hidden"
                 accept="image/*"
                 onChange={handleScreenshotUpload}
               />
-              <div 
-                className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
-                  screenshot ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200 hover:border-violet-300 hover:bg-violet-50/30'
-                }`}
+              <div
+                className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${screenshot ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200 hover:border-violet-300 hover:bg-violet-50/30'
+                  }`}
                 onClick={() => document.getElementById('screenshot-upload')?.click()}
               >
                 {screenshot ? (
@@ -164,9 +158,9 @@ export default function TaskCompletionModal({
                       <div className="absolute inset-0 bg-emerald-500/10" />
                     </div>
                     <p className="text-[12px] font-bold text-emerald-700">{STATIC_STRINGS.TASK_MODAL_SS_ATTACHED}</p>
-                    <button 
-                      type="button" 
-                      onClick={(e) => { e.stopPropagation(); setScreenshot(''); }}
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setScreenshot(''); setScreenshotFile(null); }}
                       className="text-[11px] text-red-500 font-medium hover:underline"
                     >
                       {STATIC_STRINGS.COMMON_REMOVE}
@@ -178,7 +172,7 @@ export default function TaskCompletionModal({
                       <Image size={16} />
                     </div>
                     <p className="text-[12px] font-medium text-slate-500">
-                      {flags.isAdsTask ? STATIC_STRINGS.TASK_MODAL_UPLOAD_PROOF : STATIC_STRINGS.TASK_MODAL_UPLOAD_PREVIEW}
+                      {flags.isAdsRole ? STATIC_STRINGS.TASK_MODAL_UPLOAD_PROOF : STATIC_STRINGS.TASK_MODAL_UPLOAD_PREVIEW}
                     </p>
                   </>
                 )}
@@ -191,27 +185,34 @@ export default function TaskCompletionModal({
             </div>
           )}
 
-          {/* Handoff Field */}
           {flags.showHandoff && (
             <div>
               <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">
-                {STATIC_STRINGS.TASK_MODAL_LABEL_HANDOFF} {flags.isManagerOrOwner && <span className="text-slate-400 font-normal ml-1">({STATIC_STRINGS.COMMON_OPTIONAL})</span>} {!flags.isManagerOrOwner && <span className="text-red-500">*</span>}
+                {STATIC_STRINGS.TASK_MODAL_LABEL_HANDOFF} <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <UserPlus size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <select
-                  className={`w-full pl-10 pr-4 py-3 rounded-xl border text-[13.5px] outline-none transition-all appearance-none bg-white ${
-                    formErrors.sendTo ? 'border-red-300 bg-red-50 focus:ring-red-100' : 'border-slate-200 focus:ring-4 focus:ring-violet-50 focus:border-violet-300'
-                  }`}
+                  className={`w-full pl-10 pr-4 py-3 rounded-xl border text-[13.5px] outline-none transition-all appearance-none bg-white ${formErrors.sendTo ? 'border-red-300 bg-red-50 focus:ring-red-100' : 'border-slate-200 focus:ring-4 focus:ring-violet-50 focus:border-violet-300'
+                    }`}
                   value={sendTo}
                   onChange={(e) => setSendTo(e.target.value)}
                 >
                   <option value="">{STATIC_STRINGS.TASK_MODAL_SELECT_RECIPIENT}</option>
-                  {teamMembers.filter(m => (eligibleRoles as string[]).includes(m.role as string)).map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name} ({m.role})
-                    </option>
-                  ))}
+                  {teamMembers
+                    .filter(m => {
+                      if (!m.role) return true;
+                      const mRole = m.role.toLowerCase().replace(/[\s_-]/g, '');
+                      const eligible = (eligibleRoles as string[]).map(role =>
+                        role.toLowerCase().replace(/[\s_-]/g, '')
+                      );
+                      return eligible.includes(mRole);
+                    })
+                    .map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name} ({m.role})
+                      </option>
+                    ))}
                 </select>
                 <ChevronRight className="absolute right-3.5 top-1/2 -translate-y-1/2 rotate-90 text-slate-400 pointer-events-none" size={14} />
               </div>

@@ -83,7 +83,7 @@ export default function AdsTrackingPage() {
     const kpiList = [
       { label: STATIC_STRINGS.ADS_KPI_TOTAL_SPEND,  value: `₹${adsMetrics.totalSpend.toLocaleString()}`,  icon: IndianRupee, color: 'text-violet-600 bg-violet-50', change: STATIC_STRINGS.ADS_KPI_SPEND_CHANGE, up: true },
       { label: STATIC_STRINGS.ADS_KPI_TOTAL_LEADS,  value: adsMetrics.totalLeads.toLocaleString(),         icon: Users,      color: 'text-blue-600 bg-blue-50',    change: STATIC_STRINGS.ADS_KPI_LEADS_CHANGE, up: true },
-      { label: STATIC_STRINGS.ADS_KPI_TOTAL_CLICKS, value: adsMetrics.totalClicks.toLocaleString(),        icon: TrendingUp, color: 'text-emerald-600 bg-emerald-50', change: STATIC_STRINGS.ADS_KPI_CLICKS_CHANGE, up: true },
+      // { label: STATIC_STRINGS.ADS_KPI_TOTAL_CLICKS, value: adsMetrics.totalClicks.toLocaleString(),        icon: TrendingUp, color: 'text-emerald-600 bg-emerald-50', change: STATIC_STRINGS.ADS_KPI_CLICKS_CHANGE, up: true },
       { label: STATIC_STRINGS.ADS_KPI_AVG_ROAS,     value: `${adsMetrics.avgRoas}×`,                       icon: Target,     color: 'text-amber-600 bg-amber-50',  change: STATIC_STRINGS.ADS_KPI_ROAS_CHANGE, up: false },
     ];
 
@@ -236,9 +236,9 @@ export default function AdsTrackingPage() {
           })}
         </section>
 
-        {/* Analytical Visualizations */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
-          {/* Weekly Performance Trend */}
+
+        {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+
           <section className="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
             <h2 className="text-[13.5px] font-semibold text-slate-800 mb-4">{STATIC_STRINGS.ADS_CHART_WEEKLY_TITLE}</h2>
             <ResponsiveContainer width="100%" height={220}>
@@ -254,7 +254,7 @@ export default function AdsTrackingPage() {
             </ResponsiveContainer>
           </section>
 
-          {/* Platform Resource Allocation */}
+
           <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
             <h2 className="text-[13.5px] font-semibold text-slate-800 mb-4">{STATIC_STRINGS.ADS_CHART_PLATFORM_TITLE}</h2>
             <div className="space-y-3">
@@ -280,7 +280,7 @@ export default function AdsTrackingPage() {
           </section>
         </div>
 
-        {/* Engagement Trend */}
+
         <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm mb-6">
           <h2 className="text-[13.5px] font-semibold text-slate-800 mb-4">{STATIC_STRINGS.ADS_CHART_CLICK_TITLE}</h2>
           <ResponsiveContainer width="100%" height={160}>
@@ -294,7 +294,7 @@ export default function AdsTrackingPage() {
           </ResponsiveContainer>
         </section>
 
-        {/* Granular Campaign Performance Table */}
+
         <section className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
             <h2 className="text-[13.5px] font-semibold text-slate-800 flex items-center gap-2">
@@ -379,7 +379,7 @@ export default function AdsTrackingPage() {
               </tbody>
             </table>
           </div>
-        </section>
+        </section> */}
       </div>
     </AppLayout>
   );

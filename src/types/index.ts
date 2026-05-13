@@ -24,24 +24,29 @@ export type TaskPriority = "low" | "medium" | "high";
 export type TaskRole = "Shooter" | "Editor" | "Ads Manager" | "Social Media Manager" | "Owner" | "Manager";
 
 export interface TaskNote {
-  role: TaskRole;
-  message: string;
-  timestamp: string;
-  author?: string;
+  role: TaskRole | string;
+  name?: string;
+  note: string;
+  screenshot?: string | null;
+  created_at: string;
+  message?: string;
+  timestamp?: string;
 }
 
 export interface Task {
   id: string;
   title: string;
   assignedTo: string;
-  role: TaskRole;
+  role: TaskRole | string;
   client: string;
+  performer_name?: string;
   brand?: string;
   campaign: string;
   campaignId?: string;
   deadline: string;
+  deadlineStatus?: string;
   status: TaskStatus | string; 
-  priority: TaskPriority;
+  priority?: TaskPriority;
   description?: string;
   notes?: string;
   roleNotes?: TaskNote[];
@@ -74,12 +79,15 @@ export interface ActivityLog {
 export interface Reel {
   id: string;
   title: string;
-  campaignId: string;
-  assignedToUserId: string;
-  scheduledDate: string;
-  status?: 'Scheduled' | 'Production' | 'Upload';
-  createdAt: string;
-  clientName?: string;
+  status: 'schedule' | 'production' | 'uploaded' | string;
+  deadline_date: string;
+  deadline_status: string;
+  client: {
+    id: string;
+    brandName: string;
+    clientName: string;
+  };
+  created_at: string;
 }
 export type CampaignStatus = "active" | "paused" | "completed" | "in draft" | "archived";
 

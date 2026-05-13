@@ -119,9 +119,12 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>(() => {
     if (typeof window === 'undefined') return [];
     const saved = localStorage.getItem('agencyflow_notifications_v3');
-    return saved ? JSON.parse(saved) : [
+    const parsed: Notification[] = saved ? JSON.parse(saved) : [
       { id: 'n1', type: 'task_assigned', title: 'Welcome to AgencyFlow', message: 'Your campaign management dashboard is ready.', timestamp: new Date().toISOString(), read: false, actor: 'System' }
     ];
+    
+    const unique = Array.from(new Map(parsed.map((n: Notification) => [n.id, n])).values()) as Notification[];
+    return unique;
   });
 
   useEffect(() => {
@@ -135,7 +138,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   const addNotification = (notif: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
     const newNotif: Notification = {
       ...notif,
-      id: `n${Date.now()}`,
+      id: `n${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       timestamp: new Date().toISOString(),
       read: false
     };
@@ -143,7 +146,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addTask = (task: Omit<Task, 'id'>) => {
-    const newTask: Task = { ...task, id: `t${Date.now()}` };
+    const newTask: Task = { ...task, id: `t${Date.now()}-${Math.random().toString(36).substring(2, 7)}` };
     setTasks(prev => [newTask, ...prev]);
     addNotification({
       type: 'task_assigned',
@@ -220,7 +223,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
         // Prepare Audit Log
         const log: ActivityLog = {
-          id: `log-${Date.now()}`,
+          id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           status: updates.status || task.status,
           userId: user?.id || 'system',
           role: user?.role || 'system',

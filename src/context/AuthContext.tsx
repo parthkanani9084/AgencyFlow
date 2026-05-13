@@ -5,6 +5,14 @@ import { useRouter, usePathname } from 'next/navigation';
 import type { AuthUser, UserRole } from '@/types';
 import { ROLES } from '@/constants/roles';
 import { ROUTES } from '@/constants/routes';
+import { STORAGE_KEYS, STATIC_STRINGS } from '@/utils/constants';
+import store from '@/utils/localstorage';
+import { useLogin, useLogout, mapRole } from '@/api/hooks/useAuth';
+
+import { getInitials } from '@/utils/helpers';
+
+
+
 
 const DEMO_USERS: (AuthUser & { password: string })[] = [
   { id: 'u1', name: 'Alex Owens',    email: 'alex.owens@agencyflow.io',    password: 'Owner@2026',      role: ROLES.OWNER,       avatarInitials: 'AO' },
@@ -37,8 +45,11 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   setAuthenticatedUser: (user: AuthUser) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
+  isLoggingIn: boolean;
+  isLoggingOut: boolean;
 }
+
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -48,6 +59,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [user, setUser]         = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const { mutateAsync: loginApi, isPending: isLoggingIn } = useLogin();
+  const { mutateAsync: logoutApi, isPending: isLoggingOut } = useLogout();
+
 
   // Rehydrate session from sessionStorage on mount
   useEffect(() => {
@@ -96,34 +111,91 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, isLoading, pathname, router]);
 
-  const login = useCallback(async (email: string, password: string) => {
-    // BACKEND INTEGRATION: POST /api/auth/login → { token, user }
-    const matched = DEMO_USERS.find((u) => u.email === email && u.password === password);
-    if (!matched) return { success: false, error: 'Invalid credentials — use the demo accounts below to sign in' };
-
-    const { password: _pw, ...authUser } = matched;
-    setUser(authUser);
-    sessionStorage.setItem('af_user', JSON.stringify(authUser));
-    return { success: true };
-  }, []);
-
   const setAuthenticatedUser = useCallback((user: AuthUser) => {
     setUser(user);
     sessionStorage.setItem('af_user', JSON.stringify(user));
   }, []);
 
-  const logout = useCallback(() => {
-    const isSuperAdmin = user?.role === ROLES.SUPER_ADMIN;
-    setUser(null);
-    sessionStorage.removeItem('af_user');
-    router.push(isSuperAdmin ? ROUTES.SUPER_ADMIN_LOGIN : ROUTES.LOGIN);
-  }, [router, user]);
+  const login = useCallback(async (email: string, password: string) => {
+    // 1. Try API login first
+    try {
+      const response = await loginApi({ email, password });
+
+      if (response.success && response.results) {
+        const { user: apiUser, accessToken, refreshToken } = response.results;
+        const role = mapRole(apiUser.role);
+
+        if (!role) {
+          return { success: false, error: STATIC_STRINGS.LOGIN_ERR_UNAUTHORIZED_ROLE };
+        }
+
+        const authUser: AuthUser = {
+          id: apiUser.id,
+          name: apiUser.full_name,
+          email: apiUser.email,
+          role: role as UserRole,
+          avatarInitials: getInitials(apiUser.full_name || ''),
+        };
+
+        setAuthenticatedUser(authUser);
+        if (accessToken) store.setValue(STORAGE_KEYS.AUTH_TOKEN, accessToken);
+        if (refreshToken) store.setValue(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+
+        return { success: true };
+      }
+    } catch (error: any) {
+      console.warn('API Login failed, checking demo users...', error);
+    }
+
+    // 2. Fallback to demo users
+    const matched = DEMO_USERS.find((u) => u.email === email && u.password === password);
+    if (!matched) return { success: false, error: 'Invalid credentials' };
+
+    const { password: _pw, ...authUser } = matched;
+    setUser(authUser);
+    sessionStorage.setItem('af_user', JSON.stringify(authUser));
+    
+    store.setValue(STORAGE_KEYS.AUTH_TOKEN, `demo-access-token-${authUser.id}`);
+    store.setValue(STORAGE_KEYS.REFRESH_TOKEN, `demo-refresh-token-${authUser.id}`);
+    
+    return { success: true };
+  }, [loginApi, setAuthenticatedUser]);
+
+
+  const logout = useCallback(async () => {
+    try {
+      const refreshToken = store.getValue(STORAGE_KEYS.REFRESH_TOKEN);
+      if (refreshToken) {
+        await logoutApi({ refreshToken });
+      }
+    } catch (error) {
+      console.error('Logout API failed:', error);
+    } finally {
+      const isSuperAdmin = user?.role === ROLES.SUPER_ADMIN;
+      setUser(null);
+      sessionStorage.removeItem('af_user');
+      store.removeValue(STORAGE_KEYS.AUTH_TOKEN);
+      store.removeValue(STORAGE_KEYS.REFRESH_TOKEN);
+      router.push(isSuperAdmin ? ROUTES.SUPER_ADMIN_LOGIN : ROUTES.LOGIN);
+    }
+  }, [router, user, logoutApi]);
+
+
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, setAuthenticatedUser }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      isLoading, 
+      login, 
+      logout, 
+      setAuthenticatedUser,
+      isLoggingIn,
+      isLoggingOut
+    }}>
       {children}
     </AuthContext.Provider>
   );
+
 }
 
 export function useAuth() {

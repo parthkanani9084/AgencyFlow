@@ -1,284 +1,92 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React from 'react';
 import AppLayout from '@/components/AppLayout';
-import { Video, Search, Plus, Calendar as CalendarIcon, Timer, CheckCircle2 } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
-import { useAuth } from '@/context/AuthContext';
-import { Task, TaskStatus, Reel } from '@/types';
-import TaskCompletionModal from '@/components/TaskCompletionModal';
-import Modal from '@/components/ui/Modal';
-import { toast } from 'sonner';
-import { reelService } from '@/lib/services/reelService';
-import { reelAgent } from '@/lib/agent/reelAgent';
-import ReelsSchedule from './components/ReelsSchedule';
-import { clientService } from '@/api/services/client.service';
-import { STATIC_STRINGS, ROLES, PAGE_ROLES } from '@/utils/constants';
 import { UserRole } from '@/types';
+import TaskCompletionModal from '@/components/TaskCompletionModal';
+import ReelsSchedule from './components/ReelsSchedule';
+import AddReelModal from './components/AddReelModal';
+import DashboardHeader from './components/DashboardHeader';
+import DashboardStats from './components/DashboardStats';
+import DashboardFilters from './components/DashboardFilters';
+import { useSocialMediaDashboard } from './hooks/useSocialMediaDashboard';
+import { ROLES, PAGE_ROLES } from '@/utils/constants';
 
 export default function SocialMediaManagerDashboardPage() {
-  useRoleGuard(PAGE_ROLES.SOCIAL_MEDIA_DASHBOARD as unknown as UserRole[]);
-  const { user } = useAuth();
-  
-  const [reels, setReels] = useState<Reel[]>([]);
-  const [activeTab, setActiveTab] = useState<TaskStatus | 'all'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [mounted, setMounted] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  useRoleGuard(PAGE_ROLES.SOCIAL_MEDIA_DASHBOARD as readonly UserRole[]);
 
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newReelForm, setNewReelForm] = useState({ title: '', campaignId: '', scheduledDate: '' });
-  const [clientsList, setClientsList] = useState<{ id: string; name: string }[]>([]);
-  const [isFetchingClients, setIsFetchingClients] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    const fetchReels = async () => {
-      if (user) {
-        setIsLoading(true);
-        const data = await reelService.getReelsByUserId(user.id);
-        setReels(data);
-        setIsLoading(false);
-      }
-    };
-    const fetchClients = async () => {
-      setIsFetchingClients(true);
-      try {
-        const response = await clientService.getClients({ page: 1, limit: 100 });
-        if (response?.results?.data) {
-          setClientsList(response.results.data.map((c: any) => ({
-            id: c.id,
-            name: c.clientName
-          })));
-        }
-      } catch (error) {
-      } finally {
-        setIsFetchingClients(false);
-      }
-    };
-    fetchReels();
-    fetchClients();
-  }, [user]);
-
-  const transformedTasks = useMemo(() => {
-    return reelAgent.transformToTasks(reels, user);
-  }, [reels, user]);
-
-  const filteredAndGroupedReels = useMemo(() => {
-    let filtered = transformedTasks;
-
-    if (activeTab !== 'all') {
-      filtered = filtered.filter(t => t.status === activeTab);
-    }
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      filtered = filtered.filter(t => 
-        t.title.toLowerCase().includes(q) || 
-        t.campaign.toLowerCase().includes(q) ||
-        (t.clientName && t.clientName.toLowerCase().includes(q))
-      );
-    }
-
-    return reelAgent.groupReelsByDate(filtered);
-  }, [transformedTasks, activeTab, searchQuery]);
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-
-  const stats = useMemo(() => ({
-    pending: transformedTasks.filter((t) => t.status === 'pending').length,
-    inProgress: transformedTasks.filter((t) => t.status === 'in_progress').length,
-    completed: transformedTasks.filter((t) => t.status === 'completed').length,
-  }), [transformedTasks]);
-
-  const onCompleteTask = useCallback((taskId: string) => {
-    setReels(prev => prev.map(r => r.id === taskId ? { ...r, status: 'Upload' } : r));
-    toast.success(STATIC_STRINGS.SMM_TOAST_UPLOADED);
-  }, []);
-
-  const handleStatusChange = useCallback((task: Task, newStatus: TaskStatus) => {
-    if (newStatus === 'completed') {
-      if (task.status === 'completed') return;
-      
-      if (task.type === 'REEL') {
-        onCompleteTask(task.id);
-      } else {
-        setSelectedTask(task);
-        setIsModalOpen(true);
-      }
-    } else {
-      const reelStatus = newStatus === 'in_progress' ? 'Production' : 'Scheduled';
-      setReels(prev => prev.map(r => r.id === task.id ? { ...r, status: reelStatus } : r));
-    }
-  }, [onCompleteTask]);
-
-  const handleAddReel = async () => {
-    if (!user) return;
-    try {
-      const newReel = await reelService.createReel(newReelForm, user);
-      setReels(prev => [newReel, ...prev]);
-      setIsAddModalOpen(false);
-      setNewReelForm({ title: '', campaignId: '', scheduledDate: '' });
-      toast.success(STATIC_STRINGS.SMM_TOAST_ADDED);
-    } catch (error: any) {
-      toast.error(error.message || STATIC_STRINGS.SMM_TOAST_ERROR);
-    }
-  };
-
-  if (!mounted) return <div className="min-h-screen bg-slate-50" />;
+  const {
+    activeTab,
+    setActiveTab,
+    searchQuery,
+    setSearchQuery,
+    isAddModalOpen,
+    setIsAddModalOpen,
+    selectedTask,
+    setIsTaskModalOpen,
+    isTaskModalOpen,
+    newReelForm,
+    formErrors,
+    isReelsLoading,
+    isUpdatingStatus,
+    isFetchingClients,
+    clientsList,
+    groupedReels,
+    stats,
+    handleStatusChange,
+    handleCloseAddModal,
+    handleFormChange,
+    handleAddReel,
+    refetchReels,
+    isCreatingReel,
+  } = useSocialMediaDashboard();
 
   return (
     <AppLayout>
       <div className="p-6 max-w-5xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center shadow-lg shadow-pink-200 text-white">
-              <Video size={24} />
-            </div>
-            <div>
-              <h1 className="text-[24px] font-extrabold text-slate-900 tracking-tight">{STATIC_STRINGS.SMM_DASHBOARD_TITLE}</h1>
-              <p className="text-[13px] text-slate-500 font-medium">{STATIC_STRINGS.SMM_DASHBOARD_DESC}</p>
-            </div>
-          </div>
-          <button 
-            onClick={() => setIsAddModalOpen(true)}
-            className="inline-flex items-center gap-2 bg-violet-700 hover:bg-violet-800 text-white px-4 py-2.5 rounded-xl text-[13px] font-bold transition-all active:scale-[0.98] shadow-md"
-          >
-            <Plus size={16} />
-            {STATIC_STRINGS.SMM_ADD_REEL}
-          </button>
-        </div>
+        <DashboardHeader onAddReel={() => setIsAddModalOpen(true)} />
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          {[
-            { label: STATIC_STRINGS.SMM_STAT_UPCOMING, value: stats.pending, color: 'text-blue-600', bg: 'bg-blue-50', icon: CalendarIcon },
-            { label: STATIC_STRINGS.SMM_STAT_PRODUCTION, value: stats.inProgress, color: 'text-amber-600', bg: 'bg-amber-50', icon: Timer },
-            { label: STATIC_STRINGS.SMM_STAT_UPLOADED, value: stats.completed, color: 'text-emerald-600', bg: 'bg-emerald-50', icon: CheckCircle2 },
-          ].map((s, i) => (
-            <div key={i} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-xl ${s.bg} ${s.color} flex items-center justify-center`}>
-                <s.icon size={20} />
-              </div>
-              <div>
-                <p className="text-[20px] font-black text-slate-900 leading-none">{s.value}</p>
-                <p className="text-[12px] font-bold text-slate-400 mt-1 uppercase tracking-wider">{s.label}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        <DashboardStats stats={stats} />
 
-        <div className="bg-white rounded-2xl border border-slate-100 p-4 mb-8 shadow-sm">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input 
-                type="text"
-                placeholder={STATIC_STRINGS.SMM_SEARCH_PLACEHOLDER}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border-none rounded-xl text-[13.5px] placeholder-slate-400 focus:ring-2 focus:ring-violet-500/20 transition-all"
-              />
-            </div>
+        <DashboardFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
 
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
-              <button 
-                onClick={() => setActiveTab('all')}
-                className={`px-4 py-2 rounded-lg text-[12.5px] font-bold transition-all whitespace-nowrap ${activeTab === 'all' ? 'bg-violet-600 text-white' : 'bg-violet-100 text-slate-500 hover:bg-violet-200'}`}
-              >
-                {STATIC_STRINGS.SMM_TAB_ALL}
-              </button>
-              <button 
-                onClick={() => setActiveTab('pending')}
-                className={`px-4 py-2 rounded-lg text-[12.5px] font-bold transition-all whitespace-nowrap ${activeTab === 'pending' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-              >
-                {STATIC_STRINGS.SMM_TAB_SCHEDULED}
-              </button>
-              <button 
-                onClick={() => setActiveTab('in_progress')}
-                className={`px-4 py-2 rounded-lg text-[12.5px] font-bold transition-all whitespace-nowrap ${activeTab === 'in_progress' ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-              >
-                {STATIC_STRINGS.SMM_TAB_PRODUCTION}
-              </button>
-              <button 
-                onClick={() => setActiveTab('completed')}
-                className={`px-4 py-2 rounded-lg text-[12.5px] font-bold transition-all whitespace-nowrap ${activeTab === 'completed' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-              >
-                {STATIC_STRINGS.SMM_TAB_UPLOADED}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <ReelsSchedule 
-          groupedReels={filteredAndGroupedReels}
+        <ReelsSchedule
+          groupedReels={groupedReels}
           onStatusChange={handleStatusChange}
-          isLoading={isLoading}
+          isLoading={isReelsLoading || isUpdatingStatus}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
         />
 
-        <TaskCompletionModal 
-          open={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+        <TaskCompletionModal
+          open={isTaskModalOpen}
+          onClose={() => setIsTaskModalOpen(false)}
           task={selectedTask}
-          onComplete={(taskId) => onCompleteTask(taskId)}
+          onComplete={() => {
+            setIsTaskModalOpen(false);
+            refetchReels();
+          }}
           userRole={ROLES.SOCIAL_MEDIA_MANAGER}
           teamMembers={[]}
         />
 
-        <Modal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title={STATIC_STRINGS.SMM_MODAL_TITLE} size="md">
-          <div className="p-6 space-y-5">
-            <div>
-              <label className="block text-[13px] font-bold text-slate-700 mb-2">{STATIC_STRINGS.SMM_LABEL_TITLE}</label>
-              <input 
-                type="text"
-                placeholder={STATIC_STRINGS.SMM_PLACEHOLDER_TITLE}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[14px] focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 outline-none transition-all"
-                value={newReelForm.title}
-                onChange={(e) => setNewReelForm(f => ({ ...f, title: e.target.value }))}
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-[13px] font-bold text-slate-700 mb-2">{STATIC_STRINGS.SMM_LABEL_CLIENT}</label>
-                <select 
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[14px] focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 outline-none transition-all cursor-pointer"
-                  value={newReelForm.campaignId}
-                  onChange={(e) => setNewReelForm(f => ({ ...f, campaignId: e.target.value }))}
-                >
-                  <option value="">{isFetchingClients ? 'Loading clients...' : STATIC_STRINGS.SMM_PLACEHOLDER_CLIENT}</option>
-                  {clientsList.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-[13px] font-bold text-slate-700 mb-2">{STATIC_STRINGS.SMM_LABEL_DATE}</label>
-                <input 
-                  type="date"
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[14px] focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 outline-none transition-all"
-                  value={newReelForm.scheduledDate}
-                  onChange={(e) => setNewReelForm(f => ({ ...f, scheduledDate: e.target.value }))}
-                />
-              </div>
-            </div>
-
-            <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">
-              <button 
-                onClick={() => setIsAddModalOpen(false)}
-                className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-              >
-                {STATIC_STRINGS.SMM_BTN_CANCEL}
-              </button>
-              <button 
-                onClick={handleAddReel}
-                className="px-6 py-2.5 rounded-xl bg-violet-700 hover:bg-violet-800 text-white text-[13px] font-bold transition-all shadow-md active:scale-[0.98]"
-              >
-                {STATIC_STRINGS.SMM_BTN_SCHEDULE}
-              </button>
-            </div>
-          </div>
-        </Modal>
+        <AddReelModal
+          open={isAddModalOpen}
+          onClose={handleCloseAddModal}
+          form={newReelForm}
+          errors={formErrors}
+          clients={clientsList}
+          isFetchingClients={isFetchingClients}
+          isCreating={isCreatingReel}
+          onChange={handleFormChange}
+          onSubmit={handleAddReel}
+        />
       </div>
     </AppLayout>
   );

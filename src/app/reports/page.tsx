@@ -37,7 +37,6 @@ const STAGE_DISTRIBUTION = [
 
 const STAGE_BADGE_STYLE: Record<string, string> = {
   [STATIC_STRINGS.DASHBOARD_STAGE_SHOOTING]: 'bg-blue-100 text-blue-700',
-  [STATIC_STRINGS.DASHBOARD_STAGE_RAW_UPLOAD]: 'bg-slate-100 text-slate-600',
   [STATIC_STRINGS.DASHBOARD_STAGE_EDITING]: 'bg-purple-100 text-purple-700',
   [STATIC_STRINGS.DASHBOARD_STAGE_ADS]: 'bg-amber-100 text-amber-700',
   [STATIC_STRINGS.DASHBOARD_STAGE_COMPLETE]: 'bg-emerald-100 text-emerald-700',
@@ -129,9 +128,9 @@ export default function ReportsPage() {
           })}
         </section>
 
-        {/* Performance Visualization Row */}
+{/* 
         <section className="grid grid-cols-1 xl:grid-cols-3 gap-5 mb-6">
-          {/* Main Chart: Growth and Spend */}
+
           <article className="xl:col-span-2 bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
             <header className="mb-4">
               <h2 className="text-[14px] font-semibold text-slate-800">{STATIC_STRINGS.REPORTS_MONTHLY_CHART}</h2>
@@ -152,7 +151,7 @@ export default function ReportsPage() {
             </div>
           </article>
 
-          {/* Secondary Chart: Workflow Distribution */}
+
           <article className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
             <header className="mb-2">
               <h2 className="text-[14px] font-semibold text-slate-800">{STATIC_STRINGS.REPORTS_STAGE_CHART}</h2>
@@ -261,7 +260,7 @@ export default function ReportsPage() {
               </tbody>
             </table>
           </div>
-        </section>
+        </section> */}
       </main>
     </AppLayout>
   );

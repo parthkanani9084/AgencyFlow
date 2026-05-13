@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { taskService, CreateTaskPayload, GetTasksParams } from '../services/task.service';
+import { QUERY_KEYS } from '../queryKeys';
 
 export const useCreateTask = () => {
   return useMutation({
@@ -7,10 +8,19 @@ export const useCreateTask = () => {
   });
 };
 
-export const useGetTasks = (params: GetTasksParams) => {
+export const useGetTasks = (params: GetTasksParams, options?: any) => {
   return useQuery({
-    queryKey: ['tasks', params],
+    queryKey: [QUERY_KEYS.TASKS, params],
     queryFn: () => taskService.getTasks(params),
+    ...options,
+  });
+};
+
+export const useGetTasksHistory = (params: GetTasksParams, options?: any) => {
+  return useQuery({
+    queryKey: [QUERY_KEYS.TASKS, 'history', params],
+    queryFn: () => taskService.getTasksHistory(params),
+    ...options,
   });
 };
 
@@ -43,7 +53,7 @@ export const useAssignTask = () => {
 
 export const useCompleteTask = () => {
   return useMutation({
-    mutationFn: ({ taskId, notes, screenshot }: { taskId: string; notes: string; screenshot?: string }) => 
-      taskService.completeTask(taskId, notes, screenshot),
+    mutationFn: ({ taskId, notes, screenshot, assignedTo }: { taskId: string; notes: string; screenshot?: string | File; assignedTo?: string }) => 
+      taskService.completeTask(taskId, notes, screenshot, assignedTo),
   });
 };

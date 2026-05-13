@@ -356,9 +356,9 @@ useEffect(() => {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12.5px] font-medium transition-colors">
+              {/* <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12.5px] font-medium transition-colors">
                 <Download size={13} /> {STATIC_STRINGS.CAMPAIGN_MGMT_EXPORT}
-              </button>
+              </button> */}
               <button
                 onClick={() => setCreateOpen(true)}
                 className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 active:scale-[0.98] text-white text-[12.5px] font-semibold transition-all duration-150"
