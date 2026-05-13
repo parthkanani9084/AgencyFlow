@@ -21,6 +21,12 @@ export const STATIC_STRINGS = {
   //Super Admin Dashboard
   DASHBOARD_TITLE: 'Super Admin Dashboard',
   DASHBOARD_LOGOUT: 'Logout',
+  LOGOUT_MODAL_TITLE: 'Confirm Logout',
+  LOGOUT_MODAL_QUESTION: 'Are you sure you want to log out?',
+  LOGOUT_MODAL_DESCRIPTION: 'You will need to sign back in to access your dashboard.',
+  LOGOUT_MODAL_CONFIRM: 'Log Out',
+  LOGOUT_MODAL_CANCEL: 'Cancel',
+
   DASHBOARD_TOTAL_AGENCIES: 'Total Agencies',
   DASHBOARD_ALL_AGENCY_OWNERS: 'All Agency Owners',
   DASHBOARD_MANAGE_DESCRIPTION: 'Manage all agency owner accounts and their access.',
@@ -618,6 +624,8 @@ export const STATIC_STRINGS = {
   LOGIN_ERR_PWD_MIN: 'Password must be at least 6 characters',
   LOGIN_PWD_MIN_LENGTH: 6,
   LOGIN_ERR_UNAUTHORIZED_ROLE: 'Unauthorized role access',
+  LOGIN_ARIA_HIDE_PWD: 'Hide password',
+  LOGIN_ARIA_SHOW_PWD: 'Show password',
   SMM_DASHBOARD_TITLE: 'Reels Schedule',
   SMM_DASHBOARD_DESC: 'Manage and track scheduled reel uploads for your campaigns',
   SMM_ADD_REEL: 'Add New Reel',
@@ -930,7 +938,9 @@ export const PAGE_ROLES = {
 } as const;
 export const STORAGE_KEYS = {
   AUTH_TOKEN: 'auth_token',
+  REFRESH_TOKEN: 'refresh_token',
   USER_DATA: 'user_data',
+
   ADS_METRICS: 'agencyflow_ads_metrics',
   CAMPAIGNS: 'agencyflow_campaigns',
 } as const;
