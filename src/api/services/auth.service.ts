@@ -22,9 +22,25 @@ export interface LoginResponse {
   };
 }
 
+export interface LogoutPayload {
+  refreshToken: string;
+}
+
+export interface LogoutResponse {
+  success: boolean;
+  code: number;
+  message: string;
+  results: any;
+}
+
 export const authService = {
   login: async (payload: LoginPayload): Promise<LoginResponse> => {
     const response = await AxiosRequest.post(API_ENDPOINTS.AUTH.LOGIN, payload);
     return response;
   },
+  logout: async (payload: LogoutPayload): Promise<LogoutResponse> => {
+    const response = await AxiosRequest.post(API_ENDPOINTS.AUTH.LOGOUT, payload);
+    return response;
+  },
 };
+

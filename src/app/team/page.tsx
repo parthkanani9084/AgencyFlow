@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import type { UserRole } from '@/types';
 import { STATIC_STRINGS, ROLES, PAGE_ROLES } from '@/utils/constants';
+import { getInitials } from '@/utils/helpers';
 
 interface TeamMember {
   id: string;
@@ -252,7 +253,7 @@ export default function TeamPage() {
                   {filtered.map((member, idx) => {
                     const cfg = roleConfig[member.role];
                     const RoleIcon = cfg.icon;
-                    const initials = member.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
+                    const initials = getInitials(member.name);
                     return (
                       <tr
                         key={member.id}
@@ -422,7 +423,7 @@ export default function TeamPage() {
             <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg mb-5">
               <div className={`w-8 h-8 rounded-full ${avatarColors[deleteModal.member.role]} flex items-center justify-center flex-shrink-0`}>
                 <span className="text-[11px] font-bold text-white">
-                  {deleteModal.member.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
+                  {getInitials(deleteModal.member.name)}
                 </span>
               </div>
               <div>
