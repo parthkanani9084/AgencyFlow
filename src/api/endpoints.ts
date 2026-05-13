@@ -1,5 +1,7 @@
 export const LOGIN_URL = '/common/auth/login';
 export const LOGOUT_URL = '/common/auth/logout';
+export const REFRESH_TOKEN_URL = '/common/auth/refresh-token';
+
 // Base URLs
 export const CLIENT_BASE_URL = '/owner/client';
 export const TEAM_BASE_URL = '/owner/team';
