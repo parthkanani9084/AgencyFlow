@@ -10,7 +10,7 @@ import TodayReportingCard from './components/TodayReportingCard';
 import TaskCompletionModal from '@/components/TaskCompletionModal';
 import { STATIC_STRINGS, PAGE_ROLES, STORAGE_KEY_CAMPAIGNS, ROLES, TASK_STATUSES } from '@/utils/constants';
 import { useUpdateTaskStatus, useCompleteTask, useGetTasksHistory } from '@/api/hooks/useTask';
-import TaskCard from '../shooter-dashboard/components/TaskCard';
+import TaskCard from '@/components/TaskCard';
 const WORKFLOW_STAGES = [
   STATIC_STRINGS.DASHBOARD_STAGE_SHOOTING,
   STATIC_STRINGS.DASHBOARD_STAGE_EDITING,

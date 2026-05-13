@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { authService, LoginPayload } from '../services/auth.service';
+import { authService, LoginPayload, LogoutPayload } from '../services/auth.service';
 import { UserRole } from '@/types';
 import { ROLES } from '@/constants/roles';
 
@@ -24,5 +24,11 @@ export const mapRole = (apiRole: string): UserRole | null => {
 export const useLogin = () => {
   return useMutation({
     mutationFn: (payload: LoginPayload) => authService.login(payload),
+  });
+};
+
+export const useLogout = () => {
+  return useMutation({
+    mutationFn: (payload: LogoutPayload) => authService.logout(payload),
   });
 };

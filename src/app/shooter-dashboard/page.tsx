@@ -6,13 +6,14 @@ import { Camera, ChevronRight } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/context/AuthContext';
 import { Task, TaskStatus, UserRole } from '@/types';
+import TaskCard from '@/components/TaskCard';
 import TaskCompletionModal from '@/components/TaskCompletionModal';
 import { STATIC_STRINGS, PAGE_ROLES, ROLES, TASK_STATUSES } from '@/utils/constants';
 import { STATUS_CONFIG } from '@/utils/ui-configs';
 import { useUpdateTask, useUpdateTaskStatus, useAssignTask, useCompleteTask, useGetTasksHistory } from '@/api/hooks/useTask';
 import { useGetTeamsByRole } from '@/api/hooks/useTeam';
 import { toApiRole } from '@/utils/roles';
-import TaskCard from './components/TaskCard';
+
 
 
 const WORKFLOW_STAGES = [

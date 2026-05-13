@@ -1,10 +1,13 @@
 export const LOGIN_URL = '/common/auth/login';
-
+export const LOGOUT_URL = '/common/auth/logout';
 // Base URLs
 export const CLIENT_BASE_URL = '/owner/client';
 export const TEAM_BASE_URL = '/owner/team';
 export const TASK_BASE_URL = '/owner/task';
 export const REEL_BASE_URL = '/owner/reel';
+
+export const CLIENT_CREATE_URL = '/owner/client';
+export const CLIENT_LIST_URL = '/owner/client';
 
 // Specific Endpoint Constants (using base URLs)
 export const CREATE_CLIENT_URL = CLIENT_BASE_URL;
