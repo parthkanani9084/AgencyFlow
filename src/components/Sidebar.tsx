@@ -27,6 +27,8 @@ import { useTasks } from '@/context/TaskContext';
 import { ROLES } from '@/constants/roles';
 import { ROUTES } from '@/constants/routes';
 import { STATIC_STRINGS } from '@/utils/constants';
+import LogoutModal from '@/components/LogoutModal';
+
 interface NavItem {
   id: string;
   label: string;
@@ -48,8 +50,14 @@ export default function Sidebar() {
   const { tasks, notifications } = useTasks();
   const unreadCount = notifications.filter(n => !n.read).length;
   const [collapsed, setCollapsed] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const handleLogout = async () => {
+    setShowLogoutModal(false);
+    await logout();
+  };
+
 
   const navItems: NavItem[] = [
     // Workspace
@@ -167,9 +175,10 @@ export default function Sidebar() {
         {!collapsed && user && (
           <div
             className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-50 cursor-pointer mb-1 transition-colors"
-            onClick={logout}
+            onClick={() => setShowLogoutModal(true)}
             title="Sign out"
           >
+
             <div className="w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0">
               <span className="text-[11px] font-semibold text-white">{user.avatarInitials}</span>
             </div>
@@ -182,10 +191,11 @@ export default function Sidebar() {
         )}
         {collapsed && user && (
           <button
-            onClick={logout}
+            onClick={() => setShowLogoutModal(true)}
             title="Sign out"
             className="w-full flex items-center justify-center p-2 rounded-lg hover:bg-red-50 transition-colors text-slate-400 hover:text-red-500 mb-1"
           >
+
             <LogOut size={15} />
           </button>
         )}
@@ -197,6 +207,13 @@ export default function Sidebar() {
           {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </button>
       </div>
+
+      <LogoutModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleLogout}
+      />
     </aside>
+
   );
 }

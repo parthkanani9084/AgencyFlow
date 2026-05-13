@@ -1,5 +1,5 @@
 import AxiosRequest from '@/utils/axiosHelper';
-import { LOGIN_URL } from '@/api/endpoints';
+import { LOGIN_URL, LOGOUT_URL } from '@/api/endpoints';
 
 export interface LoginPayload {
   email: string;
@@ -22,9 +22,25 @@ export interface LoginResponse {
   };
 }
 
+export interface LogoutPayload {
+  refreshToken: string;
+}
+
+export interface LogoutResponse {
+  success: boolean;
+  code: number;
+  message: string;
+  results: any;
+}
+
 export const authService = {
   login: async (payload: LoginPayload): Promise<LoginResponse> => {
     const response = await AxiosRequest.post(LOGIN_URL, payload);
     return response;
   },
+  logout: async (payload: LogoutPayload): Promise<LogoutResponse> => {
+    const response = await AxiosRequest.post(LOGOUT_URL, payload);
+    return response;
+  },
 };
+
