@@ -396,7 +396,6 @@ export const STATIC_STRINGS = {
   DASHBOARD_STAGE_REVIEW: 'Review',
   DASHBOARD_STAGE_EDITING: 'Editing',
   DASHBOARD_STAGE_SHOOTING: 'Shooting',
-  DASHBOARD_STAGE_RAW_UPLOAD: 'Raw Upload',
   DASHBOARD_STAGE_ADS: 'Ads',
   DASHBOARD_STAGE_COMPLETE: 'Complete',
   DASHBOARD_MONTH_YEAR: 'April 2026',
@@ -416,6 +415,9 @@ export const STATIC_STRINGS = {
   LOADING_TASKS: 'Loading tasks...',
   UNTITLED_TASK: 'Untitled Task',
   NOT_AVAILABLE: 'N/A',
+  TASK_CARD_VIEW_PROOF: 'View',
+  TASK_CARD_SCREENSHOT_ALT: 'Task Screenshot',
+  TASK_CARD_DELIVERY_ALT: 'Delivery Screenshot',
 
   // Client Management
   CLIENT_MGMT_TITLE: 'Client Management',
@@ -647,7 +649,7 @@ export const STATIC_STRINGS = {
   SMM_LABEL_CLIENT: 'Client',
   SMM_PLACEHOLDER_CLIENT: 'Select client...',
   SMM_LABEL_DATE: 'Schedule Date',
-  CLIENTS:'Clients',
+  CLIENTS: 'Clients',
   SMM_BTN_CANCEL: 'Cancel',
   SMM_BTN_SCHEDULE: 'Schedule Reel',
   SMM_TOAST_UPLOADED: 'Reel marked as uploaded!',

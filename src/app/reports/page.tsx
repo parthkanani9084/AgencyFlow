@@ -37,7 +37,6 @@ const STAGE_DISTRIBUTION = [
 
 const STAGE_BADGE_STYLE: Record<string, string> = {
   [STATIC_STRINGS.DASHBOARD_STAGE_SHOOTING]: 'bg-blue-100 text-blue-700',
-  [STATIC_STRINGS.DASHBOARD_STAGE_RAW_UPLOAD]: 'bg-slate-100 text-slate-600',
   [STATIC_STRINGS.DASHBOARD_STAGE_EDITING]: 'bg-purple-100 text-purple-700',
   [STATIC_STRINGS.DASHBOARD_STAGE_ADS]: 'bg-amber-100 text-amber-700',
   [STATIC_STRINGS.DASHBOARD_STAGE_COMPLETE]: 'bg-emerald-100 text-emerald-700',

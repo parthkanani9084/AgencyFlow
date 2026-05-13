@@ -17,7 +17,6 @@ import TaskCard from './components/TaskCard';
 
 const WORKFLOW_STAGES = [
   STATIC_STRINGS.DASHBOARD_STAGE_SHOOTING,
-  STATIC_STRINGS.DASHBOARD_STAGE_RAW_UPLOAD,
   STATIC_STRINGS.DASHBOARD_STAGE_EDITING,
   STATIC_STRINGS.DASHBOARD_STAGE_ADS,
   STATIC_STRINGS.DASHBOARD_STAGE_COMPLETE
@@ -37,9 +36,9 @@ export default function ShooterDashboardPage() {
   const { mutateAsync: assignTaskMutation } = useAssignTask();
   const { mutateAsync: completeTaskMutation } = useCompleteTask();
 
-  const tasksQuery = useGetTasksHistory({ 
-    page: 1, 
-    limit: 100, 
+  const tasksQuery = useGetTasksHistory({
+    page: 1,
+    limit: 100,
     role: ROLES.SHOOTER,
     status: activeTab
   }, {
@@ -51,7 +50,7 @@ export default function ShooterDashboardPage() {
         title: t.task_title || t.taskTitle || STATIC_STRINGS.UNTITLED_TASK,
         description: t.description || '',
         assignedTo: t.assign_to_name || STATIC_STRINGS.COMMON_UNASSIGNED,
-        role: t.assign_to?.role ,
+        role: t.assign_to?.role,
         client: t.client_name || STATIC_STRINGS.NOT_AVAILABLE,
         brand: t.brand_name || STATIC_STRINGS.NOT_AVAILABLE,
         deadline: (t.deadline_date || t.deadlineDate || '').split('T')[0] || STATIC_STRINGS.NOT_AVAILABLE,
@@ -60,7 +59,7 @@ export default function ShooterDashboardPage() {
         priority: t.priority || 'medium',
         roleNotes: Array.isArray(t.notes) ? t.notes : (Array.isArray(t.roleNotes) ? t.roleNotes : []),
       })) as Task[];
-      
+
       return mapped.filter((task, index, self) =>
         index === self.findIndex((t) => t.id === task.id)
       );
@@ -121,7 +120,7 @@ export default function ShooterDashboardPage() {
         const member = teamMembers.find((m: any) => m.name === nextMember.name);
         if (member) assignedToId = member.id;
       }
-      
+
       if (assignedToId) {
         await assignTaskMutation({ taskId, assignedTo: assignedToId, notes });
       } else {
@@ -142,7 +141,7 @@ export default function ShooterDashboardPage() {
             <Camera size={20} className="text-blue-700" />
           </div>
           <div>
-            <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">{STATIC_STRINGS.SHOOTER_DASHBOARD_TITLE}</h1>
+            <h1 className="text-[24px] font-bold text-slate-900">{STATIC_STRINGS.SHOOTER_DASHBOARD_TITLE}</h1>
             <p className="text-[13px] text-slate-500">{user?.name || 'Team Member'} · {ROLES.SHOOTER} Team</p>
           </div>
         </header>
@@ -168,11 +167,13 @@ export default function ShooterDashboardPage() {
               return (
                 <Fragment key={stage}>
                   <div className="flex-1 text-center">
-                    <div className={`h-2 rounded-full mb-2 ${isActive ? 'bg-blue-500' : 'bg-slate-200'}`} />
+                    <div className={`h-1.5 rounded-full mb-2 ${isActive ? 'bg-blue-500' : 'bg-slate-200'}`} />
                     <span className={`text-[11px] font-medium ${isActive ? 'text-blue-700' : 'text-slate-400'}`}>{stage}</span>
                   </div>
                   {idx < WORKFLOW_STAGES.length - 1 && (
-                    <ChevronRight size={14} className="text-slate-300 flex-shrink-0 mb-4" />
+                    <div className="flex items-center pb-4">
+                      <ChevronRight size={14} className="text-slate-300" />
+                    </div>
                   )}
                 </Fragment>
               );
@@ -182,15 +183,15 @@ export default function ShooterDashboardPage() {
 
         <main className="space-y-4">
           <header className="flex items-center justify-between">
-            <h2 className="text-[14px] font-semibold text-slate-800">{STATIC_STRINGS.DASHBOARD_ASSIGNED_TASKS}</h2>
+            <h2 className="text-[16px] font-bold text-slate-800">{STATIC_STRINGS.DASHBOARD_ASSIGNED_TASKS}</h2>
             <nav className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
-              {([TASK_STATUSES.IN_PROGRESS, TASK_STATUSES.PENDING, TASK_STATUSES.COMPLETED] as const).map((tab) => (
+              {([TASK_STATUSES.PENDING, TASK_STATUSES.IN_PROGRESS, TASK_STATUSES.COMPLETED] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
                   className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-all ${activeTab === tab
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
                     }`}
                 >
                   {tab === TASK_STATUSES.IN_PROGRESS ? STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_IN_PROGRESS : (STATUS_CONFIG[tab]?.label || tab)}
