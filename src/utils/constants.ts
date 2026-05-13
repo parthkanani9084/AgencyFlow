@@ -9,11 +9,12 @@ export const COMMON_STATUS = {
   COMPLETED: 'completed',
 } as const;
 
-export const REEL_STATUS_MAP: Record<string, string> = {
-  pending: 'schedule',
-  in_progress: 'production',
-  completed: 'uploaded',
-};
+export const REEL_STATUSES = {
+  SCHEDULED: 'schedule',
+  PRODUCTION: 'production',
+  UPLOADED: 'uploaded',
+  ALL: 'all',
+} as const;
 
 export const STATIC_STRINGS = {
   TITLE: 'AgencyFlow',
@@ -1087,3 +1088,10 @@ export const TASK_ROLE_FILTERS = [
   { label: ROLES.EDITOR, value: ROLES.EDITOR },
   { label: ROLES.ADS_MANAGER, value: ROLES.ADS_MANAGER },
 ] as const;
+
+export const REEL_CONSTANTS = {
+  DEBOUNCE_DELAY: 500,
+  REELS_LIMIT: 50,
+  DEFAULT_SORT: 'ASC',
+  DUE_SOON_KEYWORDS: ['today', '1 days'],
+} as const;

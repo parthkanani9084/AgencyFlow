@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { reelService, CreateReelPayload } from '../services/reel.service';
 import { QUERY_KEYS } from '../queryKeys';
+import { Reel } from '@/types';
 
 export const useCreateReel = () => {
   return useMutation({
@@ -13,13 +14,20 @@ export interface GetReelsResponse {
   code: number;
   message: string;
   results: {
-    data: any[];
+    data: Reel[];
     counts: {
       schedule: number;
       production: number;
       uploaded: number;
     };
-    pagination: any;
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalItem: number;
+      itemsPerPage: number;
+      hasNextPage: boolean;
+      hasPrevPage: boolean;
+    };
   };
 }
 

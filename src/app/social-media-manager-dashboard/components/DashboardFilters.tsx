@@ -2,14 +2,13 @@
 
 import React, { useMemo } from 'react';
 import { Search } from 'lucide-react';
-import { STATIC_STRINGS, COMMON_STATUS } from '@/utils/constants';
-import { TaskStatus } from '@/types';
+import { STATIC_STRINGS, REEL_STATUSES } from '@/utils/constants';
 
 interface DashboardFiltersProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
-  activeTab: TaskStatus | typeof COMMON_STATUS.ALL;
-  onTabChange: (tab: TaskStatus | typeof COMMON_STATUS.ALL) => void;
+  activeTab: string;
+  onTabChange: (tab: string) => void;
 }
 
 const DashboardFilters: React.FC<DashboardFiltersProps> = ({
@@ -19,10 +18,10 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
   onTabChange,
 }) => {
   const tabs = useMemo(() => [
-    { key: COMMON_STATUS.ALL, label: STATIC_STRINGS.SMM_TAB_ALL },
-    { key: 'pending', label: STATIC_STRINGS.SMM_TAB_SCHEDULED },
-    { key: 'in_progress', label: STATIC_STRINGS.SMM_TAB_PRODUCTION },
-    { key: 'completed', label: STATIC_STRINGS.SMM_TAB_UPLOADED },
+    { key: REEL_STATUSES.ALL, label: STATIC_STRINGS.SMM_TAB_ALL },
+    { key: REEL_STATUSES.SCHEDULED, label: STATIC_STRINGS.SMM_TAB_SCHEDULED },
+    { key: REEL_STATUSES.PRODUCTION, label: STATIC_STRINGS.SMM_TAB_PRODUCTION },
+    { key: REEL_STATUSES.UPLOADED, label: STATIC_STRINGS.SMM_TAB_UPLOADED },
   ], []);
 
   return (
@@ -47,7 +46,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
           {tabs.map((tab) => (
             <button
               key={tab.key}
-              onClick={() => onTabChange(tab.key as TaskStatus | typeof COMMON_STATUS.ALL)}
+              onClick={() => onTabChange(tab.key)}
               className={`px-4 py-2 rounded-lg text-[12.5px] font-bold transition-all whitespace-nowrap ${
                 activeTab === tab.key
                   ? 'bg-violet-600 text-white'

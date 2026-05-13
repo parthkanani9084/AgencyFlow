@@ -79,20 +79,15 @@ export interface ActivityLog {
 export interface Reel {
   id: string;
   title: string;
-  clientId?: string;
-  campaignId?: string; 
-  assignedToUserId?: string;
-  publishDate?: string;
-  scheduledDate?: string;
-  status?: 'schedule' | 'production' | 'uploaded' | string;
-  createdAt: string;
-  clientName?: string;
-  client?: {
+  status: 'schedule' | 'production' | 'uploaded' | string;
+  deadline_date: string;
+  deadline_status: string;
+  client: {
     id: string;
     brandName: string;
-    clientName?: string;
-    fullName?: string;
+    clientName: string;
   };
+  created_at: string;
 }
 export type CampaignStatus = "active" | "paused" | "completed" | "in draft" | "archived";
 

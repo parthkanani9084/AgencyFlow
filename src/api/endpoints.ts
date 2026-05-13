@@ -22,3 +22,5 @@ export const GET_TASKS_URL = TASK_BASE_URL;
 export const GET_TASKS_HISTORY_URL = `${TASK_BASE_URL}/history`;
 
 export const CREATE_REEL_URL = REEL_BASE_URL;
+export const GET_REELS_URL = REEL_BASE_URL;
+export const REEL_STATUS_UPDATE_URL = (id: string) => `${REEL_BASE_URL}/${id}/status`;

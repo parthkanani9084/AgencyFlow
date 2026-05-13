@@ -2,25 +2,23 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { Task, TaskStatus, Reel } from '@/types';
+import { Reel } from '@/types';
 import { useCreateReel, useGetReels, useUpdateReelStatus } from '@/api/hooks/useReel';
 import { useClients } from '@/api/hooks/useClient';
-import { REEL_STATUS_MAP, COMMON_STATUS } from '@/utils/constants';
-import { transformReelsToTasks, groupTasksByDate } from '../utils/dashboardUtils';
-
-const DEBOUNCE_DELAY = 500;
-const REELS_LIMIT = 50;
+import { REEL_STATUSES, REEL_CONSTANTS } from '@/utils/constants';
+import { groupReelsByDate } from '../utils/dashboardUtils';
 
 export function useSocialMediaDashboard() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<TaskStatus | typeof COMMON_STATUS.ALL>(COMMON_STATUS.ALL);
+  const [activeTab, setActiveTab] = useState<string>(REEL_STATUSES.ALL);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Reel | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newReelForm, setNewReelForm] = useState({ title: '', campaignId: '', scheduledDate: '' });
   const [formErrors, setFormErrors] = useState({ title: false, campaignId: false, scheduledDate: false });
+  
   const { mutateAsync: createReel, isPending: isCreatingReel } = useCreateReel();
   const { mutateAsync: updateStatus, isPending: isUpdatingStatus } = useUpdateReelStatus();
   const { data: clientsData, isLoading: isFetchingClients } = useClients({});
@@ -29,7 +27,7 @@ export function useSocialMediaDashboard() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
-    }, DEBOUNCE_DELAY);
+    }, REEL_CONSTANTS.DEBOUNCE_DELAY);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
@@ -39,9 +37,10 @@ export function useSocialMediaDashboard() {
     refetch: refetchReels,
   } = useGetReels({
     page: 1,
-    limit: REELS_LIMIT,
+    limit: REEL_CONSTANTS.REELS_LIMIT,
     search: debouncedSearch.trim() || undefined,
-    status: activeTab === COMMON_STATUS.ALL ? undefined : REEL_STATUS_MAP[activeTab],
+    status: activeTab === REEL_STATUSES.ALL ? undefined : activeTab,
+    sortorder: REEL_CONSTANTS.DEFAULT_SORT,
   });
 
   const clientsList = useMemo(() => {
@@ -49,7 +48,7 @@ export function useSocialMediaDashboard() {
     if (!data || !Array.isArray(data)) return [];
     return data.map((client: any) => ({
       id: client.id,
-      name: client.clientName ||'',
+      name: client.clientName || '',
     }));
   }, [clientsData]);
 
@@ -63,14 +62,12 @@ export function useSocialMediaDashboard() {
   }, [reelsData]);
 
   const reels = useMemo<Reel[]>(() => (reelsData?.results?.data as Reel[]) || [], [reelsData]);
-  const transformedTasks = useMemo(() => transformReelsToTasks(reels, user), [reels, user]);
-  const groupedReels = useMemo(() => groupTasksByDate(transformedTasks), [transformedTasks]);
+  const groupedReels = useMemo(() => groupReelsByDate(reels), [reels]);
 
   const handleStatusChange = useCallback(
-    async (task: Task, newStatus: TaskStatus) => {
+    async (reel: Reel, newStatus: string) => {
       try {
-        const apiStatus = REEL_STATUS_MAP[newStatus];
-        await updateStatus({ id: task.id, status: apiStatus });
+        await updateStatus({ id: reel.id, status: newStatus });
         refetchReels();
       } catch (error) {}
     },

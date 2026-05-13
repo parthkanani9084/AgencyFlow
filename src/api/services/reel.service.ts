@@ -1,5 +1,5 @@
 import AxiosRequest from '@/utils/axiosHelper';
-import { CREATE_REEL_URL } from '@/api/endpoints';
+import { CREATE_REEL_URL, GET_REELS_URL, REEL_STATUS_UPDATE_URL } from '@/api/endpoints';
 
 export interface CreateReelPayload {
   title: string;
@@ -20,11 +20,11 @@ export const reelService = {
     return response;
   },
   getReels: async (params?: any): Promise<any> => {
-    const response = await AxiosRequest.get(CREATE_REEL_URL, params);
+    const response = await AxiosRequest.get(GET_REELS_URL, params);
     return response;
   },
   updateReelStatus: async (id: string, status: string): Promise<any> => {
-    const response = await AxiosRequest.patch(`${CREATE_REEL_URL}/${id}/status`, { status });
+    const response = await AxiosRequest.patch(REEL_STATUS_UPDATE_URL(id), { status });
     return response;
   },
 };

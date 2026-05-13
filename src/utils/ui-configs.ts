@@ -68,19 +68,19 @@ export const STATUS_CONFIG: Record<string, { label: string; color: string; bg: s
 };
 
 export const REEL_STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  pending: { 
+  schedule: { 
     label: STATIC_STRINGS.SMM_TAB_SCHEDULED, 
     color: 'text-slate-600', 
     bg: 'bg-slate-100', 
     icon: Circle 
   },
-  in_progress: { 
+  production: { 
     label: STATIC_STRINGS.SMM_TAB_PRODUCTION, 
     color: 'text-amber-700', 
     bg: 'bg-amber-100', 
     icon: Timer 
   },
-  completed: { 
+  uploaded: { 
     label: STATIC_STRINGS.SMM_TAB_UPLOADED, 
     color: 'text-emerald-700', 
     bg: 'bg-emerald-100', 
