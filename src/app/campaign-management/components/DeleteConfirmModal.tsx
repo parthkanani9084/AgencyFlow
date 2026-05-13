@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Loader2 } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import { STATIC_STRINGS } from '@/utils/constants';
 
@@ -10,9 +10,16 @@ interface Props {
   campaignName: string;
   onClose: () => void;
   onConfirm: () => void;
+  isProcessing?: boolean;
 }
 
-export default function DeleteConfirmModal({ open, campaignName, onClose, onConfirm }: Props) {
+export default function DeleteConfirmModal({
+  open,
+  campaignName,
+  onClose,
+  onConfirm,
+  isProcessing = false,
+}: Props) {
   return (
     <Modal open={open} onClose={onClose} title={STATIC_STRINGS.DELETE_MODAL_TITLE} size="sm">
       <div className="px-6 py-5">
@@ -32,15 +39,18 @@ export default function DeleteConfirmModal({ open, campaignName, onClose, onConf
         <div className="flex items-center justify-end gap-2 mt-6">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+            disabled={isProcessing}
+            className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {STATIC_STRINGS.DELETE_MODAL_KEEP}
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 active:scale-[0.98] text-white text-[13px] font-semibold transition-all duration-150"
+            disabled={isProcessing}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 active:scale-[0.98] text-white text-[13px] font-semibold transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {STATIC_STRINGS.DELETE_MODAL_DELETE}
+            {isProcessing && <Loader2 size={16} className="animate-spin" />}
+            {isProcessing ? 'Deleting...' : STATIC_STRINGS.DELETE_MODAL_DELETE}
           </button>
         </div>
       </div>

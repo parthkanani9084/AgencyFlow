@@ -2,9 +2,11 @@
 
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Trash2} from 'lucide-react';
+import { Trash2, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import Modal from '@/components/ui/Modal';
 import { STATIC_STRINGS } from '@/utils/constants';
+import { useLogPerformance, useGetPerformanceHistory, useDeletePerformanceHistory } from '@/api/hooks/useCampaign';
 
 interface PerformanceFormValues {
   spend: number;
@@ -21,6 +23,10 @@ interface Props {
 
 export default function LogPerformanceModal({ open, onClose, campaign, onSuccess }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { mutateAsync: logPerformance } = useLogPerformance();
+  const { data: historyData, isLoading: isLoadingHistory } = useGetPerformanceHistory(campaign?.id);
+  const { mutateAsync: deleteHistory, isPending: isDeleting } = useDeletePerformanceHistory();
+  const history = historyData?.results?.history || [];
 
   const { register, handleSubmit, reset } = useForm<PerformanceFormValues>({
     defaultValues: { spend: 0, leads: 0, roas: 0 },
@@ -35,68 +41,40 @@ export default function LogPerformanceModal({ open, onClose, campaign, onSuccess
 
   const onSubmit = async (data: PerformanceFormValues) => {
     setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 400));
+    try {
+      const payload = {
+        ads_spend: Number(data.spend) || 0,
+        ads_leads: Number(data.leads) || 0,
+        ads_roas: Number(data.roas) || 0,
+      };
 
-    // Parse previous values
-    const prevSpend = Number(String(campaign?.spend || '').replace(/[^0-9.-]+/g, '')) || 0;
-    const prevLeads = Number(campaign?.leads) || 0;
-    const prevRoas = Number(campaign?.roas) || 0;
+      const response = await logPerformance({
+        campaignId: campaign.id,
+        payload,
+      });
 
-    // Parse new inputs
-    const addedSpend = Number(data.spend) || 0;
-    const addedLeads = Number(data.leads) || 0;
-    const addedRoas = Number(data.roas) || 0;
+      if (response.success) {
+        onSuccess(response.results);
+      }
+    } catch (error) {
 
-    // Additive logic
-    const totalSpend = prevSpend + addedSpend;
-    const totalLeads = prevLeads + addedLeads;
-
-    const totalRoas = addedRoas > 0 ? addedRoas : prevRoas;
-
-    const updatedCampaign = {
-      ...campaign,
-      spend: `${STATIC_STRINGS.CURRENCY_SYMBOL}${totalSpend.toLocaleString()}`,
-      leads: totalLeads,
-      roas: totalRoas,
-      performanceHistory: [
-        {
-          id: Math.random().toString(36).substring(2, 9),
-          date: new Date().toLocaleDateString('en-GB'),
-          addedSpend,
-          addedLeads,
-          newRoas: totalRoas,
-        },
-        ...(campaign?.performanceHistory || []),
-      ],
-    };
-
-    setIsSubmitting(false);
-    onSuccess(updatedCampaign);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDeleteLog = (logId: string) => {
-    const logToDelete = campaign.performanceHistory.find((l: any) => l.id === logId);
-    if (!logToDelete) return;
+  const handleDeleteHistory = async (historyId: string) => {
+    try {
+      const response = await deleteHistory(historyId);
+      if (response.success) {
 
-    // Parse current totals
-    const currentSpend = Number(String(campaign?.spend || '').replace(/[^0-9.-]+/g, '')) || 0;
-    const currentLeads = Number(campaign?.leads) || 0;
-
-    // Subtract deleted metrics
-    const newSpend = Math.max(0, currentSpend - logToDelete.addedSpend);
-    const newLeads = Math.max(0, currentLeads - logToDelete.addedLeads);
-
-    const updatedHistory = campaign.performanceHistory.filter((l: any) => l.id !== logId);
-
-    const updatedCampaign = {
-      ...campaign,
-      spend: `${STATIC_STRINGS.CURRENCY_SYMBOL}${newSpend.toLocaleString()}`,
-      leads: newLeads,
-      performanceHistory: updatedHistory,
-    };
-
-    onSuccess(updatedCampaign);
+      }
+    } catch (error) {
+      console.error('Delete history error:', error);
+      toast.error('Failed to delete log');
+    }
   };
+
 
   return (
     <Modal
@@ -142,7 +120,11 @@ export default function LogPerformanceModal({ open, onClose, campaign, onSuccess
           />
         </div>
 
-        {campaign?.performanceHistory && campaign.performanceHistory.length > 0 && (
+        {isLoadingHistory ? (
+          <div className="flex items-center justify-center py-10">
+            <Loader2 className="w-6 h-6 animate-spin text-violet-500" />
+          </div>
+        ) : history.length > 0 && (
           <div className="mt-6 border-t border-slate-100 pt-5">
             <h3 className="text-[12px] font-bold text-slate-800 uppercase tracking-wider mb-3">
               {STATIC_STRINGS.LOG_PERFORMANCE_HISTORY_TITLE}
@@ -167,33 +149,30 @@ export default function LogPerformanceModal({ open, onClose, campaign, onSuccess
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {campaign.performanceHistory.map((log: any) => (
+                  {history.map((log: any) => (
                     <tr key={log.id} className="group hover:bg-slate-50/80 transition-colors">
                       <td className="px-3 py-2.5 text-[12px] font-medium text-slate-500 whitespace-nowrap">
-                        {(() => {
-                          const date = new Date(log.date);
-                          if (isNaN(date.getTime())) return log.date;
-                          return date.toLocaleDateString('en-GB'); // DD/MM/YYYY
-                        })()}
+                        {log.performance_date ? new Date(log.performance_date).toLocaleDateString('en-GB') : '-'}
                       </td>
                       <td className="px-3 py-2.5 text-[12px] font-bold text-emerald-600 text-right">
                         +{STATIC_STRINGS.CURRENCY_SYMBOL}
-                        {log.addedSpend.toLocaleString()}
+                        {Number(log.ads_spend ||"0").toLocaleString()}
                       </td>
                       <td className="px-3 py-2.5 text-[12px] font-bold text-blue-600 text-right">
-                        +{log.addedLeads}
+                        +{log.ads_leads}
                       </td>
                       <td className="px-3 py-2.5 text-[12px] font-bold text-slate-800 text-right">
-                        {log.newRoas > 0 ? `${log.newRoas}×` : '—'}
+                        {log.ads_roas > 0 ? `${log.ads_roas}×` : 0}
                       </td>
                       <td className="px-3 py-2.5 text-right">
                         <button
                           type="button"
-                          onClick={() => handleDeleteLog(log.id)}
-                          className="p-1.5 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
+                          disabled={isDeleting}
+                          onClick={() => handleDeleteHistory(log.id)}
+                          className="p-1.5 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-30"
                           title={STATIC_STRINGS.LOG_PERFORMANCE_DELETE_LOG}
                         >
-                          <Trash2 size={13} />
+                          {isDeleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
                         </button>
                       </td>
                     </tr>
@@ -208,15 +187,17 @@ export default function LogPerformanceModal({ open, onClose, campaign, onSuccess
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-100 transition-colors"
+            disabled={isSubmitting}
+            className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {STATIC_STRINGS.FORM_CANCEL}
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex items-center gap-2 px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-[13px] font-semibold shadow-sm transition-all active:scale-[0.98] disabled:opacity-50"
+            className="flex items-center gap-2 px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-[13px] font-semibold shadow-sm transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
           >
+            {isSubmitting && <Loader2 size={16} className="animate-spin" />}
             {isSubmitting
               ? STATIC_STRINGS.LOG_PERFORMANCE_SAVING
               : STATIC_STRINGS.LOG_PERFORMANCE_ADD_BTN}

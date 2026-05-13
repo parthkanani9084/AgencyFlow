@@ -218,7 +218,6 @@ export const STATIC_STRINGS = {
   CAMPAIGN_MGMT_ALL_STAGES: 'All Stages',
   CAMPAIGN_MGMT_NO_CAMPAIGNS: 'No campaigns found',
   CAMPAIGN_MGMT_NO_CAMPAIGNS_DESC: 'Try adjusting filters or create a new campaign.',
-  CAMPAIGN_MGMT_DELETED_TOAST: 'campaigns deleted',
   CAMPAIGN_MGMT_PAUSED_TOAST: 'campaigns paused',
   CAMPAIGN_MGMT_STATUS_UPDATED: 'Campaign status updated',
   CAMPAIGN_MGMT_CREATED_TOAST: 'created',
@@ -233,6 +232,9 @@ export const STATIC_STRINGS = {
   CAMPAIGN_MGMT_PAGINATION_SHOW: 'Show',
   CAMPAIGN_MGMT_PAGINATION_OF: 'of',
   CAMPAIGN_MGMT_PAGINATION_ENTRIES: 'entries',
+  CAMPAIGN_MGMT_FETCH_ERROR: 'Failed to fetch campaigns',
+  CAMPAIGN_MGMT_DELETE_ERROR: 'Failed to delete campaigns',
+  CAMPAIGN_MGMT_PAUSE_ERROR: 'Failed to pause campaigns',
 
   // Create Campaign Modal
   CREATE_CAMPAIGN_TITLE: 'Create New Campaign',
@@ -1006,6 +1008,15 @@ export const CAMPAIGN_STATUS_OPTIONS = [
 
 export const CAMPAIGN_STAGE_OPTIONS = ['in draft', 'in review', 'process', 'publish'] as const;
 
+export const CAMPAIGN_SORT_FIELDS = {
+  NAME: 'name',
+  CLIENT: 'client',
+  DEADLINE: 'deadline',
+  LEADS: 'leads',
+  ROAS: 'roas',
+  SPEND: 'spend',
+} as const;
+
 export const ADS_DATE_RANGE_OPTIONS = [
   { label: STATIC_STRINGS.ADS_DATE_RANGE_7D, value: '7d' },
   { label: STATIC_STRINGS.ADS_DATE_RANGE_30D, value: '30d' },
@@ -1021,6 +1032,12 @@ export const CLIENT_OPTIONS = [
   'Pulse Nutrition',
   'Helios Solar',
   'Bloom Skincare',
+] as const;
+
+export const PRIORITY_OPTIONS = [
+  { label: STATIC_STRINGS.PRIORITY_LOW, value: 'low' },
+  { label: STATIC_STRINGS.PRIORITY_MEDIUM, value: 'medium' },
+  { label: STATIC_STRINGS.PRIORITY_HIGH, value: 'high' },
 ] as const;
 
 export const TEAM_MEMBERS = [

@@ -9,11 +9,11 @@ import {
   OBJECTIVE_OPTIONS,
   PLATFORM_OPTIONS,
 } from '@/utils/constants';
-import { clientService } from '@/api/services/client.service';
 import { LoaderCircle } from 'lucide-react';
+import { useClients } from '@/api/hooks/useClient';
 
 
-import { useCreateCampaign  } from '@/api/hooks/useCreateCampaign';
+import { useCreateCampaign  } from '@/api/hooks/useCampaign';
 import { CreateCampaignPayload } from '@/api/services/campaign.service';
 import { useGetTeamsByRole } from '@/api/hooks/useTeam';
 
@@ -42,18 +42,32 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [clientsList, setClientsList] = useState<{ id: string; name: string }[]>([]);
-  const [isFetchingClients, setIsFetchingClients] = useState(false);
   const [adManagers, setAdManagers] = useState<{ id: string; full_name: string }[]>([]);
 
 
   // For fetching ad managers based on role
   const role = STATIC_STRINGS.CAMPAIGN_ADSMANAGER_ROLE;
+  const { data: teamData, isLoading: isFetchingTeams, error } = useGetTeamsByRole(role, { enabled: open });
 
-  const { data, isLoading, error } = useGetTeamsByRole(role, open);
+  const { data: clientsData, isLoading: isFetchingClients } = useClients(
+    { page: 1, limit: 100 },
+    { enabled: open }
+  );
 
   useEffect(() => {
-    if (data) {
-      const results = data?.results || [];
+    if ((clientsData as any)?.results?.data) {
+      setClientsList(
+        (clientsData as any).results.data.map((c: any) => ({
+          id: c.id,
+          name: c.clientName,
+        }))
+      );
+    }
+  }, [clientsData]);
+
+  useEffect(() => {
+    if (teamData) {
+      const results = (teamData as any)?.results || [];
       const mapped = results.map((m: any) => ({
         id: String(m.id),
         full_name: String(m.full_name),
@@ -65,7 +79,7 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
     if (error) {
       setAdManagers([]);
     }
-  }, [data, error]);
+  }, [teamData, error]);
 
   // Adjust if your API returns a different structure
   const {
@@ -91,26 +105,6 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
     },
   });
 
-  React.useEffect(() => {
-    const fetchClients = async () => {
-      setIsFetchingClients(true);
-      try {
-        const response = await clientService.getClients({ page: 1, limit: 100 });
-        if (response?.results?.data) {
-          setClientsList(
-            response.results.data.map((c: any) => ({
-              id: c.id,
-              name: c.clientName,
-            }))
-          );
-        }
-      } catch (error) {
-      } finally {
-        setIsFetchingClients(false);
-      }
-    };
-    if (open) fetchClients();
-  }, [open]);
 
   const handleClose = () => {
     reset();
@@ -122,7 +116,7 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
     e.preventDefault();
     const fieldsToValidate =
       step === 1
-        ? (['name', 'platforms', 'objective', 'dailyBudget', 'adsAssignee', 'deadline'] as const)
+        ? (['name', 'platforms', 'objective', 'dailyBudget', 'adsAssignee', 'deadline', 'client'] as const)
         : ([] as any);
 
     if (fieldsToValidate.length > 0) {
@@ -146,12 +140,12 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
         ads_platform: data.platforms,
         objective: data.objective,
         daily_budget: Number(data.dailyBudget),
-        campaign_run_location: data.location,
-        target_audience: data.targetAudience,
-        media_location: data.photoVideoLocation,
         deadline_date: data.deadline,
-        notes: data.note,
         priority_level: data.priority,
+        ...(data.location && { campaign_run_location: data.location }),
+        ...(data.targetAudience && { target_audience: data.targetAudience }),
+        ...(data.photoVideoLocation && { media_location: data.photoVideoLocation }),
+        ...(data.note && { notes: data.note }),
       };
 
       const response = await createCampaign(payload);
@@ -394,6 +388,38 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
                       </option>
                     ))}
                   </select>
+                  {errors.adsAssignee && (
+                    <p className="mt-1 text-[11.5px] text-red-600">{errors.adsAssignee.message}</p>
+                  )}
+                </div>
+
+                {/* 10. Client */}
+                <div>
+                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
+                    {STATIC_STRINGS.CAMPAIGN_FIELD_CLIENT} <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all bg-white ${
+                      errors.client ? 'border-red-400' : 'border-slate-200'
+                    }`}
+                    {...register('client', {
+                      required: 'Client is required',
+                    })}
+                  >
+                    <option value="">
+                      {isFetchingClients
+                        ? 'Loading clients...'
+                        : STATIC_STRINGS.CREATE_CAMPAIGN_SELECT_CLIENT}
+                    </option>
+                    {clientsList.map((c) => (
+                      <option key={`client-sel-${c.id}`} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.client && (
+                    <p className="mt-1 text-[11.5px] text-red-600">{errors.client.message}</p>
+                  )}
                 </div>
               </div>
 
@@ -432,30 +458,6 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
                     <option value="high">{STATIC_STRINGS.PRIORITY_HIGH}</option>
                   </select>
                 </div>
-
-                <div>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                    {STATIC_STRINGS.CAMPAIGN_FIELD_CLIENT}
-                  </label>
-                  <p className="text-[11.5px] text-slate-400 mb-1.5">
-                    {STATIC_STRINGS.CREATE_CAMPAIGN_CLIENT_DESC}
-                  </p>
-                  <select
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all bg-white"
-                    {...register('client')}
-                  >
-                    <option value="">
-                      {isFetchingClients
-                        ? 'Loading clients...'
-                        : STATIC_STRINGS.CREATE_CAMPAIGN_SELECT_CLIENT}
-                    </option>
-                    {clientsList.map((c) => (
-                      <option key={`client-sel-${c.id}`} value={c.name}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
               </div>
 
               <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
@@ -473,7 +475,8 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
           <button
             type="button"
             onClick={step === 1 ? handleClose : () => setStep((s) => s - 1)}
-            className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-100 transition-colors"
+            disabled={isSubmitting}
+            className="px-4 py-2 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {step === 1 ? STATIC_STRINGS.FORM_CANCEL : STATIC_STRINGS.CREATE_CAMPAIGN_BACK}
           </button>
