@@ -17,7 +17,6 @@ import TaskCard from '../shooter-dashboard/components/TaskCard';
 
 const WORKFLOW_STAGES = [
   STATIC_STRINGS.DASHBOARD_STAGE_SHOOTING,
-  STATIC_STRINGS.DASHBOARD_STAGE_RAW_UPLOAD,
   STATIC_STRINGS.DASHBOARD_STAGE_EDITING,
   STATIC_STRINGS.DASHBOARD_STAGE_ADS,
   STATIC_STRINGS.DASHBOARD_STAGE_COMPLETE
@@ -36,9 +35,9 @@ export default function EditorDashboardPage() {
   const { mutateAsync: assignTaskMutation } = useAssignTask();
   const { mutateAsync: completeTaskMutation } = useCompleteTask();
 
-  const tasksQuery = useGetTasksHistory({ 
-    page: 1, 
-    limit: 100, 
+  const tasksQuery = useGetTasksHistory({
+    page: 1,
+    limit: 100,
     role: ROLES.EDITOR,
     status: activeTab
   }, {
@@ -49,7 +48,7 @@ export default function EditorDashboardPage() {
         id: t.task_id,
         title: t.task_title || t.taskTitle || STATIC_STRINGS.UNTITLED_TASK,
         description: t.description || '',
-        assignedTo: t.workstage_role_name ,
+        assignedTo: t.workstage_role_name,
         role: t.notes?.[0]?.assign_to?.role || t.assign_to?.role || t.assignee?.role || t.workflow_stage || ROLES.EDITOR,
         client: t.client_name || STATIC_STRINGS.NOT_AVAILABLE,
         brand: t.brand_name || STATIC_STRINGS.NOT_AVAILABLE,
@@ -60,7 +59,7 @@ export default function EditorDashboardPage() {
         priority: t.priority || 'medium',
         roleNotes: Array.isArray(t.notes) ? t.notes : (Array.isArray(t.roleNotes) ? t.roleNotes : []),
       })) as Task[];
-      
+
       return mapped.filter((task, index, self) =>
         index === self.findIndex((t) => t.id === task.id)
       );
@@ -116,18 +115,18 @@ export default function EditorDashboardPage() {
         const member = teamMembers.find(m => m.name === nextMember.name);
         if (member) assignedToId = member.id;
       }
-      
+
       if (assignedToId) {
-        await assignTaskMutation({ 
-          taskId, 
+        await assignTaskMutation({
+          taskId,
           assignedTo: assignedToId,
-          notes 
+          notes
         });
       } else {
-        await completeTaskMutation({ 
-          taskId, 
-          notes, 
-          screenshot 
+        await completeTaskMutation({
+          taskId,
+          notes,
+          screenshot
         });
       }
       await fetchTasks();
@@ -146,7 +145,7 @@ export default function EditorDashboardPage() {
             <Film size={20} className="text-purple-700" />
           </div>
           <div>
-            <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">{STATIC_STRINGS.EDITOR_DASHBOARD_TITLE}</h1>
+            <h1 className="text-[24px] font-bold text-slate-900">{STATIC_STRINGS.EDITOR_DASHBOARD_TITLE}</h1>
             <p className="text-[13px] text-slate-500">{user?.name || 'Team Member'} · {ROLES.EDITOR} Team</p>
           </div>
         </header>
@@ -170,16 +169,18 @@ export default function EditorDashboardPage() {
           <h2 className="text-[14px] font-semibold text-slate-800 mb-4">{STATIC_STRINGS.DASHBOARD_WORKFLOW_OVERVIEW}</h2>
           <div className="flex items-center gap-1">
             {WORKFLOW_STAGES.map((stage, idx) => {
-              const isActive = idx === 2; // Editing stage
-              const isDone = idx < 2;
+              const isActive = idx === 1; // Editing stage
+              const isDone = idx < 1;
               return (
                 <Fragment key={stage}>
                   <div className="flex-1 text-center">
-                    <div className={`h-2 rounded-full mb-2 ${isActive ? 'bg-purple-500' : isDone ? 'bg-emerald-500' : 'bg-slate-200'}`} />
+                    <div className={`h-1.5 rounded-full mb-2 ${isActive ? 'bg-purple-500' : isDone ? 'bg-emerald-500' : 'bg-slate-200'}`} />
                     <span className={`text-[11px] font-medium ${isActive ? 'text-purple-700' : isDone ? 'text-emerald-600' : 'text-slate-400'}`}>{stage}</span>
                   </div>
                   {idx < WORKFLOW_STAGES.length - 1 && (
-                    <ChevronRight size={14} className="text-slate-300 flex-shrink-0 mb-4" />
+                    <div className="flex items-center pb-4">
+                      <ChevronRight size={14} className="text-slate-300" />
+                    </div>
                   )}
                 </Fragment>
               );
@@ -190,9 +191,9 @@ export default function EditorDashboardPage() {
         {/* Main Task List Control */}
         <main className="space-y-4">
           <header className="flex items-center justify-between">
-            <h2 className="text-[14px] font-semibold text-slate-800">{STATIC_STRINGS.DASHBOARD_ASSIGNED_TASKS}</h2>
+            <h2 className="text-[16px] font-bold text-slate-800">{STATIC_STRINGS.DASHBOARD_ASSIGNED_TASKS}</h2>
             <nav className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
-              {([TASK_STATUSES.IN_PROGRESS, TASK_STATUSES.PENDING, TASK_STATUSES.COMPLETED] as const).map((tab) => (
+              {([TASK_STATUSES.PENDING, TASK_STATUSES.IN_PROGRESS, TASK_STATUSES.COMPLETED] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab as TaskStatus)}

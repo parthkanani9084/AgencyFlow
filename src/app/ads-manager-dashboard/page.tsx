@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, Fragment } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { Megaphone, CheckCircle2, Timer, Circle } from 'lucide-react';
+import { Megaphone, CheckCircle2, Timer, Circle, ChevronRight } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useAuth } from '@/context/AuthContext';
 import { Task, TaskStatus, UserRole } from '@/types';
@@ -11,6 +11,13 @@ import TaskCompletionModal from '@/components/TaskCompletionModal';
 import { STATIC_STRINGS, PAGE_ROLES, STORAGE_KEY_CAMPAIGNS, ROLES, TASK_STATUSES } from '@/utils/constants';
 import { useUpdateTaskStatus, useCompleteTask, useGetTasksHistory } from '@/api/hooks/useTask';
 import TaskCard from '../shooter-dashboard/components/TaskCard';
+const WORKFLOW_STAGES = [
+  STATIC_STRINGS.DASHBOARD_STAGE_SHOOTING,
+  STATIC_STRINGS.DASHBOARD_STAGE_EDITING,
+  STATIC_STRINGS.DASHBOARD_STAGE_ADS,
+  STATIC_STRINGS.DASHBOARD_STAGE_COMPLETE
+];
+
 
 export default function AdsManagerDashboardPage() {
   useRoleGuard(PAGE_ROLES.ADS_TRACKING as unknown as UserRole[]);
@@ -25,9 +32,9 @@ export default function AdsManagerDashboardPage() {
   const { mutateAsync: updateTaskStatusMutation } = useUpdateTaskStatus();
   const { mutateAsync: completeTaskMutation } = useCompleteTask();
 
-  const tasksQuery = useGetTasksHistory({ 
-    page: 1, 
-    limit: 100, 
+  const tasksQuery = useGetTasksHistory({
+    page: 1,
+    limit: 100,
     role: ROLES.ADS_MANAGER,
     status: activeTab,
   }, {
@@ -40,7 +47,7 @@ export default function AdsManagerDashboardPage() {
         description: t.description || '',
         assignedTo: t.workstage_role_name || t.notes?.[0]?.assign_to?.name || t.assign_to?.name || t.assignee?.name || t.assignee?.fullName || t.assignee?.full_name || STATIC_STRINGS.COMMON_UNASSIGNED,
         role: t.notes?.[0]?.assign_to?.role || t.assign_to?.role || t.assignee?.role || t.workflow_stage || ROLES.ADS_MANAGER,
-        client: t.client_name  || STATIC_STRINGS.NOT_AVAILABLE,
+        client: t.client_name || STATIC_STRINGS.NOT_AVAILABLE,
         brand: t.brand_name || STATIC_STRINGS.NOT_AVAILABLE,
         campaign: t.campaign?.campaignName || t.campaign_name || STATIC_STRINGS.NOT_AVAILABLE,
         deadline: (t.deadline_date || t.deadlineDate || '').split('T')[0] || STATIC_STRINGS.NOT_AVAILABLE,
@@ -49,7 +56,7 @@ export default function AdsManagerDashboardPage() {
         priority: t.priority || 'medium',
         roleNotes: Array.isArray(t.notes) ? t.notes : (Array.isArray(t.roleNotes) ? t.roleNotes : []),
       })) as Task[];
-      
+
       return mapped.filter((task, index, self) =>
         index === self.findIndex((t) => t.id === task.id)
       );
@@ -115,7 +122,7 @@ export default function AdsManagerDashboardPage() {
             <Megaphone size={20} className="text-orange-700" />
           </div>
           <div>
-            <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">
+            <h1 className="text-[24px] font-bold text-slate-900">
               {STATIC_STRINGS.ADS_DASHBOARD_TITLE}
             </h1>
             <p className="text-[13px] text-slate-500">
@@ -146,8 +153,44 @@ export default function AdsManagerDashboardPage() {
         {/* Performance Overview Component */}
         <TodayReportingCard user={user} campaigns={allCampaigns} />
 
+        {/* Workflow Stage Overview */}
+        <section className="bg-white rounded-2xl border border-slate-200 p-6 mb-8 shadow-sm">
+          <h2 className="text-[15px] font-bold text-slate-800 mb-6">{STATIC_STRINGS.DASHBOARD_WORKFLOW_OVERVIEW}</h2>
+          <div className="flex items-center gap-3 mb-3">
+            {WORKFLOW_STAGES.map((stage, idx) => {
+              const isActive = idx === 2;
+              const isDone = idx < 2;
+              const isPending = idx > 2;
+
+              let barColor = 'bg-slate-200';
+              let textColor = 'text-slate-400';
+              if (isDone) {
+                barColor = 'bg-[#10b981]';
+                textColor = 'text-[#059669]';
+              } else if (isActive) {
+                barColor = 'bg-[#f97316]';
+                textColor = 'text-[#ea580c]';
+              }
+
+              return (
+                <Fragment key={stage}>
+                  <div className="flex-1 flex flex-col items-center">
+                    <div className={`w-full h-1.5 rounded-full ${barColor}`} />
+                    <span className={`text-[11px] mt-2 font-medium ${textColor}`}>{stage}</span>
+                  </div>
+                  {idx < WORKFLOW_STAGES.length - 1 && (
+                    <div className="flex items-center pb-4">
+                      <ChevronRight size={14} className="text-slate-300" />
+                    </div>
+                  )}
+                </Fragment>
+              );
+            })}
+          </div>
+        </section>
+
         {/* Main Task List Section */}
-        <section className="space-y-4 pt-6 border-t border-slate-100">
+        <section className="space-y-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-[14px] font-semibold text-slate-800">
               {STATIC_STRINGS.ADS_DASHBOARD_ASSIGNED_TASKS}
@@ -155,7 +198,7 @@ export default function AdsManagerDashboardPage() {
 
             {/* Tab Navigation */}
             <nav className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
-              {([TASK_STATUSES.IN_PROGRESS, TASK_STATUSES.PENDING, TASK_STATUSES.COMPLETED] as const).map((tab) => (
+              {([TASK_STATUSES.PENDING, TASK_STATUSES.IN_PROGRESS, TASK_STATUSES.COMPLETED] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab as TaskStatus)}
