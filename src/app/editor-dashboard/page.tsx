@@ -12,7 +12,7 @@ import TaskCompletionModal from '@/components/TaskCompletionModal';
 import { useUpdateTaskStatus, useAssignTask, useCompleteTask, useGetTasksHistory } from '@/api/hooks/useTask';
 import { useGetTeamsByRole } from '@/api/hooks/useTeam';
 import { toApiRole } from '@/utils/roles';
-import TaskCard from '../shooter-dashboard/components/TaskCard';
+import TaskCard from '@/components/TaskCard';
 
 
 const WORKFLOW_STAGES = [
