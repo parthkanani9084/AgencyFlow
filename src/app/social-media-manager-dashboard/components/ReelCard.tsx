@@ -46,7 +46,7 @@ export default function ReelCard({ reel, onStatusChange }: ReelCardProps) {
           </p>
           <div className="flex items-center gap-2">
             {isOverdue && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-50 text-red-600 text-[9px] font-black uppercase tracking-wider shadow-sm">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-50 text-red-700 text-[9px] font-black uppercase tracking-wider shadow-sm">
                 <AlertCircle size={10} />
                 {STATIC_STRINGS.SMM_OVERDUE}
               </span>
