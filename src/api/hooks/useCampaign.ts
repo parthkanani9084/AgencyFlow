@@ -23,6 +23,8 @@ export const useGetCampaigns = (params: GetCampaignsParams) => {
   return useQuery({
     queryKey: [QUERY_KEYS.CAMPAIGNS, params],
     queryFn: () => campaignService.getCampaigns(params),
+    staleTime: 5000,
+    gcTime: 300000,
   });
 };
 
