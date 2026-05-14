@@ -8,4 +8,5 @@ export const QUERY_KEYS = {
   CAMPAIGN_PERFORMANCE_HISTORY: 'campaign-performance-history',
   CAMPAIGN_ACTIVITY: 'campaign-activity',
   NOTIFICATIONS: 'notifications',
+  DASHBOARD: 'dashboard',
 } as const;

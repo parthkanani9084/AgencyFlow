@@ -42,3 +42,4 @@ export const REEL_STATUS_UPDATE_URL = (id: string) => `${REEL_BASE_URL}/${id}/st
 export const GET_NOTIFICATIONS_URL = '/common/notifications';
 export const MARK_ALL_READ_NOTIFICATIONS_URL = '/common/notifications/mark-all-read';
 export const READ_NOTIFICATION_URL = (id: string) => `/common/notifications/${id}/read`;
+export const GET_DASHBOARD_URL = '/owner/dashboard';

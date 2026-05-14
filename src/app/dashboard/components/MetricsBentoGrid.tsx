@@ -166,19 +166,19 @@ export const revenueMetrics: MetricCardData[] = [
 ];
 
 export const reelsMetrics: MetricCardData[] = [
-  { id: 'm-today-reels', label: STATIC_STRINGS.DASHBOARD_METRIC_TODAY_REELS, value: '12', subValue: STATIC_STRINGS.DASHBOARD_METRIC_SCHEDULED_TODAY, icon: Film, variant: 'default' },
-  { id: 'm-reels-pending', label: STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_PENDING, value: '8', subValue: STATIC_STRINGS.DASHBOARD_METRIC_AWAITING_RAW, icon: Timer, variant: 'warning' },
-  { id: 'm-reels-processing', label: STATIC_STRINGS.DASHBOARD_METRIC_PROCESSING, value: '4', subValue: STATIC_STRINGS.DASHBOARD_METRIC_EDITING_QUEUE, icon: RefreshCw, variant: 'default' },
+  { id: 'm-today-reels', label: STATIC_STRINGS.DASHBOARD_METRIC_TODAY_REELS, value: '0', subValue: STATIC_STRINGS.DASHBOARD_METRIC_SCHEDULED_TODAY, icon: Film, variant: 'default' },
+  { id: 'm-reels-pending', label: STATIC_STRINGS.ADS_DASHBOARD_TASK_TAB_PENDING, value: '0', subValue: STATIC_STRINGS.DASHBOARD_METRIC_AWAITING_RAW, icon: Timer, variant: 'warning' },
+  { id: 'm-reels-processing', label: STATIC_STRINGS.DASHBOARD_METRIC_PROCESSING, value: '0', subValue: STATIC_STRINGS.DASHBOARD_METRIC_EDITING_QUEUE, icon: RefreshCw, variant: 'default' },
 ];
 
 export const metaAdsMetrics: MetricCardData[] = [
-  { id: 'm-ad-spend', label: STATIC_STRINGS.DASHBOARD_METRIC_AD_SPEND_MTD, value: `${STATIC_STRINGS.CURRENCY_SYMBOL}84,320`, change: 12, changeLabel: STATIC_STRINGS.DASHBOARD_METRIC_VS_PREV, icon: IndianRupee, variant: 'default', mono: true },
-  { id: 'm-leads-gen', label: STATIC_STRINGS.ADS_TABLE_COL_LEADS, value: '3,847', change: 18, changeLabel: STATIC_STRINGS.DASHBOARD_METRIC_VS_PREV, icon: UserPlus, variant: 'success', mono: true },
-  { id: 'm-avg-roas', label: STATIC_STRINGS.ADS_TABLE_COL_ROAS, value: '4.2×', subValue: STATIC_STRINGS.DASHBOARD_METRIC_TARGET_ROAS, icon: TrendingUp, variant: 'success', mono: true },
-  { id: 'm-active-camp', label: STATIC_STRINGS.ADS_DASHBOARD_STAT_ACTIVE_CAMPAIGNS, value: '47', subValue: `12 ${STATIC_STRINGS.DASHBOARD_METRIC_LAUNCHING_SOON}`, icon: Play, variant: 'default' },
+  { id: 'm-ad-spend', label: STATIC_STRINGS.DASHBOARD_METRIC_AD_SPEND_MTD, value: `${STATIC_STRINGS.CURRENCY_SYMBOL}0`, icon: IndianRupee, variant: 'default', mono: true },
+  { id: 'm-leads-gen', label: STATIC_STRINGS.ADS_TABLE_COL_LEADS, value: '0', icon: UserPlus, variant: 'success', mono: true },
+  { id: 'm-avg-roas', label: STATIC_STRINGS.ADS_TABLE_COL_ROAS, value: '0×', icon: TrendingUp, variant: 'success', mono: true },
+  { id: 'm-active-camp', label: STATIC_STRINGS.ADS_DASHBOARD_STAT_ACTIVE_CAMPAIGNS, value: '0', icon: Play, variant: 'default' },
 ];
 
 export const todoMetrics: MetricCardData[] = [
-  { id: 'm-tasks-risk', label: STATIC_STRINGS.DASHBOARD_METRIC_TASKS_AT_RISK, value: '14', subValue: STATIC_STRINGS.DASHBOARD_METRIC_NEAR_DEADLINE, icon: AlertTriangle, variant: 'warning' },
-  { id: 'm-overdue-tasks', label: STATIC_STRINGS.DASHBOARD_METRIC_OVERDUE_TASKS, value: '6', subValue: `3 ${STATIC_STRINGS.DASHBOARD_METRIC_ESCALATED}`, icon: Clock, variant: 'danger' },
+  { id: 'm-tasks-risk', label: STATIC_STRINGS.DASHBOARD_METRIC_TASKS_AT_RISK, value: '0', subValue: STATIC_STRINGS.DASHBOARD_METRIC_NEAR_DEADLINE, icon: AlertTriangle, variant: 'warning' },
+  { id: 'm-overdue-tasks', label: STATIC_STRINGS.DASHBOARD_METRIC_OVERDUE_TASKS, value: '0', subValue: `0 ${STATIC_STRINGS.DASHBOARD_METRIC_ESCALATED}`, icon: Clock, variant: 'danger' },
 ];

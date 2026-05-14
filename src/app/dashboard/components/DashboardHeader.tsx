@@ -60,7 +60,7 @@ export default function DashboardHeader() {
 
       <nav className="flex flex-wrap items-center gap-2">
         {/* Date Range Selector */}
-        <div className="relative group">
+        {/* <div className="relative group">
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
@@ -75,10 +75,10 @@ export default function DashboardHeader() {
             size={13} 
             className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover:text-slate-600 transition-colors" 
           />
-        </div>
+        </div> */}
 
         {/* Action Buttons */}
-        <button
+        {/* <button
           onClick={handleRefresh}
           disabled={isRefreshing}
           className="flex items-center gap-1.5 px-3 h-[38px] rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-[12.5px] font-medium transition-all duration-150 disabled:opacity-60"
@@ -93,7 +93,7 @@ export default function DashboardHeader() {
         >
           <Download size={13} />
           <span className="hidden sm:inline">{STATIC_STRINGS.CAMPAIGN_MGMT_EXPORT}</span>
-        </button>
+        </button> */}
 
         <button
           onClick={handleCreateCampaign}
