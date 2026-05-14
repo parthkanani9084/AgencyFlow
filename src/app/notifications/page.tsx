@@ -6,9 +6,10 @@ import { Bell, CheckCheck, Trash2, CheckCircle2, AlertCircle, Megaphone, ArrowRi
 
 import { NotificationType } from '@/types';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
-import { useTasks } from '@/context/TaskContext';
 import { STATIC_STRINGS, ROLES } from '@/utils/constants';
 import { UserRole } from '@/types';
+import { useGetNotifications, useMarkAllReadNotifications, useReadNotification } from '@/api/hooks/useNotification';
+
 type FilterTab = 'all' | 'unread';
 
 const TYPE_CONFIG: Record<NotificationType | string, { icon: React.ElementType; color: string; bg: string }> = {
@@ -34,7 +35,16 @@ const formatTimeAgo = (ts: string): string => {
 
 export default function NotificationsPage() {
   useRoleGuard(Object.values(ROLES) as unknown as UserRole[]);
-  const { notifications, markNotifRead, clearNotifications } = useTasks();
+  const { data: apiNotificationsResponse } = useGetNotifications();
+  const { mutate: markAllReadApi } = useMarkAllReadNotifications();
+  const { mutate: readNotifApi } = useReadNotification();
+  
+  const notifications = useMemo(() => {
+    const apiNotifications = apiNotificationsResponse?.results?.data || [];
+    // Sort by timestamp descending
+    return [...apiNotifications].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [apiNotificationsResponse]);
+
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [mounted, setMounted] = useState(false);
 
@@ -43,25 +53,25 @@ export default function NotificationsPage() {
   }, []);
 
   const unreadCount = useMemo(() => 
-    notifications.filter(n => !n.read).length,
+    notifications.filter(n => !n.isRead).length,
   [notifications]);
 
   const filteredNotifications = useMemo(() => 
-    activeTab === 'unread' ? notifications.filter(n => !n.read) : notifications,
+    activeTab === 'unread' ? notifications.filter(n => !n.isRead) : notifications,
   [activeTab, notifications]);
 
   const handleMarkAllRead = useCallback(() => {
-    const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
+    const unreadIds = notifications.filter(n => !n.isRead).map(n => n.id);
     if (unreadIds.length === 0) return;
   
-    unreadIds.forEach(id => markNotifRead(id));
-  }, [notifications, markNotifRead]);
+    // Call the API
+    markAllReadApi();
+  }, [notifications, markAllReadApi]);
 
   const handleClearAll = useCallback(() => {
     if (notifications.length === 0) return;
-    clearNotifications();
-
-  }, [notifications.length, clearNotifications]);
+    // clearNotifications(); // No API for clear all yet
+  }, [notifications.length]);
 
   const handleDeleteNotification = (id: string) => {
   };
@@ -136,14 +146,14 @@ export default function NotificationsPage() {
             </article>
           ) : (
             filteredNotifications.map((notif) => {
-              const cfg = TYPE_CONFIG[notif.type] || TYPE_CONFIG.system;
+              const cfg = (notif.type && TYPE_CONFIG[notif.type]) || TYPE_CONFIG.system;
               const StatusIcon = cfg.icon;
               
               return (
                 <article
                   key={notif.id}
                   className={`flex items-start gap-3 bg-white border rounded-xl px-4 py-3.5 transition-all hover:shadow-sm ${
-                    !notif.read ? 'border-violet-200 bg-violet-50/20' : 'border-slate-100 hover:border-slate-200'
+                    !notif.isRead ? 'border-violet-200 bg-violet-50/20' : 'border-slate-100 hover:border-slate-200'
                   }`}
                 >
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${cfg.bg}`}>
@@ -152,26 +162,28 @@ export default function NotificationsPage() {
 
                   <div className="flex-1 min-w-0">
                     <header className="flex items-start justify-between gap-2">
-                      <p className={`text-[13.5px] font-bold ${notif.read ? 'text-slate-700' : 'text-slate-900'}`}>
+                      <p className={`text-[13.5px] font-bold ${notif.isRead ? 'text-slate-700' : 'text-slate-900'}`}>
                         {notif.title}
-                        {!notif.read && (
+                        {!notif.isRead && (
                           <span className="ml-2 inline-block w-1.5 h-1.5 rounded-full bg-violet-500 align-middle animate-pulse" />
                         )}
                       </p>
                       <time className="text-[11px] text-slate-400 whitespace-nowrap font-medium flex-shrink-0">
-                        {formatTimeAgo(notif.timestamp)}
+                        {formatTimeAgo(notif.createdAt)}
                       </time>
                     </header>
-                    <p className="text-[12.5px] text-slate-500 mt-1 leading-relaxed">{notif.message}</p>
+                    <p className="text-[12.5px] text-slate-500 mt-1 leading-relaxed">{notif.description}</p>
                     {notif.actor && (
                       <p className="text-[10px] text-slate-400 mt-1 font-medium">{STATIC_STRINGS.NOTIFICATIONS_BY} {notif.actor}</p>
                     )}
                   </div>
 
                   <footer className="flex items-center gap-1 flex-shrink-0 ml-1">
-                    {!notif.read && (
+                    {!notif.isRead && (
                       <button
-                        onClick={() => markNotifRead(notif.id)}
+                        onClick={() => {
+                          readNotifApi(notif.id);
+                        }}
                         className="p-1.5 rounded-lg hover:bg-violet-100 text-slate-400 hover:text-violet-600 transition-colors"
                         title={STATIC_STRINGS.NOTIFICATIONS_MARK_AS_READ}
                       >

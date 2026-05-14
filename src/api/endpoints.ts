@@ -38,3 +38,7 @@ export const GET_TASKS_HISTORY_URL = `${TASK_BASE_URL}/history`;
 export const CREATE_REEL_URL = REEL_BASE_URL;
 export const GET_REELS_URL = REEL_BASE_URL;
 export const REEL_STATUS_UPDATE_URL = (id: string) => `${REEL_BASE_URL}/${id}/status`;
+
+export const GET_NOTIFICATIONS_URL = '/common/notifications';
+export const MARK_ALL_READ_NOTIFICATIONS_URL = '/common/notifications/mark-all-read';
+export const READ_NOTIFICATION_URL = (id: string) => `/common/notifications/${id}/read`;

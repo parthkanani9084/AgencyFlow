@@ -4,7 +4,6 @@ import '../styles/tailwind.css';
 import { Toaster } from 'sonner';
 import { AuthProvider } from '@/context/AuthContext';
 import { AdsDataProvider } from '@/context/AdsDataContext';
-import { TaskProvider } from '@/context/TaskContext';
 import { SuperAdminProvider } from '@/store/superAdminStore';
 import QueryProvider from '@/components/QueryProvider';
 
@@ -29,9 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <SuperAdminProvider>
             <AuthProvider>
               <AdsDataProvider>
-                <TaskProvider>
-                  {children}
-                </TaskProvider>
+                {children}
               </AdsDataProvider>
             </AuthProvider>
           </SuperAdminProvider>

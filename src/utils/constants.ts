@@ -194,7 +194,7 @@ export const STATIC_STRINGS = {
   ADS_DASHBOARD_TODAY: 'Today',
 
   // Campaign History Modal
-  CAMPAIGN_HISTORY_MODAL_TITLE: 'Audit Log',
+  CAMPAIGN_HISTORY_MODAL_TITLE: 'Campaign Update History',
   CAMPAIGN_HISTORY_TRAIL: 'Audit Trail',
   CAMPAIGN_HISTORY_TOTAL_CHANGES: 'Total Changes',
   CAMPAIGN_HISTORY_NO_LOGS: 'No activity logs found for this campaign.',
@@ -204,7 +204,7 @@ export const STATIC_STRINGS = {
   CAMPAIGN_HISTORY_IMMUTABLE_NOTICE: 'Logs are immutable and reflect real-time activity.',
   CAMPAIGN_HISTORY_DONE: 'Done',
   CAMPAIGN_HISTORY_UPDATED_TEXT: 'Updated',
-  CAMPAIGN_ADSMANAGER_ROLE : 'ads-manager',
+  CAMPAIGN_ADSMANAGER_ROLE: 'ads-manager',
 
   // Campaign Management
   CAMPAIGN_MGMT_TITLE: 'Campaign Management',

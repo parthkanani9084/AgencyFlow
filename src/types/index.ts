@@ -167,14 +167,21 @@ export type NotificationType =
 
 export interface Notification {
   id: string;
-  type: NotificationType;
+  userId: string;
   title: string;
-  message: string;
-  timestamp: string;
-  read: boolean;
+  description: string;
+  isRead: boolean;
+  createdAt: string;
+  updatedAt: string;
+  taskId: string | null;
+  campaignId: string | null;
+  task: {
+    id: string;
+    taskTitle: string;
+  } | null;
+  campaign: any | null;
+  type?: NotificationType;
   actor?: string;
-  targetId?: string;
-  targetType?: 'task' | 'campaign' | 'client';
 }
 export interface CampaignReport {
   campaignId: string;

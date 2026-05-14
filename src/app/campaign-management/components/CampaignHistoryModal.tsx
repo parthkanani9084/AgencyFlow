@@ -15,7 +15,6 @@ import {
   TrendingUp,
   BarChart3,
 } from 'lucide-react';
-import { auditService } from '@/lib/services/auditService';
 import { Campaign } from '@/types';
 import { STATIC_STRINGS } from '@/utils/constants';
 import { useGetCampaignActivity } from '@/api/hooks/useCampaign';
