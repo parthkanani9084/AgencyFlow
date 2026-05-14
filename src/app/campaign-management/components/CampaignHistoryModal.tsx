@@ -41,14 +41,10 @@ interface Props {
 
 export default function CampaignHistoryModal({ open, onClose, campaign }: Props) {
   const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
-  const { data: activityData, isLoading } = useGetCampaignActivity();
+  const { data: activityData, isLoading } = useGetCampaignActivity(campaign?.id);
 
   const history = useMemo(() => {
-    const res = activityData?.results;
-    if (Array.isArray(res)) return res;
-    if (Array.isArray((res as any)?.data)) return (res as any).data;
-    if (Array.isArray((res as any)?.results)) return (res as any).results;
-    return [];
+    return activityData?.results || [];
   }, [activityData]);
 
   const totalEdits = history.length;
@@ -108,16 +104,18 @@ export default function CampaignHistoryModal({ open, onClose, campaign }: Props)
               {history.map((log: any) => {
                 const logId = log.id;
                 const isExpanded = expandedLogs.has(logId);
-                const changeCount = log.activity?.updatedFieldsCount || 0;
-                const timestamp = log.timestamps?.createdAt;
-                const performer = log.actionBy || { name: 'Unknown', role: 'Staff' };
-                const changes = log.activity?.updatedFields || [];
+                const hasDetails = !!log.fieldName;
+                const timestamp = log.createdAt;
+                const performer = {
+                  name: log.actionByName || 'Unknown',
+                  role: log.actionByRole || 'Staff'
+                };
 
                 return (
                   <div key={logId} className="group border-b border-slate-50 last:border-0">
                     <div
-                      onClick={() => changes.length > 0 && toggleLog(logId)}
-                      className={`flex items-center py-3.5 px-2 hover:bg-slate-50 rounded-lg transition-colors ${changes.length > 0 ? 'cursor-pointer' : 'cursor-default'}`}
+                      onClick={() => hasDetails && toggleLog(logId)}
+                      className={`flex items-center py-3.5 px-2 hover:bg-slate-50 rounded-lg transition-colors ${hasDetails ? 'cursor-pointer' : 'cursor-default'}`}
                     >
                       {/* Left: User Info */}
                       <div className="flex items-center gap-3 w-[200px] shrink-0">
@@ -139,12 +137,12 @@ export default function CampaignHistoryModal({ open, onClose, campaign }: Props)
                       {/* Center: Activity Summary */}
                       <div className="flex-1 min-w-0 px-4">
                         <p className="text-[13px] text-slate-600 truncate">
-                          <span className="font-semibold text-violet-600">{log.activity?.message || 'Activity'}</span>
-                          {changeCount > 0 && (
+                          <span className="font-semibold text-violet-600">{log.message || 'Activity'}</span>
+                          {log.fieldName && (
                             <>
                               <span className="text-slate-400 mx-2">•</span>
                               <span className="text-slate-400">
-                                {changes.map((f: any) => fieldLabels[f.fieldName]?.label || f.fieldName).join(', ')}
+                                {fieldLabels[log.fieldName]?.label || log.fieldName}
                               </span>
                             </>
                           )}
@@ -165,7 +163,7 @@ export default function CampaignHistoryModal({ open, onClose, campaign }: Props)
                             }) : '-'}
                           </p>
                         </div>
-                        {changes.length > 0 && (
+                        {hasDetails && (
                           <ChevronDown
                             size={16}
                             className={`text-slate-300 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
@@ -175,34 +173,36 @@ export default function CampaignHistoryModal({ open, onClose, campaign }: Props)
                     </div>
 
                     {/* Detailed Diff View */}
-                    {isExpanded && changes.length > 0 && (
+                    {isExpanded && log.fieldName && (
                       <div className="ml-11 mr-2 mb-4 bg-slate-50/50 rounded-xl border border-slate-100 overflow-hidden animate-in slide-in-from-top-2 duration-200">
                         <div className="divide-y divide-slate-100">
-                          {changes.map((fieldChange: any) => {
-                            const config = fieldLabels[fieldChange.fieldName] || { label: fieldChange.fieldName, icon: Activity };
-                            const Icon = config.icon;
-                            return (
-                              <div key={fieldChange.fieldName} className="flex items-center gap-4 p-3 px-4">
-                                <div className="w-6 h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
-                                  <Icon size={12} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">
-                                    {config.label}
-                                  </p>
-                                  <div className="flex items-center gap-3 mt-0.5">
-                                    <span className="text-[12.5px] text-slate-400 line-through truncate max-w-[150px]">
-                                      {String(fieldChange.oldValue || STATIC_STRINGS.CAMPAIGN_HISTORY_EMPTY)}
-                                    </span>
-                                    <ArrowRight size={12} className="text-slate-300 shrink-0" />
-                                    <span className="text-[12.5px] text-slate-900 font-bold">
-                                      {String(fieldChange.newValue || STATIC_STRINGS.CAMPAIGN_HISTORY_EMPTY)}
-                                    </span>
+                          <div className="flex items-center gap-4 p-3 px-4">
+                            {(() => {
+                              const config = fieldLabels[log.fieldName] || { label: log.fieldName, icon: Activity };
+                              const Icon = config.icon;
+                              return (
+                                <>
+                                  <div className="w-6 h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
+                                    <Icon size={12} />
                                   </div>
-                                </div>
-                              </div>
-                            );
-                          })}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">
+                                      {config.label}
+                                    </p>
+                                    <div className="flex items-center gap-3 mt-0.5">
+                                      <span className="text-[12.5px] text-slate-400 line-through truncate max-w-[150px]">
+                                        {String(log.oldValue || STATIC_STRINGS.CAMPAIGN_HISTORY_EMPTY)}
+                                      </span>
+                                      <ArrowRight size={12} className="text-slate-300 shrink-0" />
+                                      <span className="text-[12.5px] text-slate-900 font-bold">
+                                        {String(log.newValue || STATIC_STRINGS.CAMPAIGN_HISTORY_EMPTY)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </>
+                              );
+                            })()}
+                          </div>
                         </div>
                       </div>
                     )}

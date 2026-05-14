@@ -21,6 +21,7 @@ interface TeamTableProps {
   onEdit: (m: TeamMember) => void;
   onDelete: (m: TeamMember) => void;
   onToggleStatus: (id: string) => void;
+  canManage?: boolean;
 }
 
 const MemberRow = React.memo(({ 
@@ -28,13 +29,15 @@ const MemberRow = React.memo(({
   idx, 
   onEdit, 
   onDelete, 
-  onToggleStatus 
+  onToggleStatus,
+  canManage = true
 }: { 
   member: TeamMember; 
   idx: number; 
   onEdit: (m: TeamMember) => void;
   onDelete: (m: TeamMember) => void;
   onToggleStatus: (id: string) => void;
+  canManage?: boolean;
 }) => {
   const cfg = ROLE_CONFIG[member.role];
   const RoleIcon = cfg.icon;
@@ -62,7 +65,7 @@ const MemberRow = React.memo(({
           {member.role}
         </span>
       </td>
-      <td className="px-5 py-3.5 hidden lg:table-cell">
+      {/* <td className="px-5 py-3.5 hidden lg:table-cell">
         <div className="flex items-center gap-3">
           <div>
             <p className="font-semibold text-slate-800 tabular-nums">{member.tasksCompleted}</p>
@@ -73,14 +76,17 @@ const MemberRow = React.memo(({
             <p className="text-[11px] text-slate-400">{STATIC_STRINGS.ADS_STATUS_ACTIVE}</p>
           </div>
         </div>
-      </td>
+      </td> */}
       <td className="px-5 py-3.5 text-slate-500 hidden sm:table-cell">{member.joinedAt}</td>
       <td className="px-5 py-3.5">
         <button
-          onClick={() => onToggleStatus(member.id)}
+          onClick={() => canManage && onToggleStatus(member.id)}
+          disabled={!canManage}
           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors ${
-            member.status === COMMON_STATUS.ACTIVE ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-          }`}
+            member.status === COMMON_STATUS.ACTIVE 
+              ? 'bg-emerald-100 text-emerald-700' + (canManage ? ' hover:bg-emerald-200' : '') 
+              : 'bg-slate-100 text-slate-500' + (canManage ? ' hover:bg-slate-200' : '')
+          } ${!canManage ? 'cursor-default' : ''}`}
         >
           {member.status === COMMON_STATUS.ACTIVE ? <CheckCircle2 size={11} /> : <XCircle size={11} />}
           {member.status === COMMON_STATUS.ACTIVE ? STATIC_STRINGS.TEAM_PAGE_STATUS_ACTIVE : STATIC_STRINGS.TEAM_PAGE_STATUS_INACTIVE}
@@ -88,20 +94,26 @@ const MemberRow = React.memo(({
       </td>
       <td className="px-5 py-3.5 text-right">
         <div className="flex items-center justify-end gap-1">
-          <button
-            onClick={() => onEdit(member)}
-            className="p-1.5 rounded-lg hover:bg-violet-50 text-slate-400 hover:text-violet-600 transition-colors"
-            title={STATIC_STRINGS.TEAM_PAGE_EDIT_MEMBER_TOOLTIP}
-          >
-            <Pencil size={14} />
-          </button>
-          <button
-            onClick={() => onDelete(member)}
-            className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
-            title={STATIC_STRINGS.TEAM_PAGE_REMOVE_MEMBER_TOOLTIP}
-          >
-            <Trash2 size={14} />
-          </button>
+          {canManage ? (
+            <>
+              <button
+                onClick={() => onEdit(member)}
+                className="p-1.5 rounded-lg hover:bg-violet-50 text-slate-400 hover:text-violet-600 transition-colors"
+                title={STATIC_STRINGS.TEAM_PAGE_EDIT_MEMBER_TOOLTIP}
+              >
+                <Pencil size={14} />
+              </button>
+              <button
+                onClick={() => onDelete(member)}
+                className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
+                title={STATIC_STRINGS.TEAM_PAGE_REMOVE_MEMBER_TOOLTIP}
+              >
+                <Trash2 size={14} />
+              </button>
+            </>
+          ) : (
+            <span className="text-[11px] text-slate-400 italic pr-2">Read only</span>
+          )}
         </div>
       </td>
     </tr>
@@ -115,7 +127,8 @@ export const TeamTable = ({
   isLoading, 
   onEdit, 
   onDelete, 
-  onToggleStatus 
+  onToggleStatus,
+  canManage = true
 }: TeamTableProps) => {
   if (isLoading) {
     return (
@@ -142,7 +155,7 @@ export const TeamTable = ({
           <tr className="bg-slate-50 border-b border-slate-200">
             <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider">{STATIC_STRINGS.TEAM_PAGE_COL_MEMBER}</th>
             <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider hidden md:table-cell">{STATIC_STRINGS.TASK_MGMT_COL_ROLE}</th>
-            <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider hidden lg:table-cell">{STATIC_STRINGS.DASHBOARD_ALL_TASKS}</th>
+            {/* <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider hidden lg:table-cell">{STATIC_STRINGS.DASHBOARD_ALL_TASKS}</th> */}
             <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider hidden sm:table-cell">{STATIC_STRINGS.TEAM_PAGE_COL_JOINED}</th>
             <th className="text-left px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider">{STATIC_STRINGS.TASK_MGMT_COL_STATUS}</th>
             <th className="px-5 py-3 text-slate-500 font-semibold text-[11px] uppercase tracking-wider text-right">{STATIC_STRINGS.TASK_MGMT_COL_ACTIONS}</th>
@@ -157,6 +170,7 @@ export const TeamTable = ({
               onEdit={onEdit} 
               onDelete={onDelete} 
               onToggleStatus={onToggleStatus} 
+              canManage={canManage}
             />
           ))}
         </tbody>

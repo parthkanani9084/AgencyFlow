@@ -87,12 +87,12 @@ export const useTaskManagement = () => {
 
   const { data: clientsResponse, isLoading: isFetchingClients } = useClients(
     { page: 1, limit: 100 }, 
-    { enabled: !!user && !isRestricted }
+    { enabled: !!user }
   );
   
   const { data: teamResponse, isLoading: isFetchingTeam } = useGetTeams(
     { page: 1, limit: 100 }, 
-    { enabled: !!user && !isRestricted }
+    { enabled: !!user }
   );
 
   const clientsList = useMemo((): ClientItem[] => 
@@ -167,7 +167,7 @@ export const useTaskManagement = () => {
     setForm({
       title: task.title,
       assignedTo: task.assignedTo === STATIC_STRINGS.COMMON_UNASSIGNED ? '' : task.assignedTo,
-      role: task.role,
+      role: task.role as TaskRole,
       client: task.client === TASK_FALLBACKS.NOT_AVAILABLE ? '' : task.client,
       deadline: task.deadline === TASK_FALLBACKS.NOT_AVAILABLE ? '' : task.deadline,
       status: task.status as TaskStatus,

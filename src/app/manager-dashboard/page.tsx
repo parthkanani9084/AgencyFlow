@@ -238,7 +238,7 @@ export default function ManagerDashboardPage() {
         </section>
 
         {/* Team Productivity Overview */}
-        <section className="bg-white rounded-xl border border-slate-200 p-5 mb-6 shadow-sm">
+        {/* <section className="bg-white rounded-xl border border-slate-200 p-5 mb-6 shadow-sm">
           <h2 className="text-[14px] font-semibold text-slate-800 mb-4">{STATIC_STRINGS.DASHBOARD_TEAM_OVERVIEW}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {teamOverviewData.map((member) => (
@@ -262,7 +262,7 @@ export default function ManagerDashboardPage() {
               </div>
             ))}
           </div>
-        </section>
+        </section> */}
 
         <main>
           <header className="flex items-center justify-between mb-3">

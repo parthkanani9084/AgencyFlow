@@ -81,8 +81,8 @@ export default function Sidebar() {
     { id: 'nav-social-mgr',    label: 'Social Media',  icon: TrendingUp,      href: ROUTES.SOCIAL_MEDIA_MANAGER_DASHBOARD, group: 'roles', allowedRoles: [ROLES.OWNER, ROLES.SOCIAL_MEDIA_MANAGER, ROLES.MANAGER] },
 
     // Analytics
-    { id: 'nav-ads',           label: 'Ads Tracking',  icon: TrendingUp,      href: ROUTES.ADS_TRACKING,          group: 'analytics', allowedRoles: [ROLES.OWNER, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER, ROLES.MANAGER] },
-    { id: 'nav-reports',       label: 'Reports',       icon: BarChart3,       href: ROUTES.REPORTS,               group: 'analytics', allowedRoles: [ROLES.OWNER, ROLES.MANAGER] },
+    // { id: 'nav-ads',           label: 'Ads Tracking',  icon: TrendingUp,      href: ROUTES.ADS_TRACKING,          group: 'analytics', allowedRoles: [ROLES.OWNER, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER, ROLES.MANAGER] },
+    // { id: 'nav-reports',       label: 'Reports',       icon: BarChart3,       href: ROUTES.REPORTS,               group: 'analytics', allowedRoles: [ROLES.OWNER, ROLES.MANAGER] },
 
     // Account
     { id: 'nav-team',          label: 'Team',          icon: Users,           href: ROUTES.TEAM,                  group: 'settings',  allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },

@@ -12,6 +12,7 @@ import {
   useUpdateTeam,
   useDeleteTeamMember,
 } from '@/api/hooks/useTeam';
+import { useAuth } from '@/context/AuthContext';
 import Pagination from '@/components/ui/Pagination';
 import { TeamStats } from './components/TeamStats';
 import { TeamFilters } from './components/TeamFilters';
@@ -41,6 +42,7 @@ const emptyForm = { name: '', email: '', role: '' as unknown as UserRole };
 
 export default function TeamPage() {
   useRoleGuard(PAGE_ROLES.TEAM as unknown as UserRole[]);
+  const { user } = useAuth();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -55,6 +57,10 @@ export default function TeamPage() {
   });
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState<Partial<typeof emptyForm>>({});
+
+  const canManageTeam = useMemo(() => {
+    return user?.role === ROLES.OWNER || user?.role === ROLES.MANAGER;
+  }, [user?.role]);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 500);
@@ -197,13 +203,15 @@ export default function TeamPage() {
               {STATIC_STRINGS.TEAM_PAGE_SUBTITLE_PART2}
             </p>
           </div>
-          <button
-            onClick={openAdd}
-            className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-[13.5px] font-semibold px-4 py-2.5 rounded-lg transition-colors shadow-sm shadow-violet-100 active:scale-[0.98]"
-          >
-            <Plus size={15} />
-            {STATIC_STRINGS.TEAM_PAGE_INVITE_MEMBER}
-          </button>
+          {canManageTeam && (
+            <button
+              onClick={openAdd}
+              className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-[13.5px] font-semibold px-4 py-2.5 rounded-lg transition-colors shadow-sm shadow-violet-100 active:scale-[0.98]"
+            >
+              <Plus size={15} />
+              {STATIC_STRINGS.TEAM_PAGE_INVITE_MEMBER}
+            </button>
+          )}
         </div>
 
         <TeamStats stats={stats} />
@@ -223,6 +231,7 @@ export default function TeamPage() {
             onEdit={openEdit}
             onDelete={(member) => setDeleteModal({ open: true, member })}
             onToggleStatus={toggleStatus}
+            canManage={canManageTeam}
           />
 
           {!isLoading && apiResponse?.results?.pagination && (

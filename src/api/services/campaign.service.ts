@@ -160,43 +160,24 @@ export interface DeletePerformanceHistoryResponse {
 export interface CampaignActivityItem {
   id: string;
   campaignId: string;
-  campaignName: string;
-  activity: {
-    type: string;
-    message: string;
-    updatedFieldsCount: number;
-    updatedFields: Array<{
-      fieldName: string;
-      oldValue: any;
-      newValue: any;
-    }>;
-  };
-  actionBy: {
-    id: string;
-    name: string;
-    role: string;
-  };
-  timestamps: {
-    createdAt: string;
-    updatedAt: string;
-  };
+  ownerId: string;
+  actionBy: string;
+  actionByName: string;
+  actionByRole: string;
+  activityType: string;
+  fieldName: string | null;
+  oldValue: any | null;
+  newValue: any | null;
+  message: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface GetCampaignActivityResponse {
   success: boolean;
   code: number;
   message: string;
-  results: {
-    data: CampaignActivityItem[];
-    pagination: {
-      currentPage: number;
-      totalPages: number;
-      totalItem: number;
-      itemsPerPage: number;
-      hasNextPage: boolean;
-      hasPrevPage: boolean;
-    };
-  };
+  results: CampaignActivityItem[];
 }
 export const campaignService = {
   createCampaign: async (
@@ -236,8 +217,8 @@ export const campaignService = {
     const response = await AxiosRequest.delete(DELETE_CAMPAIGN_PERFORMANCE_HISTORY_URL.replace(':id', historyId));
     return response;
   },
-  getCampaignActivity: async (): Promise<GetCampaignActivityResponse> => {
-    const response = await AxiosRequest.get(GET_CAMPAIGN_ACTIVITY_URL);
+  getCampaignActivity: async (campaignId: string): Promise<GetCampaignActivityResponse> => {
+    const response = await AxiosRequest.get(GET_CAMPAIGN_ACTIVITY_URL(campaignId));
     return response;
   },
 

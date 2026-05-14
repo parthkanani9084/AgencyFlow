@@ -105,9 +105,10 @@ export const useDeletePerformanceHistory = () => {
   });
 };
 
-export const useGetCampaignActivity = () => {
+export const useGetCampaignActivity = (campaignId?: string) => {
   return useQuery({
-    queryKey: [QUERY_KEYS.CAMPAIGN_ACTIVITY],
-    queryFn: () => campaignService.getCampaignActivity(),
+    queryKey: [QUERY_KEYS.CAMPAIGN_ACTIVITY, campaignId],
+    queryFn: () => campaignService.getCampaignActivity(campaignId as string),
+    enabled: !!campaignId,
   });
 };

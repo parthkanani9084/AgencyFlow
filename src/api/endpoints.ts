@@ -20,7 +20,7 @@ export const GET_CAMPAIGN_BY_ID_URL = '/owner/campaign/:id';
 export const LOG_CAMPAIGN_PERFORMANCE_URL = '/owner/campaign/:id/performance';
 export const LOG_CAMPAIGN_PERFORMANCE_HISTORY_URL = '/owner/campaign/:id/performance-history';
 export const DELETE_CAMPAIGN_PERFORMANCE_HISTORY_URL = '/owner/campaign/performance-history/:id';
-export const GET_CAMPAIGN_ACTIVITY_URL = '/owner/campaign/activity';
+export const GET_CAMPAIGN_ACTIVITY_URL = (id: string) => `/owner/campaign/${id}/activity`;
 
 
 // Specific Endpoint Constants (using base URLs)
