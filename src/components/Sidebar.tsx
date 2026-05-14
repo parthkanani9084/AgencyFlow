@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import type { UserRole } from '@/types';
-import { useGetNotifications } from '@/api/hooks/useNotification';
+import { useGetUnreadNotificationsCount } from '@/api/hooks/useNotification';
 import { ROLES } from '@/constants/roles';
 import { ROUTES } from '@/constants/routes';
 import { STATIC_STRINGS } from '@/utils/constants';
@@ -47,9 +47,10 @@ const groups = [
 ];
 
 export default function Sidebar() {
-  const { data: notificationsData } = useGetNotifications();
+  const { data: unreadNotificationsData } = useGetUnreadNotificationsCount();
   
-  const unreadCount = (notificationsData as any)?.results?.unreadCount || 0;
+  const unreadCount = unreadNotificationsData?.results?.unreadCount || 0;
+
   const [collapsed, setCollapsed] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const pathname = usePathname();

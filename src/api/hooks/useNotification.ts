@@ -30,3 +30,11 @@ export const useReadNotification = () => {
     },
   });
 };
+
+export const useGetUnreadNotificationsCount = () => {
+  return useQuery({
+    queryKey: [QUERY_KEYS.UNREAD_NOTIFICATIONS_COUNT],
+    queryFn: () => notificationService.getUnreadNotificationsCount(),
+  });
+};
+

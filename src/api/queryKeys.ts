@@ -9,4 +9,6 @@ export const QUERY_KEYS = {
   CAMPAIGN_ACTIVITY: 'campaign-activity',
   NOTIFICATIONS: 'notifications',
   DASHBOARD: 'dashboard',
+  UNREAD_NOTIFICATIONS_COUNT: 'unread-notifications-count',
 } as const;
+

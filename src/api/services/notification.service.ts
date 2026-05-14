@@ -1,5 +1,5 @@
 import AxiosRequest from '@/utils/axiosHelper';
-import { GET_NOTIFICATIONS_URL, MARK_ALL_READ_NOTIFICATIONS_URL, READ_NOTIFICATION_URL } from '@/api/endpoints';
+import { GET_NOTIFICATIONS_URL, GET_UNREAD_NOTIFICATIONS_COUNT_URL, MARK_ALL_READ_NOTIFICATIONS_URL, READ_NOTIFICATION_URL } from '@/api/endpoints';
 import { Notification } from '@/types';
 
 export interface MarkAllReadNotificationsResponse {
@@ -12,6 +12,15 @@ export interface ReadNotificationResponse {
   success: boolean;
   code: number;
   message: string;
+}
+
+export interface GetUnreadNotificationsCountResponse {
+  success: boolean;
+  code: number;
+  message: string;
+  results: {
+    unreadCount: number;
+  };
 }
 
 export interface GetNotificationsResponse {
@@ -43,6 +52,10 @@ export const notificationService = {
   },
   readNotification: async (id: string): Promise<ReadNotificationResponse> => {
     const response = await AxiosRequest.patch(READ_NOTIFICATION_URL(id));
+    return response;
+  },
+  getUnreadNotificationsCount: async (): Promise<GetUnreadNotificationsCountResponse> => {
+    const response = await AxiosRequest.get(GET_UNREAD_NOTIFICATIONS_COUNT_URL);
     return response;
   },
 };
