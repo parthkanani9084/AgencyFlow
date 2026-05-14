@@ -37,7 +37,7 @@ const ALL_ROLES: UserRole[] = [
   ROLES.SOCIAL_MEDIA_MANAGER,
 ] as UserRole[];
 
-const emptyForm = { name: '', email: '', role: ROLES.SHOOTER as UserRole };
+const emptyForm = { name: '', email: '', role: '' as unknown as UserRole };
 
 export default function TeamPage() {
   useRoleGuard(PAGE_ROLES.TEAM as unknown as UserRole[]);
@@ -133,6 +133,7 @@ export default function TeamPage() {
     if (!form.name.trim()) e.name = STATIC_STRINGS.FORM_NAME_REQUIRED;
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
       e.email = STATIC_STRINGS.FORM_EMAIL_REQUIRED;
+    if (!form.role) e.role = STATIC_STRINGS.TASK_MGMT_ERR_ROLE as any;
 
     if (Object.keys(e).length > 0) {
       setErrors(e);

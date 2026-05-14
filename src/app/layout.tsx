@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Metadata, Viewport } from 'next';
-import '../styles/tailwind.css';
+import '@/styles/index.css';
 import { Toaster } from 'sonner';
 import { AuthProvider } from '@/context/AuthContext';
 import { AdsDataProvider } from '@/context/AdsDataContext';
@@ -34,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </SuperAdminProvider>
         </QueryProvider>
 
-        <Toaster position="top-right" expand={false} richColors />
+        <Toaster position="top-right" expand={false} richColors duration={1000} />
       </body>
     </html>
   );

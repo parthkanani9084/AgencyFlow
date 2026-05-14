@@ -108,7 +108,7 @@ export default function NotificationsPage() {
                 {STATIC_STRINGS.NOTIFICATIONS_MARK_ALL_READ}
               </button>
             )}
-            {notifications.length > 0 && (
+            {/* {notifications.length > 0 && (
               <button
                 onClick={handleClearAll}
                 className="inline-flex items-center gap-1.5 text-[13px] font-bold text-slate-600 hover:text-red-600 border border-slate-200 hover:border-red-200 px-3 py-2 rounded-lg transition-colors bg-white shadow-sm"
@@ -116,13 +116,13 @@ export default function NotificationsPage() {
                 <Trash2 size={14} />
                 {STATIC_STRINGS.NOTIFICATIONS_CLEAR_ALL}
               </button>
-            )}
+            )} */}
           </nav>
         </header>
 
         {/* Tab Selection Filter */}
         <nav className="flex items-center gap-1 bg-slate-100 rounded-lg p-1 w-fit mb-5">
-          {(['all', 'unread'] as FilterTab[]).map((tab) => (
+          {(['all'/*, 'unread'*/] as FilterTab[]).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -184,19 +184,19 @@ export default function NotificationsPage() {
                         onClick={() => {
                           readNotifApi(notif.id);
                         }}
-                        className="p-1.5 rounded-lg hover:bg-violet-100 text-slate-400 hover:text-violet-600 transition-colors"
-                        title={STATIC_STRINGS.NOTIFICATIONS_MARK_AS_READ}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-50 text-violet-600 hover:bg-violet-100 text-[11px] font-bold transition-all"
                       >
-                        <CheckCheck size={13} />
+                        <CheckCheck size={12} />
+                        {STATIC_STRINGS.NOTIFICATIONS_MARK_AS_READ}
                       </button>
                     )}
-                    <button
+                    {/* <button
                       onClick={() => handleDeleteNotification(notif.id)}
                       className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
                       title={STATIC_STRINGS.NOTIFICATIONS_DELETE}
                     >
                       <Trash2 size={13} />
-                    </button>
+                    </button> */}
                   </footer>
                 </article>
               );

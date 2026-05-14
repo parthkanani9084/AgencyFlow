@@ -124,7 +124,7 @@ export default function AdsTrackingPage() {
             </p>
           </div>
           
-          <div className="flex items-center gap-3">
+          {/* <div className="flex items-center gap-3">
             <div className="relative">
               <select
                 value={dateRange}
@@ -137,7 +137,7 @@ export default function AdsTrackingPage() {
               </select>
               <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
-          </div>
+          </div> */}
         </header>
 
         {/* Update Metrics Modal */}

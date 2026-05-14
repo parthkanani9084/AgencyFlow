@@ -118,7 +118,7 @@ const handleSuccessResponse = (response: AxiosResponse) => {
 
   if (
     TOAST_CONFIG.enableSuccessToasts &&
-    method && ['POST', 'PUT', 'DELETE'].includes(method) &&
+    method && ['POST', 'PUT', 'DELETE','PATCH'].includes(method) &&
     shouldShowToast(url, method)
   ) {
     showSuccessToast(response.data);

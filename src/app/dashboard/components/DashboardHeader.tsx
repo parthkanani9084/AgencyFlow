@@ -97,15 +97,6 @@ export default function DashboardHeader() {
           <span className="hidden sm:inline">{STATIC_STRINGS.CAMPAIGN_MGMT_EXPORT}</span>
         </button> */}
 
-        {user?.role !== ROLES.ADS_MANAGER && (
-          <button
-            onClick={handleCreateCampaign}
-            className="flex items-center gap-1.5 px-3.5 h-[38px] rounded-lg bg-violet-600 hover:bg-violet-700 active:scale-[0.98] text-white text-[12.5px] font-semibold transition-all duration-150 shadow-sm"
-          >
-            <Plus size={13} />
-            <span className="hidden sm:inline">{STATIC_STRINGS.DASHBOARD_NEW_CAMPAIGN}</span>
-          </button>
-        )}
       </nav>
     </header>
   );

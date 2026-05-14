@@ -88,7 +88,9 @@ export const TeamMemberModal = ({
       </div>
 
       <div>
-        <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_ROLE}</label>
+        <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
+          {STATIC_STRINGS.TASK_MGMT_COL_ROLE} <span className="text-red-500">*</span>
+        </label>
         <div className="grid grid-cols-2 gap-2">
           {allRoles.map((r) => {
             const cfg = ROLE_CONFIG[r];
@@ -97,10 +99,13 @@ export const TeamMemberModal = ({
               <button
                 key={r}
                 type="button"
-                onClick={() => setForm((f) => ({ ...f, role: r }))}
+                onClick={() => {
+                  setForm((f) => ({ ...f, role: r }));
+                  setErrors((er) => ({ ...er, role: undefined }));
+                }}
                 className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border text-[12.5px] font-medium transition-all ${
                   form.role === r ? `${cfg.bg} ${cfg.color} border-current` : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
+                } ${errors.role ? 'border-red-300 bg-red-50/30' : ''}`}
               >
                 <Icon size={14} />
                 {r}
@@ -108,6 +113,7 @@ export const TeamMemberModal = ({
             );
           })}
         </div>
+        {errors.role && <p className="mt-1.5 text-[11.5px] text-red-500">{errors.role}</p>}
       </div>
 
       <div className="flex gap-2 pt-2">

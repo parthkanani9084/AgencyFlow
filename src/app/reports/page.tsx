@@ -86,7 +86,7 @@ export default function ReportsPage() {
             </p>
           </div>
           <nav className="flex items-center gap-2">
-            <div className="relative">
+            {/* <div className="relative">
               <select
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
@@ -99,14 +99,14 @@ export default function ReportsPage() {
                 <option value="all_time">{STATIC_STRINGS.REPORTS_DATE_RANGE_ALL}</option>
               </select>
               <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            </div>
-            <button
+            </div> */}
+            {/* <button
               onClick={handleExport}
               className="inline-flex items-center gap-1.5 text-[13px] font-medium text-slate-700 border border-slate-200 hover:border-slate-300 px-3 py-2 rounded-lg transition-colors bg-white shadow-sm"
             >
               <Download size={14} />
               {STATIC_STRINGS.REPORTS_EXPORT}
-            </button>
+            </button> */}
           </nav>
         </header>
 
