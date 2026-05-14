@@ -40,6 +40,7 @@ export interface GetTeamsParams {
   page?: number;
   limit?: number;
   search?: string;
+  role?: string;
 }
 
 export interface GetTeamsResponse {
@@ -53,6 +54,14 @@ export interface GetTeamsResponse {
       totalPages: number;
       currentPage: number;
       limit: number;
+    };
+    summary: {
+      total_count: number;
+      manager_count: number;
+      shooter_count: number;
+      editor_count: number;
+      ads_manager_count: number;
+      social_media_manager_count: number;
     };
   };
 }

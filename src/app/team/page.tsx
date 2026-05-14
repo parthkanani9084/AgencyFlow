@@ -65,6 +65,7 @@ export default function TeamPage() {
     page,
     limit: perPage,
     search: debouncedSearch || undefined,
+    role: roleFilter !== COMMON_STATUS.ALL ? roleFilter : undefined,
   });
 
   const { mutateAsync: createTeamAsync, isPending: isCreating } = useCreateTeam();
@@ -73,37 +74,43 @@ export default function TeamPage() {
 
   const isAnyMutationPending = isCreating || isUpdating || isDeleting;
   useEffect(() => {
-    if (apiResponse?.results?.data) {
-      const mapped = apiResponse.results.data
-        .filter((m: any) => m.role !== ROLES.OWNER)
-        .map((m: any) => ({
-          id: m.id,
-          name: m.fullName,
-          email: m.email,
-          role: m.role as UserRole,
-          status: m.status as typeof COMMON_STATUS.ACTIVE | typeof COMMON_STATUS.INACTIVE,
-          joinedAt: m.createdAt?.split('T')[0] || 'N/A',
-          tasksCompleted: 0,
-          tasksActive: 0,
-        }));
-      setMembers(mapped);
-    }
+    const data = apiResponse?.results?.data || [];
+
+    const mapped = data
+      .filter((m: any) => m.role !== ROLES.OWNER)
+      .map((m: any) => ({
+        id: m.id,
+        name: m.fullName,
+        email: m.email,
+        role: m.role as UserRole,
+        status: (m.status || COMMON_STATUS.ACTIVE) as typeof COMMON_STATUS.ACTIVE | typeof COMMON_STATUS.INACTIVE,
+        joinedAt: m.createdAt?.split('T')[0] || 'N/A',
+        tasksCompleted: 0,
+        tasksActive: 0,
+      }));
+
+    setMembers(mapped);
   }, [apiResponse]);
 
-  const filtered = useMemo(() => {
-    if (roleFilter === COMMON_STATUS.ALL) return members;
-    return members.filter((m) => m.role === roleFilter);
-  }, [members, roleFilter]);
+  const filtered = members;
 
   const stats = useMemo(() => {
-    const pagination = apiResponse?.results?.pagination;
+    const summary = apiResponse?.results?.summary;
+
+
     return {
-      total: pagination?.totalItems || 0,
+      total: summary?.total_count || 0,
       active: members.filter((m) => m.status === COMMON_STATUS.ACTIVE).length,
-      byRole: ALL_ROLES.map((r) => ({
-        role: r,
-        count: members.filter((m) => m.role === r).length,
-      })),
+      byRole: ALL_ROLES.map((r) => {
+        let count = 0;
+        if (r === ROLES.MANAGER) count = summary?.manager_count || 0;
+        else if (r === ROLES.SHOOTER) count = summary?.shooter_count || 0;
+        else if (r === ROLES.EDITOR) count = summary?.editor_count || 0;
+        else if (r === ROLES.ADS_MANAGER) count = summary?.ads_manager_count || 0;
+        else if (r === ROLES.SOCIAL_MEDIA_MANAGER) count = summary?.social_media_manager_count || 0;
+        
+        return { role: r, count };
+      }),
     };
   }, [apiResponse, members]);
 
