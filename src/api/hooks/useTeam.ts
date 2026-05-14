@@ -4,7 +4,7 @@ import { QUERY_KEYS } from '../queryKeys';
 
 export const useGetTeams = (params: GetTeamsParams, options?: any) => {
   return useQuery<GetTeamsResponse>({
-    queryKey: [QUERY_KEYS.TEAMS, params.page, params.limit, params.search],
+    queryKey: [QUERY_KEYS.TEAMS, params.page, params.limit, params.search, params.role],
     queryFn: () => teamService.getTeams(params),
     ...options,
   });
