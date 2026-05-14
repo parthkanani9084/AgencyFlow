@@ -46,9 +46,8 @@ export const mapCampaignData = (c: any): Campaign => {
   };
 };
 
-export const isDeadlineCritical = (deadline: string) => {
+export const isDeadlineCritical = (deadline: string, now = new Date()) => {
   const d = new Date(deadline);
-  const now = new Date('2026-04-09');
   const diff = (d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
   return diff >= 0 && diff <= 3;
 };
