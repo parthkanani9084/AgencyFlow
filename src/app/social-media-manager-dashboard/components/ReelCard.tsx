@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { ChevronRight, Video, Building2 } from 'lucide-react';
+import { ChevronRight, Video, Building2, AlertCircle } from 'lucide-react';
 import { Reel } from '@/types';
 import { STATIC_STRINGS, REEL_STATUSES, REEL_CONSTANTS } from '@/utils/constants';
 import { REEL_STATUS_CONFIG } from '@/utils/ui-configs';
@@ -14,6 +14,7 @@ export default function ReelCard({ reel, onStatusChange }: ReelCardProps) {
     REEL_STATUS_CONFIG[reel.status] || REEL_STATUS_CONFIG[REEL_STATUSES.SCHEDULED],
   [reel.status]);
 
+  const isOverdue = reel.is_due;
   const isDueSoon = REEL_CONSTANTS.DUE_SOON_KEYWORDS.some(keyword => 
     reel.deadline_status?.toLowerCase().includes(keyword.toLowerCase())
   );
@@ -23,9 +24,11 @@ export default function ReelCard({ reel, onStatusChange }: ReelCardProps) {
       className={`group relative flex items-center gap-4 p-3.5 rounded-xl border transition-all hover:shadow-md ${
         reel.status === REEL_STATUSES.UPLOADED 
           ? 'bg-emerald-50/20 border-emerald-100/50' 
-          : isDueSoon 
-            ? 'bg-white border-orange-200 shadow-sm shadow-orange-50' 
-            : 'bg-white border-slate-100 hover:border-violet-200'
+          : isOverdue
+            ? 'bg-red-50/30 border-red-200 shadow-sm shadow-red-50'
+            : isDueSoon 
+              ? 'bg-white border-orange-200 shadow-sm shadow-orange-50' 
+              : 'bg-white border-slate-100 hover:border-violet-200'
       }`}
     >
       <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${reel.status === REEL_STATUSES.UPLOADED ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-50 text-slate-400 group-hover:bg-violet-50 group-hover:text-violet-500 transition-colors'}`}>
@@ -41,11 +44,25 @@ export default function ReelCard({ reel, onStatusChange }: ReelCardProps) {
             <Building2 size={12} className="text-slate-400" />
             {reel.client?.brandName || reel.client?.clientName || STATIC_STRINGS.SMM_PRIVATE_CLIENT}
           </p>
-          {reel.deadline_status && (
-            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${isDueSoon ? 'text-orange-600 bg-orange-50' : 'text-slate-400 bg-slate-50'}`}>
-              {reel.deadline_status}
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {isOverdue && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-50 text-red-700 text-[9px] font-black uppercase tracking-wider shadow-sm">
+                <AlertCircle size={10} />
+                {STATIC_STRINGS.SMM_OVERDUE}
+              </span>
+            )}
+            {reel.deadline_status && (
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                isOverdue 
+                  ? 'text-red-500 bg-red-50 border border-red-100' 
+                  : isDueSoon 
+                    ? 'text-orange-600 bg-orange-50 border border-orange-100' 
+                    : 'text-slate-400 bg-slate-50 border border-slate-100'
+              }`}>
+                {reel.deadline_status}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 

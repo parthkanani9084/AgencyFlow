@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { STATIC_STRINGS, ADS_DATE_RANGE_OPTIONS } from '@/utils/constants';
+import { STATIC_STRINGS, ADS_DATE_RANGE_OPTIONS, ROLES } from '@/utils/constants';
 import { ChevronDown, Download, Plus, RefreshCw } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 const DATE_RANGES = ADS_DATE_RANGE_OPTIONS;
 
 export default function DashboardHeader() {
   const router = useRouter();
+  const { user } = useAuth();
   
   const [lastUpdated, setLastUpdated] = useState<string>('');
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -95,13 +97,15 @@ export default function DashboardHeader() {
           <span className="hidden sm:inline">{STATIC_STRINGS.CAMPAIGN_MGMT_EXPORT}</span>
         </button> */}
 
-        <button
-          onClick={handleCreateCampaign}
-          className="flex items-center gap-1.5 px-3.5 h-[38px] rounded-lg bg-violet-600 hover:bg-violet-700 active:scale-[0.98] text-white text-[12.5px] font-semibold transition-all duration-150 shadow-sm"
-        >
-          <Plus size={13} />
-          <span className="hidden sm:inline">{STATIC_STRINGS.DASHBOARD_NEW_CAMPAIGN}</span>
-        </button>
+        {user?.role !== ROLES.ADS_MANAGER && (
+          <button
+            onClick={handleCreateCampaign}
+            className="flex items-center gap-1.5 px-3.5 h-[38px] rounded-lg bg-violet-600 hover:bg-violet-700 active:scale-[0.98] text-white text-[12.5px] font-semibold transition-all duration-150 shadow-sm"
+          >
+            <Plus size={13} />
+            <span className="hidden sm:inline">{STATIC_STRINGS.DASHBOARD_NEW_CAMPAIGN}</span>
+          </button>
+        )}
       </nav>
     </header>
   );

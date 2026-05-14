@@ -64,6 +64,7 @@ export interface Task {
   type?: 'TASK' | 'REEL';
   scheduledDate?: string;
   clientName?: string;
+  is_due?: boolean;
   activityLogs?: ActivityLog[];
 }
 
@@ -82,6 +83,7 @@ export interface Reel {
   status: 'schedule' | 'production' | 'uploaded' | string;
   deadline_date: string;
   deadline_status: string;
+  is_due: boolean;
   client: {
     id: string;
     brandName: string;
