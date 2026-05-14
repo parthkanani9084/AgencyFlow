@@ -24,8 +24,6 @@ import { mapCampaignData, isDeadlineCritical } from '../utils';
 
 export default function CampaignTable() {
   const { user } = useAuth();
-  
-  // Table State
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<CampaignStatus | ''>('');
   const [stageFilter, setStageFilter] = useState<WorkflowStage | ''>('');
@@ -37,6 +35,18 @@ export default function CampaignTable() {
   const [page, setPage] = useState(1);
   const [isDeleting, setIsDeleting] = useState(false);
   const [perPage, setPerPage] = useState(10);
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  const [mounted, setMounted] = useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   // Modal State
   const [createOpen, setCreateOpen] = useState(false);
@@ -45,15 +55,18 @@ export default function CampaignTable() {
   const [deleteTarget, setDeleteTarget] = useState<Campaign | null>(null);
   const [historyTarget, setHistoryTarget] = useState<Campaign | null>(null);
 
-  // Queries & Mutations
-  const { data: campaignResponse, isLoading: isFetching, refetch } = useGetCampaigns({
+  // Memoize params to prevent redundant query triggers
+  const queryParams = useMemo(() => ({
     page,
     limit: perPage,
-    search: search || undefined,
+    search: debouncedSearch.trim() || undefined,
     status: statusFilter || undefined,
     stage: stageFilter === 'in draft' ? 'in-draft' : (stageFilter || undefined),
     priority: priorityFilter || undefined,
-  });
+  }), [page, perPage, debouncedSearch, statusFilter, stageFilter, priorityFilter]);
+
+  // Queries & Mutations
+  const { data: campaignResponse, isLoading: isFetching, refetch } = useGetCampaigns(queryParams);
 
   const { mutate: deleteCampaign, mutateAsync: deleteCampaignAsync } = useDeleteCampaign();
   const { mutate: updateCampaign, mutateAsync: updateCampaignAsync } = useUpdateCampaign();
@@ -190,6 +203,8 @@ export default function CampaignTable() {
     setPage(1);
   };
 
+  if (!mounted) return <div className="min-h-[400px] flex items-center justify-center bg-white border border-slate-200 rounded-xl"><Loader2 className="w-8 h-8 animate-spin text-violet-500" /></div>;
+
   return (
     <>
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
@@ -279,7 +294,7 @@ export default function CampaignTable() {
                     onDelete={setDeleteTarget}
                     onHistory={setHistoryTarget}
                     userRole={user?.role}
-                    isCritical={isDeadlineCritical(campaign.deadline) && campaign.status === 'active'}
+                    isCritical={isDeadlineCritical(campaign.deadline, new Date()) && campaign.status === 'active'}
                   />
                 ))
               )}

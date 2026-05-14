@@ -3,7 +3,6 @@
 import React from 'react';
 import { Search, X } from 'lucide-react';
 import { STATIC_STRINGS, CAMPAIGN_STATUS_OPTIONS, CAMPAIGN_STAGE_OPTIONS, PRIORITY_OPTIONS } from '@/utils/constants';
-import { useClients } from '@/api/hooks/useClient';
 
 interface CampaignFiltersProps {
   search: string;
