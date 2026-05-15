@@ -20,6 +20,12 @@ export interface Campaign {
   platform: Platform;
   platforms: string[];
   createdAt: string;
+  objective?: string;
+  location?: string;
+  targetAudience?: string;
+  mediaLocation?: string;
+  notes?: string;
+  priority?: 'low' | 'medium' | 'high';
   auditLogs?: any[];
   performanceHistory?: {
     id: string;

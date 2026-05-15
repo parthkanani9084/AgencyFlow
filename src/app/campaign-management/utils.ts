@@ -42,6 +42,12 @@ export const mapCampaignData = (c: any): Campaign => {
     platform: platform as Platform,
     platforms: rawPlatforms,
     createdAt: c.createdAt,
+    objective: c.objective || '',
+    location: c.campaignRunLocation || '',
+    targetAudience: c.targetAudience || '',
+    mediaLocation: c.mediaLocation || '',
+    notes: c.notes || '',
+    priority: (c.priorityLevel as 'low' | 'medium' | 'high') || 'medium',
     performanceHistory: c.performanceHistory || [],
   };
 };
