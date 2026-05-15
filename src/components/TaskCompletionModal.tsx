@@ -5,6 +5,7 @@ import Modal from '@/components/ui/Modal';
 import { CheckCircle2, UserPlus, Info, ChevronRight, Image } from 'lucide-react';
 import { Task, Reel, UserRole } from '@/types';
 import { STATIC_STRINGS, ROLES } from '@/utils/constants';
+import Label from '@/components/ui/Label';
 import { normalizeRole } from '@/utils/roles';
 
 interface TaskCompletionModalProps {
@@ -113,9 +114,7 @@ export default function TaskCompletionModal({
         <div className="space-y-4">
           {/* Notes Field */}
           <div>
-            <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">
-              {STATIC_STRINGS.TASK_MODAL_LABEL_NOTES} <span className="text-red-500">*</span>
-            </label>
+            <Label required>{STATIC_STRINGS.TASK_MODAL_LABEL_NOTES}</Label>
             <textarea
               rows={4}
               placeholder={STATIC_STRINGS.TASK_MODAL_PLACEHOLDER_NOTES}
@@ -134,11 +133,10 @@ export default function TaskCompletionModal({
           {/* Screenshot Upload Field */}
           {flags.needsScreenshot && (
             <div>
-              <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">
+              <Label required={flags.isAdsRole}>
                 {flags.isAdsRole ? STATIC_STRINGS.TASK_MODAL_LABEL_DELIVERY_SS : STATIC_STRINGS.TASK_MODAL_LABEL_EXPORT_SS} 
-                {!flags.isAdsRole && <span className="text-slate-400 font-normal ml-1">({STATIC_STRINGS.COMMON_OPTIONAL})</span>} 
-                {flags.isAdsRole && <span className="text-red-500">*</span>}
-              </label>
+                {!flags.isAdsRole && <span className="text-slate-400 font-normal ml-1">({STATIC_STRINGS.COMMON_OPTIONAL})</span>}
+              </Label>
               <input
                 type="file"
                 id="screenshot-upload"
@@ -187,9 +185,7 @@ export default function TaskCompletionModal({
 
           {flags.showHandoff && (
             <div>
-              <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">
-                {STATIC_STRINGS.TASK_MODAL_LABEL_HANDOFF} <span className="text-red-500">*</span>
-              </label>
+              <Label required>{STATIC_STRINGS.TASK_MODAL_LABEL_HANDOFF}</Label>
               <div className="relative">
                 <UserPlus size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <select

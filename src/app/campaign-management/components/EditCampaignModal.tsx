@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import Modal from '@/components/ui/Modal';
+import Label from '@/components/ui/Label';
 import { useAuth } from '@/context/AuthContext';
 import {
   STATIC_STRINGS,
