@@ -1,5 +1,6 @@
 import { UpdateCampaignPayload } from './../services/campaign.service';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import {
   campaignService,
   CreateCampaignPayload,
@@ -15,16 +16,17 @@ export const useCreateCampaign = () => {
       campaignService.createCampaign(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CAMPAIGNS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.REPORTS] });
     },
   });
 };
 
 export const useGetCampaigns = (params: GetCampaignsParams) => {
+  const queryKey = useMemo(() => [QUERY_KEYS.CAMPAIGNS, params], [params]);
   return useQuery({
-    queryKey: [QUERY_KEYS.CAMPAIGNS, params],
+    queryKey,
     queryFn: () => campaignService.getCampaigns(params),
-    staleTime: 5000,
-    gcTime: 300000,
   });
 };
 
@@ -34,6 +36,8 @@ export const useDeleteCampaign = () => {
     mutationFn: (campaignId: string) => campaignService.deleteCampaign(campaignId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CAMPAIGNS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.REPORTS] });
     },
   });
 };
@@ -52,13 +56,16 @@ export const useUpdateCampaign = () => {
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CAMPAIGNS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.REPORTS] });
     },
   });
 };
 
 export const useGetCampaignById = (campaignId?: string) => {
+  const queryKey = useMemo(() => [QUERY_KEYS.CAMPAIGNS, campaignId], [campaignId]);
   return useQuery({
-    queryKey: [QUERY_KEYS.CAMPAIGNS, campaignId],
+    queryKey,
     queryFn: () => campaignService.getCampaignById(campaignId as string),
     enabled: !!campaignId,
   });
@@ -81,13 +88,16 @@ export const useLogPerformance = () => {
       queryClient.invalidateQueries({
         queryKey: [QUERY_KEYS.CAMPAIGN_PERFORMANCE_HISTORY, variables.campaignId],
       });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.REPORTS] });
     },
   });
 };
 
 export const useGetPerformanceHistory = (campaignId?: string) => {
+  const queryKey = useMemo(() => [QUERY_KEYS.CAMPAIGN_PERFORMANCE_HISTORY, campaignId], [campaignId]);
   return useQuery({
-    queryKey: [QUERY_KEYS.CAMPAIGN_PERFORMANCE_HISTORY, campaignId],
+    queryKey,
     queryFn: () => campaignService.getPerformanceHistory(campaignId as string),
     enabled: !!campaignId,
   });
@@ -101,13 +111,15 @@ export const useDeletePerformanceHistory = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CAMPAIGNS] });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CAMPAIGN_PERFORMANCE_HISTORY] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD] });
     },
   });
 };
 
 export const useGetCampaignActivity = (campaignId?: string) => {
+  const queryKey = useMemo(() => [QUERY_KEYS.CAMPAIGN_ACTIVITY, campaignId], [campaignId]);
   return useQuery({
-    queryKey: [QUERY_KEYS.CAMPAIGN_ACTIVITY, campaignId],
+    queryKey,
     queryFn: () => campaignService.getCampaignActivity(campaignId as string),
     enabled: !!campaignId,
   });

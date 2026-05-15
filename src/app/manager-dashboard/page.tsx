@@ -9,10 +9,8 @@ import { STATIC_STRINGS, PAGE_ROLES, ROLES } from '@/utils/constants';
 import { Task, TaskStatus, TaskRole, UserRole } from '@/types';
 import TaskCard from '@/components/TaskCard';
 import TaskCompletionModal from '@/components/TaskCompletionModal';
-import { useUpdateTask, useUpdateTaskStatus, useAssignTask, useCompleteTask } from '@/api/hooks/useTask';
-import { useQueryClient } from '@tanstack/react-query';
-import { teamService } from '@/api/services/team.service';
-import { taskService } from '@/api/services/task.service';
+import { useUpdateTask, useUpdateTaskStatus, useAssignTask, useCompleteTask, useGetTasksHistory } from '@/api/hooks/useTask';
+import { useGetTeams } from '@/api/hooks/useTeam';
 
 interface TeamMember {
   id: string;
@@ -65,90 +63,78 @@ const getDaysLeft = (deadline: string) => {
 
 export default function ManagerDashboardPage() {
   useRoleGuard(PAGE_ROLES.MANAGER_DASHBOARD as unknown as UserRole[]);
-  const queryClient = useQueryClient();
   const { user } = useAuth();
 
   const [roleFilter, setRoleFilter] = useState<TaskRole>(ROLES.SHOOTER as TaskRole);
   const [mounted, setMounted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [allTasks, setAllTasks] = useState<Task[]>([]);
-  const [isTasksLoading, setIsTasksLoading] = useState(true);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
-  const { mutateAsync: updateTaskMutation } = useUpdateTask();
   const { mutateAsync: updateTaskStatusMutation } = useUpdateTaskStatus();
   const { mutateAsync: assignTaskMutation } = useAssignTask();
   const { mutateAsync: completeTaskMutation } = useCompleteTask();
 
-  const fetchTasks = async () => {
-    setIsTasksLoading(true);
-    const getRoleParam = (role: string) => {
-      const map: Record<string, string> = {
-        [ROLES.SHOOTER]: 'shooter',
-        [ROLES.EDITOR]: 'editor',
-        [ROLES.ADS_MANAGER]: 'ads-manager',
-        [ROLES.SOCIAL_MEDIA_MANAGER]: 'social-media-manager',
-        [ROLES.MANAGER]: 'manager',
-        [ROLES.OWNER]: 'owner'
-      };
-      return map[role] || role.toLowerCase().replace(/ /g, '-');
+  const getRoleParam = (role: string) => {
+    const map: Record<string, string> = {
+      [ROLES.SHOOTER]: 'shooter',
+      [ROLES.EDITOR]: 'editor',
+      [ROLES.ADS_MANAGER]: 'ads-manager',
+      [ROLES.SOCIAL_MEDIA_MANAGER]: 'social-media-manager',
+      [ROLES.MANAGER]: 'manager',
+      [ROLES.OWNER]: 'owner'
     };
-
-    try {
-      const resp = await taskService.getTasksHistory({
-        page: 1,
-        limit: 100,
-        role: getRoleParam(roleFilter)
-      });
-      if (resp?.results?.data) {
-        const mapped = resp.results.data.map((t: any) => ({
-          id: t.task_id || t.id,
-          title: t.task_title || t.taskTitle || 'Untitled Task',
-          description: t.description || '',
-          assignedTo: t.workstage_role_name || 'Unassigned',
-          role: t.notes?.[0]?.assign_to?.role || t.assign_to?.role || t.assignee?.role || t.workflow_stage || 'N/A',
-          client: t.client_name || t.client?.clientName || 'N/A',
-          brand: t.brand_name || 'N/A',
-          performer_name: t.performer_name ||  'N/A',
-          deadline: (t.deadline_date || t.deadlineDate || '').split('T')[0] || 'N/A',
-          status: t.currentStatus || t.status || 'pending',
-          priority: t.priority || 'medium',
-          campaign: t.campaign?.campaignName || t.campaign_name || 'General',
-          roleNotes: t.roleNotes || [],
-        })) as Task[];
-        const uniqueTasks = mapped.filter((task, index, self) =>
-          index === self.findIndex((t) => t.id === task.id)
-        );
-        setAllTasks(uniqueTasks);
-      }
-    } catch (err) {
-      console.error("Failed to fetch tasks", err);
-    } finally {
-      setIsTasksLoading(false);
-    }
+    return map[role] || role.toLowerCase().replace(/ /g, '-');
   };
+
+  // Team Query
+  const { data: teamData } = useGetTeams({}, { enabled: mounted });
+  
+  const teamMembers = useMemo(() => {
+    return (teamData?.results?.data || []).map((m: any) => ({
+      id: m.id,
+      name: m.fullName || m.name,
+      role: m.role
+    }));
+  }, [teamData]);
+
+  // Tasks History Query
+  const taskParams = useMemo(() => ({
+    page: 1,
+    limit: 100,
+    role: getRoleParam(roleFilter)
+  }), [roleFilter]);
+
+  const { data: tasksResp, isLoading: isTasksLoading, refetch: fetchTasks } = useGetTasksHistory(taskParams, {
+    enabled: mounted,
+  });
+
+  const allTasks = useMemo(() => {
+    const rawData = tasksResp?.results?.data;
+    const data = Array.isArray(rawData) ? rawData : [];
+    const mapped = data.map((t: any) => ({
+      id: t.task_id || t.id,
+      title: t.task_title || t.taskTitle || 'Untitled Task',
+      description: t.description || '',
+      assignedTo: t.workstage_role_name || 'Unassigned',
+      role: t.notes?.[0]?.assign_to?.role || t.assign_to?.role || t.assignee?.role || t.workflow_stage || 'N/A',
+      client: t.client_name || t.client?.clientName || 'N/A',
+      brand: t.brand_name || 'N/A',
+      performer_name: t.performer_name ||  'N/A',
+      deadline: (t.deadline_date || t.deadlineDate || '').split('T')[0] || 'N/A',
+      status: t.currentStatus || t.status || 'pending',
+      priority: t.priority || 'medium',
+      campaign: t.campaign?.campaignName || t.campaign_name || 'General',
+      roleNotes: t.roleNotes || [],
+    })) as Task[];
+
+    return mapped.filter((task, index, self) =>
+      index === self.findIndex((t) => t.id === task.id)
+    );
+  }, [tasksResp]);
 
   useEffect(() => {
     setMounted(true);
-    const fetchTeam = async () => {
-      try {
-        const resp = await teamService.getTeamMembers();
-        if (resp?.results?.data) {
-          setTeamMembers(resp.results.data.map((m: any) => ({
-            id: m.id,
-            name: m.fullName || m.name,
-            role: m.role
-          })));
-        }
-      } catch (err) { }
-    };
-    fetchTeam();
   }, []);
-
-  useEffect(() => {
-    fetchTasks();
-  }, [roleFilter]);
 
   const stats = useMemo(() => ({
     total: allTasks.length,
@@ -158,7 +144,7 @@ export default function ManagerDashboardPage() {
   }), [allTasks]);
 
   const teamOverviewData = useMemo<TeamMember[]>(() => {
-    return teamMembers.slice(0, 3).map((member) => {
+    return teamMembers.slice(0, 3).map((member: any) => {
       const mTasks = allTasks.filter(t => t.assignedTo === member.name);
       const done = mTasks.filter(t => t.status === 'completed').length;
       const pct = mTasks.length > 0 ? Math.round((done / mTasks.length) * 100) : 0;
@@ -175,7 +161,6 @@ export default function ManagerDashboardPage() {
     } else {
       try {
         await updateTaskStatusMutation({ taskId: task.id, status: newStatus });
-        fetchTasks();
       } catch (err) { }
     }
   };
@@ -184,7 +169,7 @@ export default function ManagerDashboardPage() {
     try {
       let assignedToId: string | undefined;
       if (nextMember) {
-        const member = teamMembers.find(m => m.name === nextMember.name);
+        const member = teamMembers.find((m: any) => m.name === nextMember.name);
         if (member) assignedToId = member.id;
       }
       
@@ -201,7 +186,6 @@ export default function ManagerDashboardPage() {
           screenshot 
         });
       }
-      fetchTasks();
       setIsModalOpen(false);
     } catch (err) { }
   };

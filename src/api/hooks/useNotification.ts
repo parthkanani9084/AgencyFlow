@@ -16,6 +16,7 @@ export const useMarkAllReadNotifications = () => {
     mutationFn: notificationService.markAllRead,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.NOTIFICATIONS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.UNREAD_NOTIFICATIONS_COUNT] });
     },
   });
 };
@@ -27,6 +28,7 @@ export const useReadNotification = () => {
     mutationFn: (id: string) => notificationService.readNotification(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.NOTIFICATIONS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.UNREAD_NOTIFICATIONS_COUNT] });
     },
   });
 };

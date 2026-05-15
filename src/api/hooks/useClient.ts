@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { clientService, CreateClientPayload, UpdateClientPayload, GetClientsParams, GetClientsResponse } from '../services/client.service';
 import { QUERY_KEYS } from '../queryKeys';
 
@@ -9,13 +10,15 @@ export const useCreateClient = () => {
     mutationFn: (payload: CreateClientPayload) => clientService.createClient(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CLIENTS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD] });
     },
   });
 };
 
 export const useClients = (params: GetClientsParams, options?: any) => {
+  const queryKey = useMemo(() => [QUERY_KEYS.CLIENTS, params], [params]);
   return useQuery<GetClientsResponse>({
-    queryKey: [QUERY_KEYS.CLIENTS, params],
+    queryKey,
     queryFn: () => clientService.getClients(params),
     ...options,
   });
@@ -29,6 +32,7 @@ export const useUpdateClient = () => {
       clientService.updateClient(clientId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CLIENTS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD] });
     },
   });
 };
@@ -40,6 +44,7 @@ export const useDeleteClient = () => {
     mutationFn: (clientId: string) => clientService.deleteClient(clientId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CLIENTS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD] });
     },
   });
 };

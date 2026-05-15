@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { teamService, CreateTeamPayload, UpdateTeamPayload, GetTeamsParams, GetTeamsResponse } from '../services/team.service';
 import { QUERY_KEYS } from '../queryKeys';
 
 export const useGetTeams = (params: GetTeamsParams, options?: any) => {
+  const queryKey = useMemo(() => [QUERY_KEYS.TEAMS, params], [params]);
   return useQuery<GetTeamsResponse>({
-    queryKey: [QUERY_KEYS.TEAMS, params.page, params.limit, params.search, params.role],
+    queryKey,
     queryFn: () => teamService.getTeams(params),
     ...options,
   });
@@ -17,6 +19,7 @@ export const useCreateTeam = () => {
     mutationFn: (payload: CreateTeamPayload) => teamService.createTeam(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TEAMS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD] });
     },
   });
 };
@@ -29,6 +32,8 @@ export const useUpdateTeam = () => {
       teamService.updateTeam(teamId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TEAMS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TASKS] });
     },
   });
 };
@@ -40,21 +45,25 @@ export const useDeleteTeamMember = () => {
     mutationFn: (teamId: string) => teamService.deleteTeamMember(teamId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TEAMS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TASKS] });
     },
   });
 };
 
 export const useTeamRole = (id: string | null) => {
+  const queryKey = useMemo(() => [QUERY_KEYS.TEAM_ROLE, id], [id]);
   return useQuery({
-    queryKey: [QUERY_KEYS.TEAM_ROLE, id],
+    queryKey,
     queryFn: () => teamService.getTeamRole(id!),
     enabled: !!id,
   });
 };
 
 export const useGetTeamsByRole = (role: string, options?: any) => {
+  const queryKey = useMemo(() => [QUERY_KEYS.TEAMS, 'role', role], [role]);
   return useQuery({
-    queryKey: [QUERY_KEYS.TEAMS, 'role', role],
+    queryKey,
     queryFn: () => teamService.getTeamsByRole(role),
     ...options,
   });

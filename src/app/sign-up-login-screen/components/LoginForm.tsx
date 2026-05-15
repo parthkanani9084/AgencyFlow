@@ -57,36 +57,36 @@ export default function LoginForm() {
             />
 
             {/* Password Input */}
-            <div className="relative">
-              <AuthInput
-                id="password"
-                label={STATIC_STRINGS.LOGIN_FORM_PWD_LABEL}
-                type={showPassword ? 'text' : 'password'}
-                autoComplete="current-password"
-                placeholder={STATIC_STRINGS.LOGIN_FORM_PWD_PLACEHOLDER}
-                register={register}
-                errors={errors}
-                validation={{
-                  required: STATIC_STRINGS.LOGIN_ERR_PWD_REQ,
-                  minLength: {
-                    value: STATIC_STRINGS.LOGIN_PWD_MIN_LENGTH as number,
-                    message: STATIC_STRINGS.LOGIN_ERR_PWD_MIN,
-                  },
-                }}
-              >
-                {/* <button type="button" className="text-[12px] text-violet-600 hover:text-violet-700 font-medium transition-colors">
-                  {STATIC_STRINGS.LOGIN_FORM_PWD_FORGOT}
-                </button> */}
-              </AuthInput>
-              <button
-                type="button"
-                onClick={togglePasswordVisibility}
-                className="absolute right-3 top-[38px] text-slate-400 hover:text-slate-600 transition-colors"
-                aria-label={showPassword ? STATIC_STRINGS.LOGIN_ARIA_HIDE_PWD : STATIC_STRINGS.LOGIN_ARIA_SHOW_PWD}
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
+            <AuthInput
+              id="password"
+              label={STATIC_STRINGS.LOGIN_FORM_PWD_LABEL}
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              placeholder={STATIC_STRINGS.LOGIN_FORM_PWD_PLACEHOLDER}
+              register={register}
+              errors={errors}
+              validation={{
+                required: STATIC_STRINGS.LOGIN_ERR_PWD_REQ,
+                minLength: {
+                  value: STATIC_STRINGS.LOGIN_PWD_MIN_LENGTH as number,
+                  message: STATIC_STRINGS.LOGIN_ERR_PWD_MIN,
+                },
+              }}
+              rightElement={
+                <button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  aria-label={showPassword ? STATIC_STRINGS.LOGIN_ARIA_HIDE_PWD : STATIC_STRINGS.LOGIN_ARIA_SHOW_PWD}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              }
+            >
+              {/* <button type="button" className="text-[12px] text-violet-600 hover:text-violet-700 font-medium transition-colors">
+                {STATIC_STRINGS.LOGIN_FORM_PWD_FORGOT}
+              </button> */}
+            </AuthInput>
 
             {/* <div className="flex items-center gap-2">
               <input id="remember" type="checkbox" className="w-4 h-4 rounded border-slate-300 accent-violet-600 cursor-pointer" {...register('remember')} />

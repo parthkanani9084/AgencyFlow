@@ -2,19 +2,17 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useAdsData } from '@/context/AdsDataContext';
 import { STATIC_STRINGS, ROLES, CLIENT_PLANS, CLIENT_PLATFORMS } from '@/utils/constants';
-import { clientService } from '../services/client.service';
 import { Client, FormState, EMPTY_FORM, getClientTotalPaid } from '@/app/client-management/types';
-import { useCreateClient, useUpdateClient, useDeleteClient } from './useClient';
+import { useCreateClient, useUpdateClient, useDeleteClient, useClients } from './useClient';
 import { validateClientForm, prepareClientPayload } from './clientUtils';
 
 export const useClientManagement = () => {
   const { user } = useAuth();
   const { adsMetrics, updateAdsMetrics } = useAdsData();
   const isOwner = user?.role === ROLES.OWNER;
-  const [clients, setClients] = useState<Client[]>([]);
+  
   const [isMounted, setIsMounted] = useState(false);
   const [search, setSearch] = useState('');
-  const [isFetching, setIsFetching] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [viewPaymentsOpen, setViewPaymentsOpen] = useState(false);
@@ -26,57 +24,53 @@ export const useClientManagement = () => {
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(12);
-  const [totalItems, setTotalItems] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const { mutateAsync: createClient, isPending: isCreating } = useCreateClient();
-  const { mutateAsync: updateClient, isPending: isUpdating } = useUpdateClient();
-  const { mutateAsync: deleteClientAsync, isPending: isDeleting } = useDeleteClient();
-  
+
   const [debouncedSearch, setDebouncedSearch] = useState(search);
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 500);
     return () => clearTimeout(timer);
   }, [search]);
 
-  const fetchClients = useCallback(async () => {
-    setIsFetching(true);
-    try {
-      const response = await clientService.getClients({ 
-        page, 
-        limit: perPage, 
-        search: debouncedSearch.trim() || undefined 
-      });
-      const apiClients = response?.results?.data;
-      if (apiClients) {
-        const mapped: Client[] = apiClients.map((c: any) => ({
-          id: c.id,
-          name: c.clientName,
-          email: c.email || '',
-          brand: c.brandName,
-          packageAmount: Number(c.packageAmount) || 0,
-          perDaySpend: Number(c.perDaySpendAmount) || 0,
-          planType: c.planType as typeof CLIENT_PLANS[keyof typeof CLIENT_PLANS],
-          adType: c.adType || '',
-          platformType: (c.platformType === STATIC_STRINGS.CLIENT_MGMT_PLATFORM_ONLINE ? CLIENT_PLATFORMS.WEBSITE : CLIENT_PLATFORMS.OFFLINE) as typeof CLIENT_PLATFORMS.WEBSITE | typeof CLIENT_PLATFORMS.OFFLINE,
-          location: c.fileLocation || '',
-          websiteLink: c.weblink || '',
-          reelsPerMonth: Number(c.reelsPerMonth) || 0,
-          services: c.serviceRequired || [],
-          payments: c.payments || [],
-          createdAt: c.createdAt
-        }));
-        setClients(mapped);
-        setTotalItems(response.results?.pagination?.totalItem || mapped.length);
-        setTotalPages(response.results?.pagination?.totalPages || 1);
-      }
-    } catch (error) {
-    } finally {
-      setIsFetching(false);
-    }
-  }, [page, perPage, debouncedSearch]);
+  // Unified Query Hook
+  const { data: clientsData, isLoading: isFetching, refetch: fetchClients } = useClients({
+    page,
+    limit: perPage,
+    search: debouncedSearch.trim() || undefined,
+  }, {
+    enabled: isMounted,
+  });
 
+  const clients = useMemo(() => {
+    const apiClients = clientsData?.results?.data;
+    if (!apiClients) return [];
+    
+    return apiClients.map((c: any) => ({
+      id: c.id,
+      name: c.clientName,
+      email: c.email || '',
+      brand: c.brandName,
+      packageAmount: Number(c.packageAmount) || 0,
+      perDaySpend: Number(c.perDaySpendAmount) || 0,
+      planType: c.planType as typeof CLIENT_PLANS[keyof typeof CLIENT_PLANS],
+      adType: c.adType || '',
+      platformType: (c.platformType === STATIC_STRINGS.CLIENT_MGMT_PLATFORM_ONLINE ? CLIENT_PLATFORMS.WEBSITE : CLIENT_PLATFORMS.OFFLINE) as typeof CLIENT_PLATFORMS.WEBSITE | typeof CLIENT_PLATFORMS.OFFLINE,
+      location: c.fileLocation || '',
+      websiteLink: c.weblink || '',
+      reelsPerMonth: Number(c.reelsPerMonth) || 0,
+      services: c.serviceRequired || [],
+      payments: c.payments || [],
+      createdAt: c.createdAt
+    }));
+  }, [clientsData]);
+
+  const totalItems = clientsData?.results?.pagination?.totalItem || clients.length;
+  const totalPages = clientsData?.results?.pagination?.totalPages || 1;
+
+  const { mutateAsync: createClient, isPending: isCreating } = useCreateClient();
+  const { mutateAsync: updateClient, isPending: isUpdating } = useUpdateClient();
+  const { mutateAsync: deleteClientAsync, isPending: isDeleting } = useDeleteClient();
+  
   useEffect(() => { setIsMounted(true); }, []);
-  useEffect(() => { if (isMounted) fetchClients(); }, [fetchClients, isMounted]);
   useEffect(() => { setPage(1); }, [debouncedSearch]);
 
   const filteredClients = useMemo(() => clients || [], [clients]);
@@ -122,25 +116,22 @@ export const useClientManagement = () => {
       if (editingClient) {
         if (Object.keys(payload).length > 0) {
           await updateClient({ clientId: editingClient.id, payload });
-          fetchClients();
         }
       } else {
         await createClient(payload);
-        fetchClients();
       }
       setModalOpen(false);
     } catch (error) { }
-  }, [form, editingClient, updateClient, createClient, fetchClients]);
+  }, [form, editingClient, updateClient, createClient]);
 
   const handleDelete = useCallback(async () => {
     if (deleteModal.client) {
       try {
         await deleteClientAsync(deleteModal.client.id);
-        fetchClients();
       } catch (error) { }
     }
     setDeleteModal({ open: false, client: null });
-  }, [deleteModal.client, deleteClientAsync, fetchClients]);
+  }, [deleteModal.client, deleteClientAsync]);
 
   const openPayment = useCallback((client: Client) => {
     setActiveClient(client);
@@ -154,7 +145,6 @@ export const useClientManagement = () => {
     if (getClientTotalPaid(activeClient) + newAmount > activeClient.packageAmount) return;
 
     const updatedClients = clients.map(c => c.id === activeClient.id ? { ...c, payments: [{ amount: newAmount, date: paymentForm.date, notes: paymentForm.notes.trim() }, ...(c.payments || [])] } : c);
-    setClients(updatedClients);
     updateGlobalRevenue(updatedClients);
     setPaymentModalOpen(false);
   }, [activeClient, paymentForm, clients, updateGlobalRevenue]);
@@ -169,7 +159,6 @@ export const useClientManagement = () => {
       }
       return c;
     });
-    setClients(updatedClients);
     updateGlobalRevenue(updatedClients);
     const updatedActiveClient = updatedClients.find(c => c.id === activeClient.id);
     if (updatedActiveClient) setActiveClient(updatedActiveClient);
