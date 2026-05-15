@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { notificationService } from '../services/notification.service';
+import { notificationService, GetUnreadNotificationsCountResponse } from '../services/notification.service';
 import { QUERY_KEYS } from '../queryKeys';
 
 export const useGetNotifications = () => {
@@ -31,10 +31,11 @@ export const useReadNotification = () => {
   });
 };
 
-export const useGetUnreadNotificationsCount = () => {
-  return useQuery({
+export const useGetUnreadNotificationsCount = (options?: any) => {
+  return useQuery<GetUnreadNotificationsCountResponse>({
     queryKey: [QUERY_KEYS.UNREAD_NOTIFICATIONS_COUNT],
     queryFn: () => notificationService.getUnreadNotificationsCount(),
+    ...options,
   });
 };
 

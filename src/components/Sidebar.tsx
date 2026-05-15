@@ -24,7 +24,6 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import type { UserRole } from '@/types';
 import { useGetUnreadNotificationsCount } from '@/api/hooks/useNotification';
-import { useGetTasks } from '@/api/hooks/useTask';
 import { ROLES } from '@/constants/roles';
 import { ROUTES } from '@/constants/routes';
 import { STATIC_STRINGS } from '@/utils/constants';
@@ -48,11 +47,12 @@ const groups = [
 ];
 
 export default function Sidebar() {
-  const { data: unreadNotificationsData } = useGetUnreadNotificationsCount();
-  const { data: tasksData } = useGetTasks({ page: 1, limit: 100 });
+  const { data: unreadNotificationsData } = useGetUnreadNotificationsCount({ 
+    staleTime: 1000 * 60 * 1, 
+    refetchOnWindowFocus: false 
+  });
   
-  const unreadCount = unreadNotificationsData?.results?.unreadCount || 0;
-  const totalTasks = (tasksData as any)?.results?.pagination?.totalItems || (tasksData as any)?.results?.pagination?.totalItem || 0;
+  const unreadCount = (unreadNotificationsData as any)?.results?.unread_count || 0;
   const [collapsed, setCollapsed] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const pathname = usePathname();
@@ -69,9 +69,9 @@ export default function Sidebar() {
     { id: 'nav-client-profile', label: 'My Profile',    icon: Users,           href: ROUTES.CLIENT_PROFILE,       group: 'main',      allowedRoles: [ROLES.CLIENT] },
     { id: 'nav-client-campaigns', label: 'My Campaigns', icon: Megaphone,      href: ROUTES.CLIENT_CAMPAIGNS,     group: 'main',      allowedRoles: [ROLES.CLIENT] },
     { id: 'nav-client-reels',     label: 'My Reels',        icon: Film,            href: ROUTES.CLIENT_REELS,         group: 'main',      allowedRoles: [ROLES.CLIENT] },
-    { id: 'nav-campaigns',     label: 'Campaigns',     icon: Megaphone,       href: ROUTES.CAMPAIGN_MANAGEMENT,   badge: 3, group: 'main', allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
+    { id: 'nav-campaigns',     label: 'Campaigns',     icon: Megaphone,       href: ROUTES.CAMPAIGN_MANAGEMENT,   group: 'main', allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
     { id: 'nav-clients',       label: 'Clients',       icon: Briefcase,       href: ROUTES.CLIENT_MANAGEMENT,     group: 'main',      allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
-    { id: 'nav-tasks',         label: 'Tasks',         icon: CheckSquare,     href: ROUTES.TASK_MANAGEMENT,       badge: totalTasks, group: 'main', allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
+    { id: 'nav-tasks',         label: 'Tasks',         icon: CheckSquare,     href: ROUTES.TASK_MANAGEMENT,       group: 'main', allowedRoles: [ROLES.OWNER, ROLES.MANAGER, ROLES.SHOOTER, ROLES.EDITOR, ROLES.ADS_MANAGER, ROLES.SOCIAL_MEDIA_MANAGER] },
     { id: 'nav-sa-dashboard',  label: 'Dashboard',      icon: LayoutDashboard, href: ROUTES.SUPER_ADMIN_DASHBOARD,  group: 'main',      allowedRoles: [ROLES.SUPER_ADMIN] },
     { id: 'nav-sa-agencies',   label: 'Business Agency', icon: Briefcase,       href: ROUTES.SUPER_ADMIN_AGENCIES, group: 'main',      allowedRoles: [ROLES.SUPER_ADMIN] },
     { id: 'nav-sa-subs',       label: 'Subscription',    icon: Megaphone,       href: ROUTES.SUPER_ADMIN_SUBSCRIPTIONS, group: 'main',      allowedRoles: [ROLES.SUPER_ADMIN] },

@@ -1,15 +1,16 @@
 import { STATIC_STRINGS } from '@/utils/constants';
 import { Campaign, Platform } from './types';
+import { CAMPAIGN_STATUS, WORKFLOW_STAGE, PLATFORMS } from './constants';
 
 export const mapCampaignData = (c: any): Campaign => {
   const assigneeName = c.assignee?.fullName || 'Unassigned';
   const rawPlatforms: string[] = c.adsPlatform || [];
   
   const platform = (() => {
-    if (rawPlatforms.length > 1) return 'Multi';
+    if (rawPlatforms.length > 1) return PLATFORMS.MULTI;
     const first = rawPlatforms[0];
-    if (!first) return 'Meta';
-    const options = ['Meta', 'Facebook', 'Instagram', 'Google', 'TikTok', 'LinkedIn', 'Multi'] as const;
+    if (!first) return PLATFORMS.META;
+    const options = Object.values(PLATFORMS);
     return options.find((opt) => opt.toLowerCase() === first.toLowerCase()) ?? (first as Platform);
   })();
 
@@ -18,8 +19,8 @@ export const mapCampaignData = (c: any): Campaign => {
     name: c.campaignName,
     client: c.client?.clientName,
     clientId: c.clientId || c.client?.id || '',
-    status: c.status === 'pause' ? 'paused' : c.status,
-    stage: c.stage === 'in-draft' ? 'in draft' : c.stage,
+    status: c.status === CAMPAIGN_STATUS.PAUSE ? CAMPAIGN_STATUS.PAUSE : c.status,
+    stage: c.stage === 'in-draft' ? WORKFLOW_STAGE.DRAFT : c.stage,
     assignee: assigneeName,
     assigneeId: c.assignedTo || c.assignee?.id || '',
     assigneeInitials: assigneeName
