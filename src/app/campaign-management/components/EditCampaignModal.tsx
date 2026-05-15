@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import Modal from '@/components/ui/Modal';
+import Label from '@/components/ui/Label';
 import { useAuth } from '@/context/AuthContext';
 import { auditService } from '@/lib/services/auditService';
 import { STATIC_STRINGS, CAMPAIGN_STATUS_OPTIONS, CAMPAIGN_STAGE_OPTIONS, PLATFORM_OPTIONS, TEAM_MEMBERS } from '@/utils/constants';
@@ -125,7 +126,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CAMPAIGN_FIELD_NAME}</label>
+            <Label required>{STATIC_STRINGS.CAMPAIGN_FIELD_NAME}</Label>
             <input
               type="text"
               className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 font-semibold disabled:bg-slate-50 disabled:text-slate-500"
@@ -134,7 +135,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
             />
           </div>
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CAMPAIGN_FIELD_CLIENT}</label>
+            <Label>{STATIC_STRINGS.CAMPAIGN_FIELD_CLIENT}</Label>
             <input
               type="text"
               className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 disabled:bg-slate-50 disabled:text-slate-500"
@@ -147,7 +148,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
         {/* Row 2: Workflow & Status */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CAMPAIGN_FIELD_STATUS}</label>
+            <Label>{STATIC_STRINGS.CAMPAIGN_FIELD_STATUS}</Label>
             <select
               className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 bg-white disabled:bg-slate-50 disabled:text-slate-500"
               {...register('status')}
@@ -161,7 +162,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
             </select>
           </div>
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CAMPAIGN_FIELD_STAGE}</label>
+            <Label>{STATIC_STRINGS.CAMPAIGN_FIELD_STAGE}</Label>
             <select
               className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 bg-white disabled:bg-slate-50 disabled:text-slate-500"
               {...register('stage')}
@@ -175,7 +176,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
             </select>
           </div>
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CAMPAIGN_FIELD_PLATFORM}</label>
+            <Label>{STATIC_STRINGS.CAMPAIGN_FIELD_PLATFORM}</Label>
             <select
               className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 bg-white disabled:bg-slate-50 disabled:text-slate-500"
               {...register('platform')}
@@ -185,7 +186,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
             </select>
           </div>
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CAMPAIGN_FIELD_DEADLINE}</label>
+            <Label required>{STATIC_STRINGS.CAMPAIGN_FIELD_DEADLINE}</Label>
             <input
               type="date"
               className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 bg-white disabled:bg-slate-50 disabled:text-slate-500"
@@ -198,7 +199,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
         {/* Row 3: Assignment */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CAMPAIGN_FIELD_ASSIGNEE}</label>
+            <Label>{STATIC_STRINGS.CAMPAIGN_FIELD_ASSIGNEE}</Label>
             <select
               className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 bg-white disabled:bg-slate-50 disabled:text-slate-500"
               {...register('assignee')}
@@ -214,7 +215,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
           <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-4">{STATIC_STRINGS.EDIT_MODAL_FINANCIALS}</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-[12px] font-semibold text-slate-600 mb-1">{STATIC_STRINGS.CAMPAIGN_FIELD_BUDGET}</label>
+              <Label className="text-slate-600 mb-1" style={{ fontSize: '12px' }}>{STATIC_STRINGS.CAMPAIGN_FIELD_BUDGET}</Label>
               <input
                 type="text"
                 className="w-full px-3 py-2 rounded-lg border border-slate-200 text-[13px] outline-none"
@@ -222,7 +223,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
               />
             </div>
             <div>
-              <label className="block text-[12px] font-semibold text-slate-600 mb-1">{STATIC_STRINGS.EDIT_MODAL_ACTUAL_SPEND}</label>
+              <Label className="text-slate-600 mb-1" style={{ fontSize: '12px' }}>{STATIC_STRINGS.EDIT_MODAL_ACTUAL_SPEND}</Label>
               <input
                 type="text"
                 className="w-full px-3 py-2 rounded-lg border border-slate-200 text-[13px] outline-none"
@@ -230,7 +231,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
               />
             </div>
             <div>
-              <label className="block text-[12px] font-semibold text-slate-600 mb-1">{STATIC_STRINGS.CAMPAIGN_FIELD_LEADS}</label>
+              <Label className="text-slate-600 mb-1" style={{ fontSize: '12px' }}>{STATIC_STRINGS.CAMPAIGN_FIELD_LEADS}</Label>
               <input
                 type="number"
                 className="w-full px-3 py-2 rounded-lg border border-slate-200 text-[13px] outline-none"
@@ -238,7 +239,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
               />
             </div>
             <div>
-              <label className="block text-[12px] font-semibold text-slate-600 mb-1">{STATIC_STRINGS.CAMPAIGN_FIELD_ROAS}</label>
+              <Label className="text-slate-600 mb-1" style={{ fontSize: '12px' }}>{STATIC_STRINGS.CAMPAIGN_FIELD_ROAS}</Label>
               <input
                 type="number"
                 step="0.1"

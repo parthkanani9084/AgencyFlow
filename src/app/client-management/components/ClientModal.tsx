@@ -1,7 +1,8 @@
 import React from 'react';
 import Modal from '@/components/ui/Modal';
-import { STATIC_STRINGS, CLIENT_PLATFORMS, CLIENT_PLANS } from '@/utils/constants';
+import { STATIC_STRINGS, CLIENT_PLATFORMS, CLIENT_PLANS, CLIENT_SERVICES } from '@/utils/constants';
 import { FormState, Client, SERVICE_OPTIONS } from '../types';
+import Label from '@/components/ui/Label';
 
 interface ClientModalProps {
   isOpen: boolean;
@@ -37,7 +38,7 @@ const ClientModal: React.FC<ClientModalProps> = ({
       <div className="px-6 py-5 space-y-4 max-h-[75vh] overflow-y-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_CLIENT_NAME} <span className="text-red-500">*</span></label>
+            <Label required>{STATIC_STRINGS.CLIENT_MGMT_LABEL_CLIENT_NAME}</Label>
             <input
               type="text"
               value={form.name}
@@ -48,7 +49,7 @@ const ClientModal: React.FC<ClientModalProps> = ({
             {errors.name && <p className="mt-1 text-[11.5px] text-red-500">{errors.name}</p>}
           </div>
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_BRAND_NAME} <span className="text-red-500">*</span></label>
+            <Label required>{STATIC_STRINGS.CLIENT_MGMT_LABEL_BRAND_NAME}</Label>
             <input
               type="text"
               value={form.brand}
@@ -59,7 +60,7 @@ const ClientModal: React.FC<ClientModalProps> = ({
             {errors.brand && <p className="mt-1 text-[11.5px] text-red-500">{errors.brand}</p>}
           </div>
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.FORM_EMAIL_ADDRESS} <span className="text-red-500">*</span></label>
+            <Label required>{STATIC_STRINGS.FORM_EMAIL_ADDRESS}</Label>
             <input
               type="email"
               value={form.email}
@@ -72,7 +73,7 @@ const ClientModal: React.FC<ClientModalProps> = ({
         </div>
 
         <div>
-          <label className="block text-[12.5px] font-semibold text-slate-700 mb-2.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_SERVICES}</label>
+          <Label required className="mb-2.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_SERVICES}</Label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {SERVICE_OPTIONS.map((service) => (
               <label key={service.value} className="flex items-center gap-2.5 cursor-pointer group">
@@ -98,7 +99,7 @@ const ClientModal: React.FC<ClientModalProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_PACKAGE} <span className="text-red-500">*</span></label>
+            <Label required>{STATIC_STRINGS.CLIENT_MGMT_LABEL_PACKAGE}</Label>
             <div className="relative">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[13px]">{STATIC_STRINGS.CURRENCY_SYMBOL}</span>
               <input
@@ -112,7 +113,7 @@ const ClientModal: React.FC<ClientModalProps> = ({
             {errors.packageAmount && <p className="mt-1 text-[11.5px] text-red-500">{errors.packageAmount}</p>}
           </div>
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_PER_DAY_SPEND}</label>
+            <Label required>{STATIC_STRINGS.CLIENT_MGMT_LABEL_PER_DAY_SPEND}</Label>
             <div className="relative">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[13px]">{STATIC_STRINGS.CURRENCY_SYMBOL}</span>
               <input
@@ -128,7 +129,7 @@ const ClientModal: React.FC<ClientModalProps> = ({
         </div>
 
         <div>
-          <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_PLAN_TYPE} <span className="text-red-500">*</span></label>
+          <Label required>{STATIC_STRINGS.CLIENT_MGMT_LABEL_PLAN_TYPE}</Label>
           <div className="flex gap-2">
             {[
               { label: STATIC_STRINGS.CLIENT_MGMT_PLAN_WEEKLY, value: CLIENT_PLANS.WEEKLY },
@@ -151,7 +152,7 @@ const ClientModal: React.FC<ClientModalProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_REELS_PER_MONTH}</label>
+            <Label required={form.services.includes(CLIENT_SERVICES.REELS)}>{STATIC_STRINGS.CLIENT_MGMT_LABEL_REELS_PER_MONTH}</Label>
             <input
               type="number"
               value={form.reelsPerMonth}
@@ -162,7 +163,7 @@ const ClientModal: React.FC<ClientModalProps> = ({
             {errors.reelsPerMonth && <p className="mt-1 text-[11.5px] text-red-500">{errors.reelsPerMonth}</p>}
           </div>
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_PLATFORM_TYPE}</label>
+            <Label required>{STATIC_STRINGS.CLIENT_MGMT_LABEL_PLATFORM_TYPE}</Label>
             <select
               value={form.platformType}
               onChange={(e) => { setForm(f => ({ ...f, platformType: e.target.value as any })); setErrors(er => ({ ...er, platformType: '' })); }}
@@ -180,7 +181,7 @@ const ClientModal: React.FC<ClientModalProps> = ({
           <div>
             {form.platformType === CLIENT_PLATFORMS.WEBSITE && (
               <>
-                <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5 animate-in slide-in-from-top-1">{STATIC_STRINGS.CLIENT_MGMT_LABEL_WEBSITE_LINK}</label>
+                <Label required className="animate-in slide-in-from-top-1">{STATIC_STRINGS.CLIENT_MGMT_LABEL_WEBSITE_LINK}</Label>
                 <input
                   type="url"
                   value={form.websiteLink}
@@ -193,7 +194,7 @@ const ClientModal: React.FC<ClientModalProps> = ({
             )}
             {form.platformType === CLIENT_PLATFORMS.OFFLINE && (
               <>
-                <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5 animate-in slide-in-from-top-1">{STATIC_STRINGS.CLIENT_MGMT_LABEL_LOCATION}</label>
+                <Label required className="animate-in slide-in-from-top-1">{STATIC_STRINGS.CLIENT_MGMT_LABEL_LOCATION}</Label>
                 <input
                   type="text"
                   value={form.location}
