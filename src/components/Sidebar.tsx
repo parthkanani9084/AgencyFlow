@@ -47,10 +47,12 @@ const groups = [
 ];
 
 export default function Sidebar() {
-  const { data: unreadNotificationsData } = useGetUnreadNotificationsCount();
+  const { data: unreadNotificationsData } = useGetUnreadNotificationsCount({ 
+    staleTime: 1000 * 60 * 1, 
+    refetchOnWindowFocus: false 
+  });
   
-  const unreadCount = unreadNotificationsData?.results?.unreadCount || 0;
-
+  const unreadCount = (unreadNotificationsData as any)?.results?.unread_count || 0;
   const [collapsed, setCollapsed] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const pathname = usePathname();

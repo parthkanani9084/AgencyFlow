@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import Modal from '@/components/ui/Modal';
 import { useAuth } from '@/context/AuthContext';
-import { STATIC_STRINGS, PLATFORM_OPTIONS, TEAM_MEMBERS } from '@/utils/constants';
+import { STATIC_STRINGS, PLATFORM_OPTIONS } from '@/utils/constants';
 import { Loader2 } from 'lucide-react';
 import { useUpdateCampaign } from '@/api/hooks/useCampaign';
 import { useGetTeamsByRole } from '@/api/hooks/useTeam';

@@ -21,6 +21,7 @@ import {
 } from '@/api/hooks/useCampaign';
 import { Campaign, SortField, SortDir, CampaignStatus, WorkflowStage, Platform } from '../types';
 import { mapCampaignData, isDeadlineCritical } from '../utils';
+import { CAMPAIGN_STATUS, WORKFLOW_STAGE, PLATFORMS } from '../constants';
 
 export default function CampaignTable() {
   const { user } = useAuth();
@@ -61,7 +62,7 @@ export default function CampaignTable() {
     limit: perPage,
     search: debouncedSearch.trim() || undefined,
     status: statusFilter || undefined,
-    stage: stageFilter === 'in draft' ? 'in-draft' : (stageFilter || undefined),
+    stage: stageFilter === WORKFLOW_STAGE.DRAFT ? 'in-draft' : (stageFilter || undefined),
     priority: priorityFilter || undefined,
   }), [page, perPage, debouncedSearch, statusFilter, stageFilter, priorityFilter]);
 
@@ -161,7 +162,7 @@ export default function CampaignTable() {
       try {
         await Promise.all(
           ids.map((id) =>
-            updateCampaignAsync({ campaignId: id, payload: { status: 'pause' } } as any)
+            updateCampaignAsync({ campaignId: id, payload: { status: CAMPAIGN_STATUS.PAUSE } } as any)
           )
         );
         setSelectedIds(new Set());
@@ -216,7 +217,7 @@ export default function CampaignTable() {
               </h1>
               <p className="text-[12.5px] text-slate-500 mt-0.5">
                 {filtered.length} {STATIC_STRINGS.CAMPAIGN_MGMT_TOTAL} ·{' '}
-                {campaigns.filter((c) => c.status === 'active').length}{' '}
+                {campaigns.filter((c) => c.status === CAMPAIGN_STATUS.ACTIVE).length}{' '}
                 {STATIC_STRINGS.CAMPAIGN_MGMT_ACTIVE}
               </p>
             </div>
@@ -294,7 +295,7 @@ export default function CampaignTable() {
                     onDelete={setDeleteTarget}
                     onHistory={setHistoryTarget}
                     userRole={user?.role}
-                    isCritical={isDeadlineCritical(campaign.deadline, new Date()) && campaign.status === 'active'}
+                    isCritical={isDeadlineCritical(campaign.deadline, new Date()) && campaign.status === CAMPAIGN_STATUS.ACTIVE}
                   />
                 ))
               )}

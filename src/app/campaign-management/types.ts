@@ -1,6 +1,8 @@
-export type CampaignStatus = 'active' | 'draft' | 'pause' | 'completed' | 'archived';
-export type WorkflowStage = 'in draft' | 'in review' | 'process' | 'publish';
-export type Platform = 'Meta' | 'Facebook' | 'Instagram' | 'Google' | 'TikTok' | 'LinkedIn' | 'Multi';
+import { CAMPAIGN_STATUS, WORKFLOW_STAGE, PLATFORMS } from './constants';
+
+export type CampaignStatus = typeof CAMPAIGN_STATUS[keyof typeof CAMPAIGN_STATUS];
+export type WorkflowStage = typeof WORKFLOW_STAGE[keyof typeof WORKFLOW_STAGE];
+export type Platform = typeof PLATFORMS[keyof typeof PLATFORMS];
 
 export interface Campaign {
   id: string;

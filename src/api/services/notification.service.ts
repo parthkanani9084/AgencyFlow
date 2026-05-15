@@ -19,7 +19,7 @@ export interface GetUnreadNotificationsCountResponse {
   code: number;
   message: string;
   results: {
-    unreadCount: number;
+    unread_count: number;
   };
 }
 
@@ -29,7 +29,7 @@ export interface GetNotificationsResponse {
   message: string;
   results: {
     data: Notification[];
-    unreadCount: number;
+    unread_count: number;
     pagination?: {
       currentPage: number;
       totalPages: number;
