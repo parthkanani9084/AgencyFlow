@@ -212,9 +212,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
           {/* Row 1: Campaign Name & Client */}
           <div className="grid grid-cols-2 gap-5">
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                {STATIC_STRINGS.CAMPAIGN_FIELD_NAME}
-              </label>
+              <Label required>{STATIC_STRINGS.CAMPAIGN_FIELD_NAME}</Label>
               <input
                 type="text"
                 className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 font-semibold disabled:bg-slate-50 disabled:text-slate-500 transition-all"
@@ -223,9 +221,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
               />
             </div>
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                {STATIC_STRINGS.CAMPAIGN_FIELD_CLIENT}
-              </label>
+              <Label>{STATIC_STRINGS.CAMPAIGN_FIELD_CLIENT}</Label>
               <select
                 className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 bg-white disabled:bg-slate-50 disabled:text-slate-500 transition-all"
                 {...register('client')}
@@ -246,9 +242,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
           {/* Row 2: Objective & Daily Budget */}
           <div className="grid grid-cols-2 gap-5">
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                {STATIC_STRINGS.CREATE_CAMPAIGN_OBJECTIVE}
-              </label>
+              <Label>{STATIC_STRINGS.CREATE_CAMPAIGN_OBJECTIVE}</Label>
               <select
                 className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 bg-white disabled:bg-slate-50 disabled:text-slate-500 transition-all"
                 {...register('objective')}
@@ -263,9 +257,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
               </select>
             </div>
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                {STATIC_STRINGS.CREATE_CAMPAIGN_BUDGET}
-              </label>
+              <Label>{STATIC_STRINGS.CREATE_CAMPAIGN_BUDGET}</Label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[13px]">
                   {STATIC_STRINGS.CURRENCY_SYMBOL}
@@ -284,9 +276,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
           {/* Row 3: Status & Stage */}
           <div className="grid grid-cols-2 gap-5">
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                {STATIC_STRINGS.CAMPAIGN_FIELD_STATUS}
-              </label>
+              <Label>{STATIC_STRINGS.CAMPAIGN_FIELD_STATUS}</Label>
               <select
                 className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 bg-white disabled:bg-slate-50 disabled:text-slate-500 transition-all"
                 {...register('status')}
@@ -300,9 +290,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
               </select>
             </div>
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                {STATIC_STRINGS.CAMPAIGN_FIELD_STAGE}
-              </label>
+              <Label>{STATIC_STRINGS.CAMPAIGN_FIELD_STAGE}</Label>
               <select
                 className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 bg-white disabled:bg-slate-50 disabled:text-slate-500 transition-all"
                 {...register('stage')}
@@ -320,9 +308,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
           {/* Row 4: Deadline & Assignee */}
           <div className="grid grid-cols-2 gap-5">
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                {STATIC_STRINGS.CAMPAIGN_FIELD_DEADLINE}
-              </label>
+              <Label required>{STATIC_STRINGS.CAMPAIGN_FIELD_DEADLINE}</Label>
               <input
                 type="date"
                 className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 bg-white disabled:bg-slate-50 disabled:text-slate-500 transition-all"
@@ -331,9 +317,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
               />
             </div>
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                {STATIC_STRINGS.CAMPAIGN_FIELD_ASSIGNEE}
-              </label>
+              <Label>{STATIC_STRINGS.CAMPAIGN_FIELD_ASSIGNEE}</Label>
               <select
                 className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 bg-white disabled:bg-slate-50 disabled:text-slate-500 transition-all"
                 {...register('assignee')}
@@ -352,9 +336,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
           {/* Row 5: Location & Target Audience */}
           <div className="grid grid-cols-2 gap-5">
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                {STATIC_STRINGS.CREATE_CAMPAIGN_LOCATION}
-              </label>
+              <Label>{STATIC_STRINGS.CREATE_CAMPAIGN_LOCATION}</Label>
               <input
                 type="text"
                 placeholder={STATIC_STRINGS.CREATE_CAMPAIGN_PLACEHOLDER_LOCATION}
@@ -364,9 +346,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
               />
             </div>
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                {STATIC_STRINGS.CREATE_CAMPAIGN_AUDIENCE}
-              </label>
+              <Label>{STATIC_STRINGS.CREATE_CAMPAIGN_AUDIENCE}</Label>
               <input
                 type="text"
                 placeholder={STATIC_STRINGS.CREATE_CAMPAIGN_PLACEHOLDER_AUDIENCE}
@@ -380,9 +360,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
           {/* Row 6: Photo/Video Location & Priority */}
           <div className="grid grid-cols-2 gap-5">
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                {STATIC_STRINGS.CREATE_CAMPAIGN_MEDIA_LOCATION}
-              </label>
+              <Label>{STATIC_STRINGS.CREATE_CAMPAIGN_MEDIA_LOCATION}</Label>
               <input
                 type="text"
                 placeholder={STATIC_STRINGS.CREATE_CAMPAIGN_PLACEHOLDER_MEDIA_LOCATION}
@@ -392,9 +370,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
               />
             </div>
             <div>
-              <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                {STATIC_STRINGS.CREATE_CAMPAIGN_PRIORITY}
-              </label>
+              <Label>{STATIC_STRINGS.CREATE_CAMPAIGN_PRIORITY}</Label>
               <select
                 className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 bg-white disabled:bg-slate-50 disabled:text-slate-500 transition-all"
                 {...register('priority')}
@@ -409,9 +385,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
 
           {/* Row 7: Ad Platform (Full Width) */}
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-2">
-              {STATIC_STRINGS.CAMPAIGN_FIELD_PLATFORM}
-            </label>
+            <Label required className="mb-2">{STATIC_STRINGS.CAMPAIGN_FIELD_PLATFORM}</Label>
             <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
               <Controller
                 name="platforms"
@@ -460,9 +434,7 @@ export default function EditCampaignModal({ open, onClose, campaign, onSuccess }
 
           {/* Row 8: Note (Full Width) */}
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-              {STATIC_STRINGS.CREATE_CAMPAIGN_NOTE}
-            </label>
+            <Label>{STATIC_STRINGS.CREATE_CAMPAIGN_NOTE}</Label>
             <textarea
               rows={2}
               placeholder={STATIC_STRINGS.CREATE_CAMPAIGN_PLACEHOLDER_NOTE}
