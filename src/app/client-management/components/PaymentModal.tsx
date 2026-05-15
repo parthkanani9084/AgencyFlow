@@ -1,5 +1,6 @@
 import React from 'react';
 import Modal from '@/components/ui/Modal';
+import Label from '@/components/ui/Label';
 import { STATIC_STRINGS } from '@/utils/constants';
 import { Client } from '../types';
 
@@ -30,7 +31,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     >
       <div className="px-6 py-5 space-y-4">
         <div>
-          <label className="block text-[12px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">{STATIC_STRINGS.CLIENT_MGMT_LABEL_CLIENT_NAME}</label>
+          <Label className="text-[12px] text-slate-400 uppercase tracking-wider">{STATIC_STRINGS.CLIENT_MGMT_LABEL_CLIENT_NAME}</Label>
           <input
             type="text"
             readOnly
@@ -40,7 +41,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.ADS_TABLE_COL_SPEND} ({STATIC_STRINGS.CURRENCY_SYMBOL})</label>
+            <Label>{STATIC_STRINGS.ADS_TABLE_COL_SPEND} ({STATIC_STRINGS.CURRENCY_SYMBOL})</Label>
             <input
               type="number"
               value={paymentForm.amount}
@@ -50,7 +51,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             />
           </div>
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.DATE}</label>
+            <Label>{STATIC_STRINGS.DATE}</Label>
             <input
               type="date"
               value={paymentForm.date}
@@ -60,7 +61,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           </div>
         </div>
         <div>
-          <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.CAMPAIGN_MGMT_NOTES}</label>
+          <Label>{STATIC_STRINGS.CAMPAIGN_MGMT_NOTES}</Label>
           <textarea
             value={paymentForm.notes}
             onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })}
