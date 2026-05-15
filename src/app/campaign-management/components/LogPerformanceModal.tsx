@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { Trash2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import Modal from '@/components/ui/Modal';
+import Label from '@/components/ui/Label';
 import { STATIC_STRINGS } from '@/utils/constants';
 import { useLogPerformance, useGetPerformanceHistory, useDeletePerformanceHistory } from '@/api/hooks/useCampaign';
 
@@ -86,9 +87,7 @@ export default function LogPerformanceModal({ open, onClose, campaign, onSuccess
     >
       <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
         <div>
-          <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-            {STATIC_STRINGS.LOG_PERFORMANCE_LABEL_ADD_SPEND}
-          </label>
+          <Label>{STATIC_STRINGS.LOG_PERFORMANCE_LABEL_ADD_SPEND}</Label>
           <input
             type="number"
             placeholder="e.g. 500"
@@ -97,9 +96,7 @@ export default function LogPerformanceModal({ open, onClose, campaign, onSuccess
           />
         </div>
         <div>
-          <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-            {STATIC_STRINGS.LOG_PERFORMANCE_LABEL_ADD_LEADS}
-          </label>
+          <Label>{STATIC_STRINGS.LOG_PERFORMANCE_LABEL_ADD_LEADS}</Label>
           <input
             type="number"
             placeholder="e.g. 50"
@@ -108,9 +105,7 @@ export default function LogPerformanceModal({ open, onClose, campaign, onSuccess
           />
         </div>
         <div>
-          <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-            {STATIC_STRINGS.LOG_PERFORMANCE_LABEL_ROAS_OPTIONAL}
-          </label>
+          <Label>{STATIC_STRINGS.LOG_PERFORMANCE_LABEL_ROAS_OPTIONAL}</Label>
           <input
             type="number"
             step="0.1"

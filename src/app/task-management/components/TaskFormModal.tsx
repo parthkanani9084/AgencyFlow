@@ -1,6 +1,7 @@
 import React from 'react';
 import Modal from '@/components/ui/Modal';
 import { STATIC_STRINGS, ROLES } from '@/utils/constants';
+import Label from '@/components/ui/Label';
 import { TaskForm } from '../types';
 import { Task, TaskRole } from '@/types';
 
@@ -41,7 +42,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
     <Modal open={open} onClose={onClose} title={editingTask ? STATIC_STRINGS.TASK_MGMT_EDIT_TASK : STATIC_STRINGS.TASK_MGMT_ADD_NEW_TASK} size="lg">
       <div className="px-6 py-5 space-y-4">
         <div>
-          <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_LABEL_TITLE} <span className="text-red-500">*</span></label>
+          <Label required>{STATIC_STRINGS.TASK_MGMT_LABEL_TITLE}</Label>
           <input
             type="text"
             value={form.title}
@@ -52,7 +53,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
           {errors.title && <p className="mt-1 text-[11.5px] text-red-500">{errors.title}</p>}
         </div>
         <div>
-          <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_LABEL_DESCRIPTION}</label>
+          <Label>{STATIC_STRINGS.TASK_MGMT_LABEL_DESCRIPTION}</Label>
           <textarea
             value={form.description}
             onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
@@ -63,7 +64,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_ASSIGNED_TO} <span className="text-red-500">*</span></label>
+            <Label required>{STATIC_STRINGS.TASK_MGMT_COL_ASSIGNED_TO}</Label>
             <select 
               value={teamMembers.find(m => m.name === form.assignedTo)?.id || ''} 
               onChange={(e) => { handleMemberChange(e.target.value); setErrors(er => ({ ...er, assignedTo: '' })); }} 
@@ -75,7 +76,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
             {errors.assignedTo && <p className="mt-1 text-[11.5px] text-red-500">{errors.assignedTo}</p>}
           </div>
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_ROLE} <span className="text-red-500">*</span></label>
+            <Label required>{STATIC_STRINGS.TASK_MGMT_COL_ROLE}</Label>
             <select 
               value={form.role} 
               onChange={(e) => { setForm((f) => ({ ...f, role: e.target.value as TaskRole })); setErrors(er => ({ ...er, role: '' })); }} 
@@ -94,7 +95,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_CLIENT} <span className="text-red-500">*</span></label>
+            <Label required>{STATIC_STRINGS.TASK_MGMT_COL_CLIENT}</Label>
             <select 
               value={form.client} 
               onChange={(e) => { setForm((f) => ({ ...f, client: e.target.value })); setErrors(er => ({ ...er, client: '' })); }} 
@@ -106,7 +107,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
             {errors.client && <p className="mt-1 text-[11.5px] text-red-500">{errors.client}</p>}
           </div>
           <div>
-            <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">{STATIC_STRINGS.TASK_MGMT_COL_DEADLINE} <span className="text-red-500">*</span></label>
+            <Label required>{STATIC_STRINGS.TASK_MGMT_COL_DEADLINE}</Label>
             <input 
               type="date" 
               value={form.deadline} 

@@ -2,6 +2,7 @@ import React from 'react';
 import Modal from '@/components/ui/Modal';
 import { Loader2 } from 'lucide-react';
 import { STATIC_STRINGS, COMMON_STATUS } from '@/utils/constants';
+import Label from '@/components/ui/Label';
 import { ROLE_CONFIG, ROLE_AVATAR_COLORS } from '@/utils/ui-configs';
 import { UserRole } from '@/types';
 
@@ -50,9 +51,7 @@ export const TeamMemberModal = ({
   >
     <div className="px-6 py-5 space-y-4">
       <div>
-        <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-          {STATIC_STRINGS.TEAM_PAGE_LABEL_FULL_NAME} <span className="text-red-500">*</span>
-        </label>
+        <Label required>{STATIC_STRINGS.TEAM_PAGE_LABEL_FULL_NAME}</Label>
         <input
           type="text"
           value={form.name}
@@ -69,9 +68,7 @@ export const TeamMemberModal = ({
       </div>
 
       <div>
-        <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-          {STATIC_STRINGS.TEAM_PAGE_LABEL_EMAIL} <span className="text-red-500">*</span>
-        </label>
+        <Label required>{STATIC_STRINGS.TEAM_PAGE_LABEL_EMAIL}</Label>
         <input
           type="email"
           value={form.email}
@@ -88,9 +85,7 @@ export const TeamMemberModal = ({
       </div>
 
       <div>
-        <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-          {STATIC_STRINGS.TASK_MGMT_COL_ROLE} <span className="text-red-500">*</span>
-        </label>
+        <Label>{STATIC_STRINGS.TASK_MGMT_COL_ROLE}</Label>
         <div className="grid grid-cols-2 gap-2">
           {allRoles.map((r) => {
             const cfg = ROLE_CONFIG[r];

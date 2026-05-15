@@ -3,19 +3,13 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import Modal from '@/components/ui/Modal';
-import {
-  STATIC_STRINGS,
-  TEAM_MEMBERS,
-  OBJECTIVE_OPTIONS,
-  PLATFORM_OPTIONS,
-} from '@/utils/constants';
+import Label from '@/components/ui/Label';
+import { STATIC_STRINGS, OBJECTIVE_OPTIONS, PLATFORM_OPTIONS } from '@/utils/constants';
 import { LoaderCircle } from 'lucide-react';
-import { useClients } from '@/api/hooks/useClient';
-
-
-import { useCreateCampaign  } from '@/api/hooks/useCampaign';
 import { CreateCampaignPayload } from '@/api/services/campaign.service';
+import { useCreateCampaign } from '@/api/hooks/useCampaign';
 import { useGetTeamsByRole } from '@/api/hooks/useTeam';
+import { useClients } from '@/api/hooks/useClient';
 
 interface CampaignFormValues {
   name: string;
@@ -219,9 +213,7 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
             <div className="space-y-4 animate-fade-in max-h-[60vh] overflow-y-auto pr-1">
               {/* 1. Campaign Name */}
               <div>
-                <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                  {STATIC_STRINGS.CAMPAIGN_FIELD_NAME} <span className="text-red-500">*</span>
-                </label>
+                <Label required>{STATIC_STRINGS.CAMPAIGN_FIELD_NAME}</Label>
                 <input
                   type="text"
                   placeholder={STATIC_STRINGS.CREATE_CAMPAIGN_PLACEHOLDER_NAME}
@@ -235,9 +227,7 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
 
               {/* 2. Ad Platform */}
               <div>
-                <label className="block text-[12.5px] font-semibold text-slate-700 mb-2">
-                  {STATIC_STRINGS.CREATE_CAMPAIGN_PLATFORM} <span className="text-red-500">*</span>
-                </label>
+                <Label required className="mb-2">{STATIC_STRINGS.CREATE_CAMPAIGN_PLATFORM}</Label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {PLATFORM_OPTIONS.filter((p) => p !== STATIC_STRINGS.MULTI_PLATFORM).map((p) => (
                     <label
@@ -267,10 +257,7 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
               <div className="grid grid-cols-2 gap-4">
                 {/* 3. Objective */}
                 <div>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                    {STATIC_STRINGS.CREATE_CAMPAIGN_OBJECTIVE}{' '}
-                    <span className="text-red-500">*</span>
-                  </label>
+                  <Label required>{STATIC_STRINGS.CREATE_CAMPAIGN_OBJECTIVE}</Label>
                   <select
                     className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all bg-white ${errors.objective ? 'border-red-400' : 'border-slate-200'}`}
                     {...register('objective', {
@@ -288,9 +275,7 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
 
                 {/* 4. Daily Budget (INR) */}
                 <div>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                    {STATIC_STRINGS.CREATE_CAMPAIGN_BUDGET} <span className="text-red-500">*</span>
-                  </label>
+                  <Label required>{STATIC_STRINGS.CREATE_CAMPAIGN_BUDGET}</Label>
                   <div className="relative">
                     <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[13px]">
                       {STATIC_STRINGS.CURRENCY_SYMBOL}
@@ -310,9 +295,7 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
               <div className="grid grid-cols-2 gap-4">
                 {/* 5. Location */}
                 <div>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                    {STATIC_STRINGS.CREATE_CAMPAIGN_LOCATION}
-                  </label>
+                  <Label>{STATIC_STRINGS.CREATE_CAMPAIGN_LOCATION}</Label>
                   <input
                     type="text"
                     placeholder={STATIC_STRINGS.CREATE_CAMPAIGN_PLACEHOLDER_LOCATION}
@@ -322,9 +305,7 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
                 </div>
                 {/* 6. Target Audience */}
                 <div>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                    {STATIC_STRINGS.CREATE_CAMPAIGN_AUDIENCE}
-                  </label>
+                  <Label>{STATIC_STRINGS.CREATE_CAMPAIGN_AUDIENCE}</Label>
                   <input
                     type="text"
                     placeholder={STATIC_STRINGS.CREATE_CAMPAIGN_PLACEHOLDER_AUDIENCE}
@@ -337,9 +318,7 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
               <div className="grid grid-cols-2 gap-4">
                 {/* 7. Photo/Video Location */}
                 <div>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                    {STATIC_STRINGS.CREATE_CAMPAIGN_MEDIA_LOCATION}
-                  </label>
+                  <Label>{STATIC_STRINGS.CREATE_CAMPAIGN_MEDIA_LOCATION}</Label>
                   <input
                     type="text"
                     placeholder={STATIC_STRINGS.CREATE_CAMPAIGN_PLACEHOLDER_MEDIA_LOCATION}
@@ -349,10 +328,7 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
                 </div>
                 {/* 8. Campaign Deadline */}
                 <div>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                    {STATIC_STRINGS.CREATE_CAMPAIGN_DEADLINE}{' '}
-                    <span className="text-red-500">*</span>
-                  </label>
+                  <Label required>{STATIC_STRINGS.CREATE_CAMPAIGN_DEADLINE}</Label>
                   <input
                     type="date"
                     className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all ${errors.deadline ? 'border-red-400 bg-red-50' : 'border-slate-200'}`}
@@ -364,10 +340,7 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
               <div className="grid grid-cols-2 gap-4">
                 {/* 9. Ad Manager */}
                 <div>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                    {STATIC_STRINGS.CREATE_CAMPAIGN_AD_MANAGER}{' '}
-                    <span className="text-red-500">*</span>
-                  </label>
+                  <Label required>{STATIC_STRINGS.CREATE_CAMPAIGN_AD_MANAGER}</Label>
                   <select
                     className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all bg-white ${
                       errors.adsAssignee ? 'border-red-400' : 'border-slate-200'
@@ -425,9 +398,7 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
 
               {/* 10. Note */}
               <div>
-                <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                  {STATIC_STRINGS.CREATE_CAMPAIGN_NOTE}
-                </label>
+                <Label>{STATIC_STRINGS.CREATE_CAMPAIGN_NOTE}</Label>
                 <textarea
                   rows={2}
                   placeholder={STATIC_STRINGS.CREATE_CAMPAIGN_PLACEHOLDER_NOTE}
@@ -443,12 +414,8 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
             <div className="space-y-4 animate-fade-in">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">
-                    {STATIC_STRINGS.CREATE_CAMPAIGN_PRIORITY}
-                  </label>
-                  <p className="text-[11.5px] text-slate-400 mb-1.5">
-                    {STATIC_STRINGS.CREATE_CAMPAIGN_PRIORITY_DESC}
-                  </p>
+                  <Label>{STATIC_STRINGS.CREATE_CAMPAIGN_PRIORITY}</Label>
+                  <p className="text-[11.5px] text-slate-400 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_PRIORITY_DESC}</p>
                   <select
                     className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all bg-white"
                     {...register('priority')}
@@ -456,6 +423,18 @@ export default function CreateCampaignModal({ open, onClose, onSuccess }: Props)
                     <option value="low">{STATIC_STRINGS.PRIORITY_LOW}</option>
                     <option value="medium">{STATIC_STRINGS.PRIORITY_MEDIUM}</option>
                     <option value="high">{STATIC_STRINGS.PRIORITY_HIGH}</option>
+                  </select>
+                </div>
+
+                <div>
+                  <Label>{STATIC_STRINGS.CAMPAIGN_FIELD_CLIENT}</Label>
+                  <p className="text-[11.5px] text-slate-400 mb-1.5">{STATIC_STRINGS.CREATE_CAMPAIGN_CLIENT_DESC}</p>
+                  <select
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[13px] outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all bg-white"
+                    {...register('client')}
+                  >
+                    <option value="">{isFetchingClients ? 'Loading clients...' : STATIC_STRINGS.CREATE_CAMPAIGN_SELECT_CLIENT}</option>
+                    {clientsList.map((c) => <option key={`client-sel-${c.id}`} value={c.name}>{c.name}</option>)}
                   </select>
                 </div>
               </div>
