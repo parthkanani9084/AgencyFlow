@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Task, TaskStatus, Reel } from '@/types';
 import TaskCompletionModal from '@/components/TaskCompletionModal';
 import Modal from '@/components/ui/Modal';
+import Label from '@/components/ui/Label';
 import { toast } from 'sonner';
 import { reelService } from '@/lib/services/reelService';
 import { reelAgent } from '@/lib/agent/reelAgent';
@@ -230,7 +231,7 @@ export default function SocialMediaManagerDashboardPage() {
         <Modal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title={STATIC_STRINGS.SMM_MODAL_TITLE} size="md">
           <div className="p-6 space-y-5">
             <div>
-              <label className="block text-[13px] font-bold text-slate-700 mb-2">{STATIC_STRINGS.SMM_LABEL_TITLE}</label>
+              <Label className="font-bold mb-2" style={{ fontSize: '13px' }}>{STATIC_STRINGS.SMM_LABEL_TITLE}</Label>
               <input 
                 type="text"
                 placeholder={STATIC_STRINGS.SMM_PLACEHOLDER_TITLE}
@@ -242,7 +243,7 @@ export default function SocialMediaManagerDashboardPage() {
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[13px] font-bold text-slate-700 mb-2">{STATIC_STRINGS.SMM_LABEL_CLIENT}</label>
+                <Label className="font-bold mb-2" style={{ fontSize: '13px' }}>{STATIC_STRINGS.SMM_LABEL_CLIENT}</Label>
                 <select 
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[14px] focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 outline-none transition-all cursor-pointer"
                   value={newReelForm.campaignId}
@@ -253,7 +254,7 @@ export default function SocialMediaManagerDashboardPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-[13px] font-bold text-slate-700 mb-2">{STATIC_STRINGS.SMM_LABEL_DATE}</label>
+                <Label className="font-bold mb-2" style={{ fontSize: '13px' }}>{STATIC_STRINGS.SMM_LABEL_DATE}</Label>
                 <input 
                   type="date"
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[14px] focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 outline-none transition-all"
